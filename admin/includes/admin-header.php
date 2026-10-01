@@ -100,6 +100,20 @@ $accred_nav_alerts = checkAccreditationExpirations();
         font-weight: 700;
         background: rgba(124, 58, 237, 0.35);
     }
+    /* Pastikan judul modal di modal-header berlatar belakang gelap/gradien selalu terlihat jelas dan putih */
+    .modal-header.text-white .modal-title,
+    .modal-header.bg-dark .modal-title,
+    .modal-header.bg-danger .modal-title,
+    .modal-header.bg-primary .modal-title,
+    .modal-header[style*="background"] .modal-title,
+    .modal-header[style*="linear-gradient"] .modal-title,
+    .modal-header .modal-title.text-white {
+        color: #ffffff !important;
+    }
+    .modal-header.text-white .modal-title i,
+    .modal-header[style*="linear-gradient"] .modal-title i {
+        color: #ffffff !important;
+    }
     </style>
     <?= isset($extra_css) ? $extra_css : '' ?>
 </head>

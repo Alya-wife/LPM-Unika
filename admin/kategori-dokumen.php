@@ -230,7 +230,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <div class="modal-header" style="background:linear-gradient(135deg, var(--navy) 0%, #1E3A8A 100%);color:#fff;">
-                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-pencil-square me-2"></i> Edit Kategori Dokumen</h5>
+                <h5 class="modal-title fw-bold text-white" style="font-size:1rem;color:#ffffff !important;"><i class="bi bi-pencil-square me-2"></i> Edit Kategori Dokumen</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST">
@@ -259,7 +259,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Konfirmasi Hapus Kategori</h5>
+                <h5 class="modal-title fw-bold text-white" style="font-size:1rem;color:#ffffff !important;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Konfirmasi Hapus Kategori</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST">

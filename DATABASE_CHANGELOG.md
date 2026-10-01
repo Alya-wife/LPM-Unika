@@ -379,6 +379,12 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Halaman [`faq.php`](./faq.php) dan template [`includes/knowledge-sections.php`](./includes/knowledge-sections.php) diperbarui dengan tab filter kategori interaktif (*Semua Kategori, SPMI, AMI, Akreditasi, Layanan, Umum*), badge identitas kategori, dan pembukaan otomatis kategori berdasarkan parameter URL.
 
 
+### N. Penyempurnaan Skrip Migrasi Idempoten & Sinkronisasi FAQ Akreditasi
+- **Penambahan Seeder Idempoten FAQ Akreditasi di `scripts/run_migrations.php`**:
+  - Memastikan 3 butir tanya jawab kategori Akreditasi otomatis ditambahkan ke basis data lingkungan manapun yang telah memiliki data FAQ awal tanpa harus menghapus/mereset tabel.
+- **Validasi dan Perbaikan Kolom `kategori_berita`**:
+  - Penambahan skrip otomatis untuk merapikan nama kolom (`nama_kategori`) dan menyisipkan kolom `updated_at` jika belum tersedia, mencegah kendala kompatibilitas skema antar lingkungan kolaborator.
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain

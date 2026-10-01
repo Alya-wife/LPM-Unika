@@ -243,6 +243,17 @@ if ($faqCount === 0) {
     echo "Seeded initial faqs table.\n";
 }
 
+$akreditasiFaqCount = (int)$db->query("SELECT COUNT(*) FROM faqs WHERE kategori = 'Akreditasi'")->fetchColumn();
+if ($akreditasiFaqCount === 0) {
+    $db->exec("
+        INSERT INTO `faqs` (`pertanyaan`, `jawaban`, `kategori`, `urutan`, `is_active`) VALUES
+        ('Apa status akreditasi institusi UNIKA Soegijapranata saat ini?', 'Universitas Katolik Soegijapranata terakreditasi UNGGUL oleh Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).', 'Akreditasi', 1, 1),
+        ('Bagaimana cara memperoleh legalisir sertifikat akreditasi?', 'Legalisir sertifikat akreditasi dapat diajukan secara online melalui layanan permohonan LPM atau datang langsung ke Sekretariat LPM.', 'Akreditasi', 2, 1),
+        ('Apakah seluruh program studi di UNIKA sudah terakreditasi?', 'Ya, seluruh program studi aktif di Universitas Katolik Soegijapranata telah terakreditasi oleh BAN-PT atau LAM yang berwenang.', 'Akreditasi', 3, 1);
+    ");
+    echo "Seeded Akreditasi FAQs.\n";
+}
+
 // 8. Tabel Glosarium
 $db->exec("
     CREATE TABLE IF NOT EXISTS `glosarium` (
@@ -321,6 +332,14 @@ $db->exec("
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
+$chkKbAma = $db->query("SHOW COLUMNS FROM `kategori_berita` LIKE 'ama_kategori'")->fetchAll();
+if (!empty($chkKbAma)) {
+    $db->exec("ALTER TABLE `kategori_berita` CHANGE COLUMN `ama_kategori` `nama_kategori` VARCHAR(100) NOT NULL");
+}
+$chkKbUpdated = $db->query("SHOW COLUMNS FROM `kategori_berita` LIKE 'updated_at'")->fetchAll();
+if (empty($chkKbUpdated)) {
+    $db->exec("ALTER TABLE `kategori_berita` ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+}
 $kbCount = (int)$db->query("SELECT COUNT(*) FROM kategori_berita")->fetchColumn();
 if ($kbCount === 0) {
     $default_news_cats = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];

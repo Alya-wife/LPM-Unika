@@ -604,10 +604,39 @@ if ($pRankCount === 0) {
             $r['file_sertifikat'],
             $r['tahun'],
             $r['urutan'],
-            $r['is_active']
         ]);
     }
-    echo "Seeded initial pemeringkatan table with Lokal, Nasional, and Internasional records.\n";
+    echo "Seeded initial pemeringkatan table.\n";
+}
+
+// 15. Tabel Tahapan Kartu Siklus SPMI PPEPP (Dapat diedit penuh oleh admin)
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `spmi_ppepp_stages` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `tahap_ke` INT NOT NULL UNIQUE,
+      `inisial` VARCHAR(10) NOT NULL DEFAULT 'P',
+      `label` VARCHAR(100) NOT NULL,
+      `badge_teks` VARCHAR(150) NOT NULL,
+      `judul` VARCHAR(255) NOT NULL,
+      `tagline` VARCHAR(255) NULL,
+      `warna` VARCHAR(30) NOT NULL DEFAULT '#C0392B',
+      `deskripsi` TEXT NOT NULL,
+      `prosedur_label` VARCHAR(150) NOT NULL DEFAULT 'PROSEDUR OPERASIONAL:',
+      `langkah_prosedur` TEXT NOT NULL,
+      `dokumen_label` VARCHAR(150) NOT NULL DEFAULT 'DOKUMEN TERKAIT:',
+      `dokumen_teks` TEXT NOT NULL,
+      `aktor_label` VARCHAR(150) NOT NULL DEFAULT 'PENANGGUNG JAWAB:',
+      `aktor_teks` TEXT NOT NULL,
+      `tombol_teks` VARCHAR(100) NOT NULL DEFAULT 'Dokumen Terkait',
+      `tombol_url` VARCHAR(255) NOT NULL DEFAULT '#dokumen-spmi',
+      `footer_teks` VARCHAR(255) NOT NULL DEFAULT 'Standar Mutu UNIKA Soegijapranata',
+      `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$stagesCount = (int)$db->query("SELECT COUNT(*) FROM spmi_ppepp_stages")->fetchColumn();
+if ($stagesCount === 0) {
+    require_once __DIR__ . '/migrate_spmi_ppepp_stages.php';
 }
 
 echo "All migrations finished successfully!\n";
+

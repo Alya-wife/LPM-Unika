@@ -312,11 +312,47 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Halaman publik [`pemeringkatan.php`](./pemeringkatan.php) dirancang terbagi menjadi 3 seksi mandiri tanpa bercampur:
     1. **Seksi Internasional** (Global & Dunia) di bagian paling atas
     2. **Seksi Nasional** (Tingkat Indonesia) di bagian tengah
-    3. **Seksi Lokal** (Kota Semarang & Jawa Tengah) di bagian bawah
-  - Dilengkapi *sticky jump navigator* di bagian atas untuk lompat cepat antar seksi serta lightbox penampil sertifikat resmi (`#certPreviewModal`).
-
-
-
+### L. Modul Pengelolaan Konten Kartu Siklus PPEPP SPMI (`spmi_ppepp_stages`)
+- **Tabel Basis Data Baru (`spmi_ppepp_stages`)**:
+  - Tabel `spmi_ppepp_stages` dibuat untuk memungkinkan administrator mengedit seluruh bagian detail card pada 5 tahapan siklus SPMI PPEPP (Penetapan, Pelaksanaan, Evaluasi, Pengendalian, Peningkatan):
+    ```sql
+    CREATE TABLE IF NOT EXISTS `spmi_ppepp_stages` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `tahap_ke` INT NOT NULL UNIQUE,
+      `inisial` VARCHAR(10) NOT NULL DEFAULT 'P',
+      `label` VARCHAR(100) NOT NULL,
+      `badge_teks` VARCHAR(150) NOT NULL,
+      `judul` VARCHAR(255) NOT NULL,
+      `tagline` VARCHAR(255) NULL,
+      `warna` VARCHAR(30) NOT NULL DEFAULT '#C0392B',
+      `deskripsi` TEXT NOT NULL,
+      `prosedur_label` VARCHAR(150) NOT NULL DEFAULT 'PROSEDUR OPERASIONAL:',
+      `langkah_prosedur` TEXT NOT NULL,
+      `dokumen_label` VARCHAR(150) NOT NULL DEFAULT 'DOKUMEN TERKAIT:',
+      `dokumen_teks` TEXT NOT NULL,
+      `aktor_label` VARCHAR(150) NOT NULL DEFAULT 'PENANGGUNG JAWAB:',
+      `aktor_teks` TEXT NOT NULL,
+      `tombol_teks` VARCHAR(100) NOT NULL DEFAULT 'Dokumen Terkait',
+      `tombol_url` VARCHAR(255) NOT NULL DEFAULT '#dokumen-spmi',
+      `footer_teks` VARCHAR(255) NOT NULL DEFAULT 'Standar Mutu UNIKA Soegijapranata',
+      `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ```
+- **Fitur Kustomisasi Penuh Tanpa Terkecuali**:
+  - Halaman panel admin baru [`admin/spmi-ppepp-card.php`](./admin/spmi-ppepp-card.php) dilengkapi *Live Interactive Preview* kartu persis seperti tampilan website publik.
+  - Admin dapat mengedit seluruh bagian:
+    1. Inisial huruf & label node diagram.
+    2. Teks badge header kartu (`TAHAP X DARI 5 • SIKLUS SPMI`).
+    3. Warna aksen border & pill kartu (*color picker* + HEX).
+    4. Judul tahapan & deskripsi lengkap.
+    5. Label judul & butir-butir langkah prosedur operasional (format teks baris per baris).
+    6. Label & daftar dokumen terkait.
+    7. Label & pihak penanggung jawab kegiatan.
+    8. Teks & tautan URL tombol aksi dokumen.
+    9. Teks catatan samping footer kartu.
+  - Dilengkapi tombol reset ke pengaturan bawaan standar.
+- **Integrasi Halaman Publik**:
+  - Template [`includes/spmi-sections.php`](./includes/spmi-sections.php) membaca data siklus dari tabel `spmi_ppepp_stages` secara dinamis dengan *fallback* aman ke data bawaan.
 
 ---
 

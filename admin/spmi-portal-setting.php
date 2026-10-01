@@ -184,15 +184,23 @@ require_once __DIR__ . '/includes/admin-header.php';
 
         <!-- Intro Banner Card -->
         <div class="card mb-4 border-0 shadow-sm" style="border-radius:12px;background:#F8FAFC;border:1px solid #E2E8F0;">
-            <div class="card-body p-4 d-flex align-items-center gap-3">
-                <div style="width:48px;height:48px;border-radius:12px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;color:#6D28D9;font-size:1.4rem;flex-shrink:0;">
-                    <i class="bi bi-pie-chart-fill"></i>
+            <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px;height:48px;border-radius:12px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;color:#6D28D9;font-size:1.4rem;flex-shrink:0;">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color:var(--navy);font-size:1.1rem;">Pengelolaan Konten SPMI (Chart PPEPP &amp; 3 Portal Utama)</h5>
+                        <div class="small text-muted" style="line-height:1.5;">
+                            Di sini Anda dapat mengedit <strong>Judul &amp; Penjelasan Chart Siklus PPEPP</strong> serta <strong>Judul, Badge Kategori, Penjelasan, Status &amp; Tautan</strong> ketiga portal mutu (Portal SISTA, Portal SPMI Kemendikti, dan Portal E-PPEPP).
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <h5 class="fw-bold mb-1" style="color:var(--navy);font-size:1.1rem;">Pengelolaan Konten SPMI (Chart PPEPP &amp; 3 Portal Utama)</h5>
-                    <div class="small text-muted" style="line-height:1.5;">
-                        Di sini Anda dapat mengedit <strong>Judul &amp; Penjelasan Chart Siklus PPEPP</strong> serta <strong>Judul, Badge Kategori, Penjelasan, Status &amp; Tautan</strong> ketiga portal mutu (Portal SISTA, Portal SPMI Kemendikti, dan Portal E-PPEPP).
-                    </div>
+                    <a href="<?= SITE_URL ?>/admin/spmi-ppepp-card.php" class="btn btn-warning text-dark fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="border-radius:10px;padding:0.6rem 1.2rem;">
+                        <i class="bi bi-card-text fs-5"></i>
+                        <span>Edit Isi Kartu Tahap PPEPP &rarr;</span>
+                    </a>
                 </div>
             </div>
         </div>

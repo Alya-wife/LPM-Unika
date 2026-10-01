@@ -95,98 +95,168 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
             break;
 
         case 'spmi_ppepp':
-            $ppepp_data = [
-                [
-                    'inisial'   => 'P',
-                    'label'     => 'Penetapan',
-                    'judul'     => 'Penetapan Standar Dikti (P)',
-                    'tagline'   => 'Penetapan Standar Dikti;',
-                    'warna'     => '#C0392B',
-                    'warna_sub' => '#E74C3C',
-                    'bg_light'  => 'rgba(192, 57, 43, 0.08)',
-                    'deskripsi' => 'Tahap awal perumusan, penyelarasan, dan penetapan seluruh tolok ukur standar mutu akademik, non-akademik, serta standar ciri khas Universitas Katolik Soegijapranata yang disusun melampaui Standar Nasional Pendidikan Tinggi (SN Dikti).',
-                    'langkah'   => [
-                        'Penyusunan draf standar mutu bersama tim pakar LPM dan UPPS.',
-                        'Uji publik dan review komprehensif bersama Gugus Penjaminan Mutu (GPM).',
-                        'Pemberian pertimbangan dan persetujuan formal oleh Senat Akademik Universitas.',
-                        'Penetapan resmi pemberlakuan standar melalui Surat Keputusan Rektor.'
+            $ppepp_data = [];
+            try {
+                $db_spmi = getDB();
+                $stmt_stages = $db_spmi->query("SELECT * FROM spmi_ppepp_stages ORDER BY tahap_ke ASC");
+                $rows_stages = $stmt_stages->fetchAll(PDO::FETCH_ASSOC);
+                if (!empty($rows_stages) && count($rows_stages) === 5) {
+                    foreach ($rows_stages as $row) {
+                        $steps = array_filter(array_map('trim', explode("\n", $row['langkah_prosedur'])));
+                        $ppepp_data[] = [
+                            'inisial'          => $row['inisial'],
+                            'label'            => $row['label'],
+                            'badge_teks'       => $row['badge_teks'],
+                            'judul'            => $row['judul'],
+                            'tagline'          => $row['tagline'] ?? '',
+                            'warna'            => $row['warna'] ?: '#C0392B',
+                            'warna_sub'        => $row['warna'] ?: '#C0392B',
+                            'bg_light'         => 'rgba(0,0,0,0.06)',
+                            'deskripsi'        => $row['deskripsi'],
+                            'prosedur_label'   => $row['prosedur_label'] ?: 'PROSEDUR OPERASIONAL:',
+                            'langkah'          => $steps,
+                            'dokumen_label'    => $row['dokumen_label'] ?: 'DOKUMEN TERKAIT:',
+                            'dokumen'          => $row['dokumen_teks'],
+                            'aktor_label'      => $row['aktor_label'] ?: 'PENANGGUNG JAWAB:',
+                            'aktor'            => $row['aktor_teks'],
+                            'tombol_teks'      => $row['tombol_teks'] ?: 'Dokumen Terkait',
+                            'tombol_url'       => $row['tombol_url'] ?: '#dokumen-spmi',
+                            'footer_teks'      => $row['footer_teks'] ?: 'Standar Mutu UNIKA Soegijapranata'
+                        ];
+                    }
+                }
+            } catch (Exception $e) {}
+
+            // Fallback jika database belum termigrasi
+            if (empty($ppepp_data)) {
+                $ppepp_data = [
+                    [
+                        'inisial'          => 'P',
+                        'label'            => 'Penetapan',
+                        'badge_teks'       => 'TAHAP 1 DARI 5 • SIKLUS SPMI',
+                        'judul'            => 'Penetapan Standar Dikti (P)',
+                        'tagline'          => 'Penetapan Standar Dikti;',
+                        'warna'            => '#C0392B',
+                        'warna_sub'        => '#E74C3C',
+                        'bg_light'         => 'rgba(192, 57, 43, 0.08)',
+                        'deskripsi'        => 'Tahap awal perumusan, penyelarasan, dan penetapan seluruh tolok ukur standar mutu akademik, non-akademik, serta standar ciri khas Universitas Katolik Soegijapranata yang disusun melampaui Standar Nasional Pendidikan Tinggi (SN Dikti).',
+                        'prosedur_label'   => 'PROSEDUR OPERASIONAL:',
+                        'langkah'          => [
+                            'Penyusunan draf standar mutu bersama tim pakar LPM dan UPPS.',
+                            'Uji publik dan review komprehensif bersama Gugus Penjaminan Mutu (GPM).',
+                            'Pemberian pertimbangan dan persetujuan formal oleh Senat Akademik Universitas.',
+                            'Penetapan resmi pemberlakuan standar melalui Surat Keputusan Rektor.'
+                        ],
+                        'dokumen_label'    => 'DOKUMEN TERKAIT:',
+                        'dokumen'          => 'Kebijakan SPMI, Manual Penetapan Standar, dan Buku Standar SPMI (Pendidikan, Riset, PkM, & Identitas).',
+                        'aktor_label'      => 'PENANGGUNG JAWAB:',
+                        'aktor'            => 'Rektor, Senat Akademik Universitas, & LPM',
+                        'tombol_teks'      => 'Dokumen Terkait',
+                        'tombol_url'       => '#dokumen-spmi',
+                        'footer_teks'      => 'Standar Mutu UNIKA Soegijapranata'
                     ],
-                    'dokumen'   => 'Kebijakan SPMI, Manual Penetapan Standar, dan Buku Standar SPMI (Pendidikan, Riset, PkM, & Identitas).',
-                    'aktor'     => 'Rektor, Senat Akademik Universitas, & LPM'
-                ],
-                [
-                    'inisial'   => 'P',
-                    'label'     => 'Pelaksanaan',
-                    'judul'     => 'Pelaksanaan Standar Dikti (P)',
-                    'tagline'   => 'Pelaksanaan Standar Dikti;',
-                    'warna'     => '#689F38',
-                    'warna_sub' => '#7CB342',
-                    'bg_light'  => 'rgba(104, 159, 56, 0.08)',
-                    'deskripsi' => 'Tahap implementasi seluruh indikator capaian standar yang telah disahkan ke dalam operasional tridharma perguruan tinggi dan tata kelola unit kerja di lingkungan kampus UNIKA.',
-                    'langkah'   => [
-                        'Sosialisasi menyeluruh isi standar mutu kepada dosen, tendik, dan mahasiswa.',
-                        'Penerapan SOP operasional dalam perkuliahan, bimbingan, penelitian, dan pengabdian.',
-                        'Penyusunan dan pengarsipan portofolio pembelajaran serta bukti fisik ketercapaian standar.',
-                        'Pencatatan real-time melalui sistem informasi akademik dan portal terpadu kampus.'
+                    [
+                        'inisial'          => 'P',
+                        'label'            => 'Pelaksanaan',
+                        'badge_teks'       => 'TAHAP 2 DARI 5 • SIKLUS SPMI',
+                        'judul'            => 'Pelaksanaan Standar Dikti (P)',
+                        'tagline'          => 'Pelaksanaan Standar Dikti;',
+                        'warna'            => '#689F38',
+                        'warna_sub'        => '#7CB342',
+                        'bg_light'         => 'rgba(104, 159, 56, 0.08)',
+                        'deskripsi'        => 'Tahap implementasi seluruh indikator capaian standar yang telah disahkan ke dalam operasional tridharma perguruan tinggi dan tata kelola unit kerja di lingkungan kampus UNIKA.',
+                        'prosedur_label'   => 'PROSEDUR OPERASIONAL:',
+                        'langkah'          => [
+                            'Sosialisasi menyeluruh isi standar mutu kepada dosen, tendik, dan mahasiswa.',
+                            'Penerapan SOP operasional dalam perkuliahan, bimbingan, penelitian, dan pengabdian.',
+                            'Penyusunan dan pengarsipan portofolio pembelajaran serta bukti fisik ketercapaian standar.',
+                            'Pencatatan real-time melalui sistem informasi akademik dan portal terpadu kampus.'
+                        ],
+                        'dokumen_label'    => 'DOKUMEN TERKAIT:',
+                        'dokumen'          => 'SOP Pelaksanaan, Modul Perkuliahan, Rencana Pembelajaran (RPS), Kontrak Kinerja Unit, dan Bukti Tridharma.',
+                        'aktor_label'      => 'PENANGGUNG JAWAB:',
+                        'aktor'            => 'Dekan, Ketua Program Studi, Kepala Lembaga/Biro, Dosen, & Tendik',
+                        'tombol_teks'      => 'Dokumen Terkait',
+                        'tombol_url'       => '#dokumen-spmi',
+                        'footer_teks'      => 'Standar Mutu UNIKA Soegijapranata'
                     ],
-                    'dokumen'   => 'SOP Pelaksanaan, Modul Perkuliahan, Rencana Pembelajaran (RPS), Kontrak Kinerja Unit, dan Bukti Tridharma.',
-                    'aktor'     => 'Dekan, Ketua Program Studi, Kepala Lembaga/Biro, Dosen, & Tendik'
-                ],
-                [
-                    'inisial'   => 'E',
-                    'label'     => 'Evaluasi',
-                    'judul'     => 'Evaluasi (Pelaksanaan) Standar Dikti (E)',
-                    'tagline'   => 'Evaluasi (Pelaksanaan) Standar Dikti;',
-                    'warna'     => '#6A4C93',
-                    'warna_sub' => '#8E44AD',
-                    'bg_light'  => 'rgba(106, 76, 147, 0.08)',
-                    'deskripsi' => 'Tahap pemantauan, pengukuran, dan pengujian berkala terhadap kesesuaian pelaksanaan kegiatan dengan tolok ukur standar mutu, guna mendeteksi secara dini potensi hambatan maupun ketidaksesuaian.',
-                    'langkah'   => [
-                        'Pengisian Dokumen Evaluasi Diri (DED) berbasis data riil oleh UPPS/Unit.',
-                        'Pelaksanaan Audit Mutu Internal (AMI) terjadwal oleh auditor internal bersertifikat.',
-                        'Visitasi lapangan, wawancara auditee, dan uji petik bukti dukung fisik/digital.',
-                        'Penyusunan Laporan Hasil Audit Mutu, rekapitulasi temuan KTS, dan potensi risiko.'
+                    [
+                        'inisial'          => 'E',
+                        'label'            => 'Evaluasi',
+                        'badge_teks'       => 'TAHAP 3 DARI 5 • SIKLUS SPMI',
+                        'judul'            => 'Evaluasi (Pelaksanaan) Standar Dikti (E)',
+                        'tagline'          => 'Evaluasi (Pelaksanaan) Standar Dikti;',
+                        'warna'            => '#6A4C93',
+                        'warna_sub'        => '#8E44AD',
+                        'bg_light'         => 'rgba(106, 76, 147, 0.08)',
+                        'deskripsi'        => 'Tahap pemantauan, pengukuran, dan pengujian berkala terhadap kesesuaian pelaksanaan kegiatan dengan tolok ukur standar mutu, guna mendeteksi secara dini potensi hambatan maupun ketidaksesuaian.',
+                        'prosedur_label'   => 'PROSEDUR OPERASIONAL:',
+                        'langkah'          => [
+                            'Pengisian Dokumen Evaluasi Diri (DED) berbasis data riil oleh UPPS/Unit.',
+                            'Pelaksanaan Audit Mutu Internal (AMI) terjadwal oleh auditor internal bersertifikat.',
+                            'Visitasi lapangan, wawancara auditee, dan uji petik bukti dukung fisik/digital.',
+                            'Penyusunan Laporan Hasil Audit Mutu, rekapitulasi temuan KTS, dan potensi risiko.'
+                        ],
+                        'dokumen_label'    => 'DOKUMEN TERKAIT:',
+                        'dokumen'          => 'Instrumen Audit Mutu Internal (AMI), Dokumen Evaluasi Diri (DED), Laporan Temuan KTS, dan Survei Kepuasan.',
+                        'aktor_label'      => 'PENANGGUNG JAWAB:',
+                        'aktor'            => 'Kepala Pusat AMI, Tim Auditor Internal Tersertifikasi, & Auditee',
+                        'tombol_teks'      => 'Dokumen Terkait',
+                        'tombol_url'       => '#dokumen-spmi',
+                        'footer_teks'      => 'Standar Mutu UNIKA Soegijapranata'
                     ],
-                    'dokumen'   => 'Instrumen Audit Mutu Internal (AMI), Dokumen Evaluasi Diri (DED), Laporan Temuan KTS, dan Survei Kepuasan.',
-                    'aktor'     => 'Kepala Pusat AMI, Tim Auditor Internal Tersertifikasi, & Auditee'
-                ],
-                [
-                    'inisial'   => 'P',
-                    'label'     => 'Pengendalian',
-                    'judul'     => 'Pengendalian (Pelaksanaan) Standar Dikti (P)',
-                    'tagline'   => 'Pengendalian (Pelaksanaan) Standar Dikti; dan',
-                    'warna'     => '#00838F',
-                    'warna_sub' => '#00ACC1',
-                    'bg_light'  => 'rgba(0, 131, 143, 0.08)',
-                    'deskripsi' => 'Tahap analisis dan perumusan tindakan korektif terhadap temuan evaluasi melalui forum resmi Rapat Tinjauan Manajemen (RTM) agar penyimpangan segera teratasi dan tidak berulang.',
-                    'langkah'   => [
-                        'Penyusunan Rencana Tindak Lanjut (RTL) dan tenggat waktu perbaikan oleh auditee.',
-                        'Penyelenggaraan Rapat Tinjauan Manajemen (RTM) berjenjang (Prodi, Fakultas, Universitas).',
-                        'Keputusan pimpinan terkait alokasi sumber daya pendukung percepatan pemenuhan standar.',
-                        'Verifikasi dan monitoring penutupan status temuan KTS oleh GPM dan LPM.'
+                    [
+                        'inisial'          => 'P',
+                        'label'            => 'Pengendalian',
+                        'badge_teks'       => 'TAHAP 4 DARI 5 • SIKLUS SPMI',
+                        'judul'            => 'Pengendalian (Pelaksanaan) Standar Dikti (P)',
+                        'tagline'          => 'Pengendalian (Pelaksanaan) Standar Dikti; dan',
+                        'warna'            => '#00838F',
+                        'warna_sub'        => '#00ACC1',
+                        'bg_light'         => 'rgba(0, 131, 143, 0.08)',
+                        'deskripsi'        => 'Tahap analisis dan perumusan tindakan korektif terhadap temuan evaluasi melalui forum resmi Rapat Tinjauan Manajemen (RTM) agar penyimpangan segera teratasi dan tidak berulang.',
+                        'prosedur_label'   => 'PROSEDUR OPERASIONAL:',
+                        'langkah'          => [
+                            'Penyusunan Rencana Tindak Lanjut (RTL) dan tenggat waktu perbaikan oleh auditee.',
+                            'Penyelenggaraan Rapat Tinjauan Manajemen (RTM) berjenjang (Prodi, Fakultas, Universitas).',
+                            'Keputusan pimpinan terkait alokasi sumber daya pendukung percepatan pemenuhan standar.',
+                            'Verifikasi dan monitoring penutupan status temuan KTS oleh GPM dan LPM.'
+                        ],
+                        'dokumen_label'    => 'DOKUMEN TERKAIT:',
+                        'dokumen'          => 'Risalah RTM, Lembar Rencana Tindak Lanjut (RTL), Bukti Perbaikan Tindak Lanjut, dan Berita Acara RTM.',
+                        'aktor_label'      => 'PENANGGUNG JAWAB:',
+                        'aktor'            => 'Rektor, Wakil Rektor, Dekan Fakultas, Kepala Unit Kerja, & GPM',
+                        'tombol_teks'      => 'Dokumen Terkait',
+                        'tombol_url'       => '#dokumen-spmi',
+                        'footer_teks'      => 'Standar Mutu UNIKA Soegijapranata'
                     ],
-                    'dokumen'   => 'Risalah RTM, Lembar Rencana Tindak Lanjut (RTL), Bukti Perbaikan Tindak Lanjut, dan Berita Acara RTM.',
-                    'aktor'     => 'Rektor, Wakil Rektor, Dekan Fakultas, Kepala Unit Kerja, & GPM'
-                ],
-                [
-                    'inisial'   => 'P',
-                    'label'     => 'Peningkatan',
-                    'judul'     => 'Peningkatan Standar Dikti (P)',
-                    'tagline'   => 'Peningkatan Standar Dikti.',
-                    'warna'     => '#E65100',
-                    'warna_sub' => '#F57C00',
-                    'bg_light'  => 'rgba(230, 81, 0, 0.08)',
-                    'deskripsi' => 'Tahap menaikkan target atau memperluas kriteria standar mutu yang telah tercapai secara konsisten (kaizen berkelanjutan) agar kualitas institusi terus meningkat menuju standar internasional.',
-                    'langkah'   => [
-                        'Kajian kelayakan terhadap standar yang telah berhasil dipenuhi secara penuh dan konsisten.',
-                        'Benchmarking mutu ke institusi mitra terbaik di tingkat nasional dan internasional.',
-                        'Revisi rumusan indikator capaian standar menjadi lebih tinggi dan adaptif masa depan.',
-                        'Pengesahan standar edisi terbaru sebagai titik awal siklus Penetapan berikutnya.'
-                    ],
-                    'dokumen'   => 'Naskah Rekomendasi Peningkatan Mutu, Laporan Studi Banding/Benchmarking, dan Draf Revisi Standar Baru.',
-                    'aktor'     => 'Rektor, Senat Akademik Universitas, Dewan Pakar Mutu, & LPM'
-                ]
-            ];
+                    [
+                        'inisial'          => 'P',
+                        'label'            => 'Peningkatan',
+                        'badge_teks'       => 'TAHAP 5 DARI 5 • SIKLUS SPMI',
+                        'judul'            => 'Peningkatan Standar Dikti (P)',
+                        'tagline'          => 'Peningkatan Standar Dikti.',
+                        'warna'            => '#E65100',
+                        'warna_sub'        => '#F57C00',
+                        'bg_light'         => 'rgba(230, 81, 0, 0.08)',
+                        'deskripsi'        => 'Tahap menaikkan target atau memperluas kriteria standar mutu yang telah tercapai secara konsisten (kaizen berkelanjutan) agar kualitas institusi terus meningkat menuju standar internasional.',
+                        'prosedur_label'   => 'PROSEDUR OPERASIONAL:',
+                        'langkah'          => [
+                            'Kajian kelayakan terhadap standar yang telah berhasil dipenuhi secara penuh dan konsisten.',
+                            'Benchmarking mutu ke institusi mitra terbaik di tingkat nasional dan internasional.',
+                            'Revisi rumusan indikator capaian standar menjadi lebih tinggi dan adaptif masa depan.',
+                            'Pengesahan standar edisi terbaru sebagai titik awal siklus Penetapan berikutnya.'
+                        ],
+                        'dokumen_label'    => 'DOKUMEN TERKAIT:',
+                        'dokumen'          => 'Naskah Rekomendasi Peningkatan Mutu, Laporan Studi Banding/Benchmarking, dan Draf Revisi Standar Baru.',
+                        'aktor_label'      => 'PENANGGUNG JAWAB:',
+                        'aktor'            => 'Rektor, Senat Akademik Universitas, Dewan Pakar Mutu, & LPM',
+                        'tombol_teks'      => 'Dokumen Terkait',
+                        'tombol_url'       => '#dokumen-spmi',
+                        'footer_teks'      => 'Standar Mutu UNIKA Soegijapranata'
+                    ]
+                ];
+            }
             $chart_title = getPengaturan('spmi_chart_title', $block['title'] ?? 'Siklus PPEPP SPMI Interaktif');
             $chart_badge = getPengaturan('spmi_chart_badge', $block['badge'] ?? 'Siklus Penjaminan Mutu Berkelanjutan');
             $chart_desc  = getPengaturan('spmi_chart_desc', 'Implementasi penjaminan mutu di Universitas Katolik Soegijapranata berlandaskan pada 5 tahap siklus berkelanjutan (PPEPP). Klik salah satu lingkaran siklus di bawah ini untuk menelaah penjelasan rinci setiap tahapannya.');
@@ -324,10 +394,20 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             <div class="ppepp-card-container mx-auto" style="max-width:490px;">
                                 <!-- Dynamic Detail Panel for Selected Stage -->
                                 <?php foreach ($ppepp_data as $idx => $stg): ?>
-                                <div class="ppepp-detail-card <?= $idx === 0 ? 'd-block' : 'd-none' ?>" id="ppepp-detail-<?= $idx ?>" style="background:#ffffff;border:1px solid var(--border);border-left:5px solid <?= $stg['warna'] ?>;border-radius:var(--radius-md);padding:1.3rem 1.45rem;box-shadow:0 8px 26px rgba(10,25,47,0.06);animation:ppeppFadeIn 0.3s ease;">
+                                <?php 
+                                $card_color = $stg['warna'] ?? '#C0392B';
+                                $badge_text = !empty($stg['badge_teks']) ? $stg['badge_teks'] : ('Tahap ' . ($idx + 1) . ' dari 5 • Siklus SPMI');
+                                $pros_label = !empty($stg['prosedur_label']) ? $stg['prosedur_label'] : 'PROSEDUR OPERASIONAL:';
+                                $dok_label  = !empty($stg['dokumen_label']) ? $stg['dokumen_label'] : 'DOKUMEN TERKAIT:';
+                                $akt_label  = !empty($stg['aktor_label']) ? $stg['aktor_label'] : 'PENANGGUNG JAWAB:';
+                                $btn_text   = !empty($stg['tombol_teks']) ? $stg['tombol_teks'] : 'Dokumen Terkait';
+                                $btn_url    = !empty($stg['tombol_url']) ? $stg['tombol_url'] : '#dokumen-spmi';
+                                $foot_text  = !empty($stg['footer_teks']) ? $stg['footer_teks'] : 'Standar Mutu UNIKA Soegijapranata';
+                                ?>
+                                <div class="ppepp-detail-card <?= $idx === 0 ? 'd-block' : 'd-none' ?>" id="ppepp-detail-<?= $idx ?>" style="background:#ffffff;border:1px solid var(--border);border-left:5px solid <?= htmlspecialchars($card_color) ?>;border-radius:var(--radius-md);padding:1.3rem 1.45rem;box-shadow:0 8px 26px rgba(10,25,47,0.06);animation:ppeppFadeIn 0.3s ease;">
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2" style="border-bottom:1px solid #F1F5F9;">
-                                        <span style="font-size:0.72rem;font-weight:800;letter-spacing:0.5px;color:<?= $stg['warna'] ?>;background:<?= $stg['bg_light'] ?>;padding:0.25rem 0.65rem;border-radius:20px;text-transform:uppercase;">
-                                            Tahap <?= $idx + 1 ?> dari 5 &bull; Siklus SPMI
+                                        <span style="font-size:0.72rem;font-weight:800;letter-spacing:0.5px;color:<?= htmlspecialchars($card_color) ?>;background:<?= htmlspecialchars($card_color) ?>15;padding:0.25rem 0.65rem;border-radius:20px;text-transform:uppercase;">
+                                            <?= htmlspecialchars($badge_text) ?>
                                         </span>
                                         <div class="d-flex align-items-center gap-1">
                                             <button class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.72rem;border-radius:6px;" onclick="navigatePpeppStage(<?= ($idx - 1 + 5) % 5 ?>)" title="Tahap Sebelumnya">
@@ -340,41 +420,41 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                                     </div>
 
                                     <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;margin-bottom:0.45rem;">
-                                        <?= $stg['judul'] ?>
+                                        <?= htmlspecialchars($stg['judul']) ?>
                                     </h3>
 
                                     <p style="font-size:0.85rem;color:var(--text-main);line-height:1.55;margin-bottom:0.75rem;">
-                                        <?= $stg['deskripsi'] ?>
+                                        <?= nl2br(htmlspecialchars($stg['deskripsi'])) ?>
                                     </p>
 
                                     <div class="mb-2">
                                         <div style="font-family:var(--font-heading);font-weight:700;font-size:0.78rem;color:var(--navy);margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.5px;">
-                                            <i class="bi bi-check2-circle me-1" style="color:<?= $stg['warna'] ?>;"></i> Prosedur Operasional:
+                                            <i class="bi bi-check2-circle me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= htmlspecialchars($pros_label) ?>
                                         </div>
                                         <ul style="margin:0;padding-left:1.15rem;font-size:0.81rem;color:var(--text-muted);line-height:1.5;">
                                             <?php foreach ($stg['langkah'] as $step_item): ?>
-                                            <li class="mb-1"><?= $step_item ?></li>
+                                            <li class="mb-1"><?= htmlspecialchars($step_item) ?></li>
                                             <?php endforeach; ?>
                                         </ul>
                                     </div>
 
                                     <div class="row g-2 pt-2" style="border-top:1px dashed var(--border);">
                                         <div class="col-sm-7">
-                                            <small class="text-muted d-block" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Dokumen Terkait:</small>
-                                            <span style="font-size:0.78rem;color:var(--navy);font-weight:600;"><?= $stg['dokumen'] ?></span>
+                                            <small class="text-muted d-block" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;"><?= htmlspecialchars($dok_label) ?></small>
+                                            <span style="font-size:0.78rem;color:var(--navy);font-weight:600;line-height:1.4;display:block;"><?= nl2br(htmlspecialchars($stg['dokumen'])) ?></span>
                                         </div>
                                         <div class="col-sm-5">
-                                            <small class="text-muted d-block" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Penanggung Jawab:</small>
-                                            <span style="font-size:0.78rem;color:var(--navy);font-weight:600;"><?= $stg['aktor'] ?></span>
+                                            <small class="text-muted d-block" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;"><?= htmlspecialchars($akt_label) ?></small>
+                                            <span style="font-size:0.78rem;color:var(--navy);font-weight:600;line-height:1.4;display:block;"><?= nl2br(htmlspecialchars($stg['aktor'])) ?></span>
                                         </div>
                                     </div>
 
                                     <div class="mt-2 pt-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-top:1px solid var(--border);">
-                                        <a href="#dokumen-spmi" class="btn btn-sm btn-outline-primary fw-bold px-3 py-1" style="font-size:0.76rem;border-radius:6px;text-decoration:none;">
-                                            <i class="bi bi-file-earmark-text me-1"></i> Dokumen Terkait
+                                        <a href="<?= htmlspecialchars($btn_url) ?>" class="btn btn-sm btn-outline-primary fw-bold px-3 py-1" style="font-size:0.76rem;border-radius:6px;text-decoration:none;">
+                                            <i class="bi bi-file-earmark-text me-1"></i> <?= htmlspecialchars($btn_text) ?>
                                         </a>
                                         <span style="font-size:0.72rem;color:var(--text-muted);">
-                                            Standar Mutu UNIKA Soegijapranata
+                                            <?= htmlspecialchars($foot_text) ?>
                                         </span>
                                     </div>
                                 </div>

@@ -112,6 +112,18 @@ $db->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
 
+$s4Undangan = $db->query("SHOW COLUMNS FROM ami_siklus4_dokumentasi LIKE 'file_undangan'")->fetchAll();
+if (empty($s4Undangan)) {
+    $db->exec("ALTER TABLE ami_siklus4_dokumentasi ADD COLUMN file_undangan VARCHAR(255) DEFAULT '' AFTER file_daftar_hadir");
+    echo "Added file_undangan column to ami_siklus4_dokumentasi.\n";
+}
+
+$s5Undangan = $db->query("SHOW COLUMNS FROM ami_siklus5_rtm LIKE 'file_undangan'")->fetchAll();
+if (empty($s5Undangan)) {
+    $db->exec("ALTER TABLE ami_siklus5_rtm ADD COLUMN file_undangan VARCHAR(255) DEFAULT '' AFTER file_daftar_hadir");
+    echo "Added file_undangan column to ami_siklus5_rtm.\n";
+}
+
 @mkdir(__DIR__ . '/../uploads/ami/siklus1', 0755, true);
 @mkdir(__DIR__ . '/../uploads/ami/siklus4', 0755, true);
 @mkdir(__DIR__ . '/../uploads/ami/siklus5', 0755, true);

@@ -229,6 +229,32 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
 5. **Brosur Layanan Pelatihan (`layanan_brosur`)**: Entri dummy brosur contoh dikosongkan.
 *Catatan: Struktur master pertanyaan IKM (`kunjungan_kuesioner_pertanyaan`) dan daftar unit tujuan (`kunjungan_tujuan_unit`) tetap dipertahankan utuh sebagai instrumen standar.*
 
+### H. Penambahan Kolom `file_undangan` & Restrukturisasi Lampiran Dokumen Siklus AMI (Siklus 4 & 5)
+- **Penambahan Kolom Skema Basis Data**:
+  - Tabel `ami_siklus4_dokumentasi`:
+    ```sql
+    ALTER TABLE `ami_siklus4_dokumentasi` ADD COLUMN IF NOT EXISTS `file_undangan` VARCHAR(255) DEFAULT '' AFTER `file_daftar_hadir`;
+    ```
+  - Tabel `ami_siklus5_rtm`:
+    ```sql
+    ALTER TABLE `ami_siklus5_rtm` ADD COLUMN IF NOT EXISTS `file_undangan` VARCHAR(255) DEFAULT '' AFTER `file_daftar_hadir`;
+    ```
+- **Pembersihan Ringkasan Naratif Sesuai Kebutuhan**:
+  - Ringkasan berita acara (`narasi_berita_acara`) dan ringkasan notulensi (`notulensi`) telah dihapus sepenuhnya dari antarmuka publik (`siklus-ami.php`), form admin (`admin/ami-siklus4-form.php`, `admin/ami-siklus5-form.php`), dan daftar tabel admin (`admin/ami-siklus-list.php`).
+- **Standardisasi Penamaan & Berkas Lampiran**:
+  - Label "Softfile Berita Acara" disederhanakan menjadi **"Berita Acara"**.
+  - Setiap kartu Siklus 4 dan 5 kini memiliki 3 dokumen lampiran terpadu:
+    - **Siklus 4 (Audit Lapangan)**: 1) Berita Acara, 2) Daftar Hadir, 3) Undangan.
+    - **Siklus 5 (RTM)**: 1) Notulensi, 2) Daftar Hadir, 3) Undangan.
+- **Redesain Kartu Dokumentasi**:
+  - Struktur tata letak kartu: **Foto kegiatan di bagian atas** (dapat diklik untuk memperbesar pratinjau), **Judul kegiatan & info unit di bagian tengah**, dan **Lampiran berkas resmi di bagian bawah**.
+- **Fitur Pratinjau Dokumen (Preview Modal Sebelum Unduh)**:
+  - Seluruh dokumen pada Siklus 1, Siklus 4, dan Siklus 5 dilengkapi dengan tombol **Pratinjau** (membuka modal `#docPreviewModal` dengan viewer PDF interaktif dan fallback dokumen Word) serta tombol **Unduh** langsung.
+- **Hierarki Filter Bertingkat**:
+  - Filter disusun bertingkat: **Filter Periode terlebih dahulu** (Langkah 1), diikuti langsung oleh **Filter Tingkat Satuan Kerja** (Langkah 2: Semua Tingkat, Tingkat Universitas, Tingkat Fakultas, Tingkat Program Studi).
+- **Perbaikan CSS Card Overflow**:
+  - Memperbaiki bug tampilan teks panjang dan tombol download yang keluar dari batas kartu (`.doc-ami-card`) dengan pembagian kontainer `.doc-ami-info` (`min-width: 0`, `word-break: break-word`) dan `.doc-ami-actions`.
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain
@@ -242,4 +268,8 @@ Jika melakukan klon proyek ke lingkungan baru:
 3. Atau jalankan skrip migrasi bawaan via CLI:
    ```bash
    php scripts/run_migrations.php
+   ```
+4. Jalankan seeder dummy data Siklus AMI (1 s.d. 5) jika diperlukan:
+   ```bash
+   php scripts/seed_ami_dummy_data.php
    ```

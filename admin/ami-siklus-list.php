@@ -665,7 +665,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <div class="admin-table-topbar flex-wrap gap-2">
             <div>
                 <div class="admin-table-title"><i class="bi bi-journal-text text-purple me-2"></i>Dokumentasi Audit Lapangan Fakultas &amp; Program Studi (<?= count($siklus4_dokumentasi) ?>)</div>
-                <div class="text-muted small">Memuat narasi berita acara, softfile BA, daftar hadir, dan galeri foto kegiatan periode <?= e($selected_periode) ?>.</div>
+                <div class="text-muted small">Memuat berkas berita acara, daftar hadir, undangan, dan galeri foto kegiatan periode <?= e($selected_periode) ?>.</div>
             </div>
             <a href="ami-siklus4-form.php?periode=<?= urlencode($selected_periode) ?>" class="btn-add btn-sm">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Dokumentasi
@@ -681,9 +681,9 @@ require_once __DIR__ . '/includes/admin-header.php';
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th width="140">Tingkat / Unit</th>
-                        <th>Judul &amp; Narasi Berita Acara</th>
-                        <th width="200">Lampiran Berkas</th>
+                        <th width="150">Tingkat / Unit</th>
+                        <th>Judul Kegiatan</th>
+                        <th width="210">Lampiran Berkas</th>
                         <th width="120">Galeri Foto</th>
                         <th width="110" class="text-center">Aksi</th>
                     </tr>
@@ -706,17 +706,12 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </td>
                         <td>
                             <div class="fw-bold" style="color:var(--navy);"><?= e($item['judul']) ?></div>
-                            <?php if (!empty($item['narasi_berita_acara'])): ?>
-                            <div class="text-muted small mt-1" style="font-size:0.82rem;line-height:1.5;">
-                                <?= nl2br(e(truncate($item['narasi_berita_acara'], 120))) ?>
-                            </div>
-                            <?php endif; ?>
                         </td>
                         <td>
                             <div class="vstack gap-1">
                                 <?php if (!empty($item['file_berita_acara'])): ?>
                                 <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
-                                    <i class="bi bi-file-earmark-check-fill text-primary me-1"></i> Softfile BA
+                                    <i class="bi bi-file-earmark-check-fill text-primary me-1"></i> Berita Acara
                                 </a>
                                 <?php endif; ?>
 
@@ -726,7 +721,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </a>
                                 <?php endif; ?>
 
-                                <?php if (empty($item['file_berita_acara']) && empty($item['file_daftar_hadir'])): ?>
+                                <?php if (!empty($item['file_undangan'])): ?>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
+                                    <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
+                                </a>
+                                <?php endif; ?>
+
+                                <?php if (empty($item['file_berita_acara']) && empty($item['file_daftar_hadir']) && empty($item['file_undangan'])): ?>
                                 <span class="text-muted small">-</span>
                                 <?php endif; ?>
                             </div>
@@ -767,7 +768,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="admin-table-topbar flex-wrap gap-2">
         <div>
             <div class="admin-table-title"><i class="bi bi-people-fill text-purple me-2"></i>Rapat Tinjauan Manajemen (RTM) - Tingkat Univ, Fakultas &amp; Prodi (<?= count($siklus5_rtm) ?>)</div>
-            <div class="text-muted small">Kelola notulensi, berkas daftar hadir, dan foto kegiatan RTM periode <?= e($selected_periode) ?>.</div>
+            <div class="text-muted small">Kelola notulensi, daftar hadir, berkas undangan, dan foto kegiatan RTM periode <?= e($selected_periode) ?>.</div>
         </div>
         <a href="ami-siklus5-form.php?periode=<?= urlencode($selected_periode) ?>" class="btn-add btn-sm">
             <i class="bi bi-plus-lg me-1"></i> Tambah Data RTM
@@ -784,8 +785,8 @@ require_once __DIR__ . '/includes/admin-header.php';
             <thead>
                 <tr>
                     <th width="150">Tingkat / Unit</th>
-                    <th>Judul &amp; Ringkasan Notulensi RTM</th>
-                    <th width="200">Lampiran Dokumen</th>
+                    <th>Judul Kegiatan</th>
+                    <th width="210">Lampiran Dokumen</th>
                     <th width="120">Galeri Foto</th>
                     <th width="110" class="text-center">Aksi</th>
                 </tr>
@@ -811,17 +812,12 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </td>
                     <td>
                         <div class="fw-bold" style="color:var(--navy);"><?= e($rtm['judul']) ?></div>
-                        <?php if (!empty($rtm['notulensi'])): ?>
-                        <div class="text-muted small mt-1" style="font-size:0.82rem;line-height:1.5;">
-                            <?= nl2br(e(truncate($rtm['notulensi'], 130))) ?>
-                        </div>
-                        <?php endif; ?>
                     </td>
                     <td>
                         <div class="vstack gap-1">
                             <?php if (!empty($rtm['file_notulensi'])): ?>
                             <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
-                                <i class="bi bi-file-earmark-text-fill text-primary me-1"></i> File Notulensi
+                                <i class="bi bi-file-earmark-text-fill text-primary me-1"></i> Notulensi
                             </a>
                             <?php endif; ?>
 
@@ -831,7 +827,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </a>
                             <?php endif; ?>
 
-                            <?php if (empty($rtm['file_notulensi']) && empty($rtm['file_daftar_hadir'])): ?>
+                            <?php if (!empty($rtm['file_undangan'])): ?>
+                            <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
+                                <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if (empty($rtm['file_notulensi']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_undangan'])): ?>
                             <span class="text-muted small">-</span>
                             <?php endif; ?>
                         </div>

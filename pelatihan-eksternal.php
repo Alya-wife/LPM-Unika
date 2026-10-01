@@ -156,10 +156,7 @@ require_once __DIR__ . '/includes/navbar.php';
                             <i class="bi bi-mortarboard-fill"></i>
                         </div>
                         <div>
-                            <div class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold text-uppercase" style="font-size:0.75rem;letter-spacing:0.5px;">
-                                Layanan Penjaminan Mutu &amp; Kemitraan
-                            </div>
-                            <h2 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.25rem, 2.2vw, 1.55rem);margin:0.25rem 0 0;">
+                            <h2 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.25rem, 2.2vw, 1.55rem);margin:0;">
                                 Profil &amp; Program Pelatihan Penjaminan Mutu
                             </h2>
                         </div>
@@ -248,9 +245,11 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <div>
                                     <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                         <?= $format_badge ?>
+                                        <?php if (!empty($br['tahun'])): ?>
                                         <span class="badge bg-light text-dark px-2 py-1 rounded-pill fw-semibold" style="font-size:0.75rem;">
                                             EDISI <?= htmlspecialchars($br['tahun']) ?>
                                         </span>
+                                        <?php endif; ?>
                                         <?php if (!empty($br['ukuran_file'])): ?>
                                         <span class="badge bg-secondary-subtle text-white border px-2 py-1 rounded-pill" style="font-size:0.75rem;">
                                             <i class="bi bi-hdd-fill me-1"></i><?= htmlspecialchars($br['ukuran_file']) ?>
@@ -258,7 +257,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                         <?php endif; ?>
                                     </div>
                                     <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.35rem;margin:0.25rem 0 0.2rem;">
-                                        <?= htmlspecialchars($br['judul_brosur']) ?>
+                                        <?= htmlspecialchars($br['judul_brosur'] ?: 'Brosur Pelatihan & Workshop LPM SCU') ?>
                                     </h4>
                                     <?php if (!empty($br['deskripsi'])): ?>
                                     <p style="color:rgba(255,255,255,0.85);font-size:0.88rem;margin:0;line-height:1.5;">

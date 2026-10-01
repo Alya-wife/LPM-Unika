@@ -96,14 +96,18 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
 - **Fitur & Format File yang Didukung**:
   - Format Berkas: **PDF, Word (DOCX/DOC), serta Foto / Gambar (PNG, JPG, JPEG, WEBP)**.
   - Nilai kolom `tipe_file`: `'pdf'`, `'docx'`, atau `'image'`.
-  - Terintegrasi dengan form unggah multi-format di Admin CMS (`admin/layanan-form-setting.php?tab=brosur`).
+  - Terintegrasi dengan form unggah di Admin CMS (`admin/layanan-form-setting.php?tab=pelatihan-umum`).
+  - **Penyederhanaan Upload (Terbaru)**: Admin kini hanya perlu mengunggah berkas dokumen atau foto saja. Kolom `judul_brosur` terisi otomatis dari nama berkas asli, `tahun` otomatis tahun berjalan, dan kolom link pendaftaran/deskripsi ditiadakan dari form.
+  - **Brosur Sampel Resmi LPM**: Dokumen aktif diperbarui ke berkas contoh brosur grafis resmi LPM UNIKA 2026 (`brosur_contoh_pelatihan_lpm_2026.pdf` & `brosur_contoh_pelatihan_lpm_2026.jpg`) menggantikan naskah akademik sebelumnya.
   - Halaman publik (`pelatihan.php` / `pelatihan-eksternal.php`) menampilkan brosur secara langsung (embedded viewer PDF, foto poster, atau kartu dokumen Word) dengan tombol aksi unduh langsung.
 
-### G. Kunci Pengaturan Narasi Pelatihan (`pengaturan`)
+### G. Kunci Pengaturan Narasi Pelatihan & Kontak (`pengaturan`)
 - Penambahan / standarisasi kunci pada tabel `pengaturan`:
   - `pelatihan_hero_title`: Judul Banner Hero pada halaman info pelatihan.
   - `pelatihan_hero_desc`: Ikhtisar singkat pada banner hero.
-  - `pelatihan_narasi_lengkap`: Teks narasi komprehensif profil pelatihan, kompetensi narasumber asesor BAN-PT/LAM, ruang lingkup materi (Auditor AMI, Bimtek SPMI PPEPP, Klinik Borang Akreditasi, RTM), serta kemitraan yang dapat disunting langsung oleh Administrator.
+  - `pelatihan_narasi_lengkap`: Teks narasi komprehensif profil pelatihan, kompetensi narasumber asesor BAN-PT/LAM, serta kemitraan yang dapat disunting langsung oleh Administrator.
+  - `pelatihan_email_kontak`: Alamat email tujuan tombol konsultasi pelatihan, terhubung langsung ke `lpm@unika.ac.id`.
+  - Formulir survei kepuasan publik (`survei-kepuasan.php`) tidak lagi mensyaratkan `umur` dan `token`, sehingga kolom `umur` dan `token_id` pada `kunjungan_feedback_respon` terisi `NULL` secara aman.
 
 ### H. Kolom Alur Publikasi Berita (`berita.status`)
 - Penambahan kolom `status ENUM('draft', 'published') NOT NULL DEFAULT 'published' AFTER tampil_di_ami`.

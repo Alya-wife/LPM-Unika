@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+require_once dirname(__DIR__) . '/config/database.php';
 $db = getDB();
 
 echo "--- 1. SEEDING PENGATURAN SPMI CHART & PORTAL ---\n";
@@ -71,8 +71,8 @@ echo "AMI Stages settings seeded successfully.\n";
 
 echo "--- 3. VERIFY AMI UPLOAD FILES ---\n";
 // Pastikan file dummy ada, bila belum ada buat salinan dari file yang sudah ada
-$basePdf = __DIR__ . '/../uploads/ami/siklus1/panduan_ami_2025_2026.pdf';
-$baseImg = __DIR__ . '/../uploads/ami/siklus1/opening_meeting_2025.webp';
+$basePdf = dirname(__DIR__) . '/uploads/ami/siklus1/panduan_ami_2025_2026.pdf';
+$baseImg = dirname(__DIR__) . '/uploads/ami/siklus1/opening_meeting_2025.webp';
 
 if (!file_exists($basePdf)) {
     // buat file dummy bila kosong
@@ -94,19 +94,21 @@ $filesToEnsure = [
     'ami/siklus4/jadwal_audit_unit_non_akademik.pdf'  => $basePdf,
     'ami/siklus4/ba_fik_2025.pdf'                     => $basePdf,
     'ami/siklus4/presensi_fik_2025.pdf'               => $basePdf,
+    'ami/siklus4/undangan_audit_2025.pdf'             => $basePdf,
     'ami/siklus4/foto_audit_fik.webp'                 => $baseImg,
     'ami/siklus4/foto_audit_ti.webp'                  => $baseImg,
     'ami/siklus4/foto_audit_manajemen.webp'           => $baseImg,
 
     'ami/siklus5/notulensi_rtm_univ_2025.pdf'         => $basePdf,
     'ami/siklus5/presensi_rtm_univ_2025.pdf'          => $basePdf,
+    'ami/siklus5/undangan_rtm_2025.pdf'               => $basePdf,
     'ami/siklus5/foto_rtm_univ.webp'                  => $baseImg,
     'ami/siklus5/foto_rtm_fik.webp'                   => $baseImg,
     'ami/siklus5/foto_rtm_akuntansi.webp'             => $baseImg,
 ];
 
 foreach ($filesToEnsure as $relPath => $src) {
-    $fullPath = __DIR__ . '/../uploads/' . $relPath;
+    $fullPath = dirname(__DIR__) . '/uploads/' . $relPath;
     if (!file_exists($fullPath)) {
         @mkdir(dirname($fullPath), 0755, true);
         if (file_exists($src)) {
@@ -163,7 +165,7 @@ echo "Inserted " . count($dok4) . " rows into ami_siklus4_dokumen.\n";
 
 echo "--- 7. SEEDING SIKLUS 4 DOKUMENTASI AUDIT LAPANGAN ---\n";
 $db->exec("TRUNCATE TABLE `ami_siklus4_dokumentasi`");
-$stmtDt4 = $db->prepare("INSERT INTO `ami_siklus4_dokumentasi` (`periode`, `tingkat`, `fakultas`, `prodi`, `judul`, `narasi_berita_acara`, `file_berita_acara`, `file_daftar_hadir`, `foto_kegiatan`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmtDt4 = $db->prepare("INSERT INTO `ami_siklus4_dokumentasi` (`periode`, `tingkat`, `fakultas`, `prodi`, `judul`, `narasi_berita_acara`, `file_berita_acara`, `file_daftar_hadir`, `file_undangan`, `foto_kegiatan`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $dokumentasi4 = [
     [
@@ -172,9 +174,10 @@ $dokumentasi4 = [
         'Fakultas Ilmu Komputer',
         '',
         'Audit Lapangan Pengelolaan Fakultas Ilmu Komputer (FIK)',
-        "Visitasi audit lapangan Fakultas Ilmu Komputer mencakup evaluasi tata kelola Renstra fakultas, ketercapaian IKU penelitian dan pengabdian dosen, serta sarana prasarana laboratorium riset berbasis AI & Cloud. Temuan observasi telah disepakati bersama Dekanat untuk ditindaklanjuti.",
+        '',
         'ami/siklus4/ba_fik_2025.pdf',
         'ami/siklus4/presensi_fik_2025.pdf',
+        'ami/siklus4/undangan_audit_2025.pdf',
         json_encode(['ami/siklus4/foto_audit_fik.webp'])
     ],
     [
@@ -183,9 +186,10 @@ $dokumentasi4 = [
         'Fakultas Ilmu Komputer',
         'S1 Teknik Informatika',
         'Visitasi Audit Mutu Akademik Program Studi S1 Teknik Informatika',
-        "Audit lapangan memverifikasi pemenuhan Capaian Pembelajaran Lulusan (CPL), integrasi kurikulum OBE berbasis industri global, rasio dosen-mahasiswa, serta portofolio asesmen tugas akhir mahasiswa. Kinerja prodi melampaui Standar Nasional Dikti dengan kategori Memuaskan.",
+        '',
         'ami/siklus4/ba_fik_2025.pdf',
         'ami/siklus4/presensi_fik_2025.pdf',
+        'ami/siklus4/undangan_audit_2025.pdf',
         json_encode(['ami/siklus4/foto_audit_ti.webp'])
     ],
     [
@@ -194,9 +198,10 @@ $dokumentasi4 = [
         'Fakultas Ekonomi dan Bisnis',
         'S1 Manajemen',
         'Visitasi Audit Dokumen & Lapangan Program Studi S1 Manajemen',
-        "Pelaksanaan visitasi dan konfirmasi bukti luaran akreditasi LAMEMBA, publikasi bereputasi internasional dosen dan mahasiswa, serta realisasi program student exchange ke perguruan tinggi mitra luar negeri berjalan tertib dan terverifikasi.",
+        '',
         'ami/siklus4/ba_fik_2025.pdf',
         'ami/siklus4/presensi_fik_2025.pdf',
+        'ami/siklus4/undangan_audit_2025.pdf',
         json_encode(['ami/siklus4/foto_audit_manajemen.webp'])
     ],
 ];
@@ -207,7 +212,7 @@ echo "Inserted " . count($dokumentasi4) . " rows into ami_siklus4_dokumentasi.\n
 
 echo "--- 8. SEEDING SIKLUS 5 RTM (RAPAT TINJAUAN MANAJEMEN) ---\n";
 $db->exec("TRUNCATE TABLE `ami_siklus5_rtm`");
-$stmtR5 = $db->prepare("INSERT INTO `ami_siklus5_rtm` (`periode`, `tingkat`, `fakultas`, `prodi`, `judul`, `notulensi`, `file_notulensi`, `file_daftar_hadir`, `foto_kegiatan`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmtR5 = $db->prepare("INSERT INTO `ami_siklus5_rtm` (`periode`, `tingkat`, `fakultas`, `prodi`, `judul`, `notulensi`, `file_notulensi`, `file_daftar_hadir`, `file_undangan`, `foto_kegiatan`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $rtm5 = [
     [
@@ -216,9 +221,10 @@ $rtm5 = [
         '',
         '',
         'Rapat Tinjauan Manajemen (RTM) Pleno Tingkat Universitas',
-        "RTM Pleno Universitas dipimpin langsung oleh Rektor dan para Wakil Rektor didampingi Kepala LPM. Disampaikan rekapitulasi temuan audit mutu Siklus XIX, komitmen alokasi anggaran percepatan akreditasi internasional, dan pengesahan Rencana Tindak Lanjut (RTL) Universitas Tahun Akademik 2025/2026.",
+        '',
         'ami/siklus5/notulensi_rtm_univ_2025.pdf',
         'ami/siklus5/presensi_rtm_univ_2025.pdf',
+        'ami/siklus5/undangan_rtm_2025.pdf',
         json_encode(['ami/siklus5/foto_rtm_univ.webp'])
     ],
     [
@@ -227,9 +233,10 @@ $rtm5 = [
         'Fakultas Ilmu Komputer',
         '',
         'RTM Tingkat Fakultas Ilmu Komputer & Penetapan Action Plan',
-        "Pembahasan tindak lanjut hasil audit lapangan FIK mengenai modernisasi server laboratorium komputasi, percepatan jabatan fungsional Lektor Kepala dosen muda, serta peningkatan hibah penelitian kolaboratif industri.",
+        '',
         'ami/siklus5/notulensi_rtm_univ_2025.pdf',
         'ami/siklus5/presensi_rtm_univ_2025.pdf',
+        'ami/siklus5/undangan_rtm_2025.pdf',
         json_encode(['ami/siklus5/foto_rtm_fik.webp'])
     ],
     [
@@ -238,9 +245,10 @@ $rtm5 = [
         'Fakultas Ekonomi dan Bisnis',
         'S1 Akuntansi',
         'RTM Tingkat Program Studi S1 Akuntansi',
-        "Evaluasi masa studi mahasiswa, pembaruan silabus mata kuliah audit forensik dan big data analytics, serta pemantauan waktu tunggu lulusan pertama memperoleh pekerjaan sesuai bidang kompetensi.",
+        '',
         'ami/siklus5/notulensi_rtm_univ_2025.pdf',
         'ami/siklus5/presensi_rtm_univ_2025.pdf',
+        'ami/siklus5/undangan_rtm_2025.pdf',
         json_encode(['ami/siklus5/foto_rtm_akuntansi.webp'])
     ],
 ];

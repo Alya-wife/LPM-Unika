@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fakultas = trim($_POST['fakultas'] ?? '');
     $prodi = ($tingkat === 'prodi') ? trim($_POST['prodi'] ?? '') : null;
     $judul = trim($_POST['judul'] ?? '');
-    $narasi_berita_acara = trim($_POST['narasi_berita_acara'] ?? '');
+    $narasi_berita_acara = '';
 
     if ($periode === '' || $fakultas === '' || $judul === '') {
         $error = 'Periode, Fakultas, dan Judul Dokumentasi wajib diisi.';
@@ -80,7 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // 3. Foto-foto Dokumentasi Kegiatan (Multiple Upload)
+        // 3. File Undangan
+        $file_undangan = $data['file_undangan'] ?? null;
+        if (!$error && !empty($_FILES['file_undangan']['name'])) {
+            $ext = strtolower(pathinfo($_FILES['file_undangan']['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['pdf', 'doc', 'docx'])) {
+                $error = 'Format file Undangan harus PDF atau Word.';
+            } else {
+                $und_name = 'undangan_' . time() . '_' . uniqid() . '.' . $ext;
+                if (move_uploaded_file($_FILES['file_undangan']['tmp_name'], $upload_dir . $und_name)) {
+                    $file_undangan = 'ami/siklus4/' . $und_name;
+                }
+            }
+        }
+
+        // 4. Foto-foto Dokumentasi Kegiatan (Multiple Upload)
         $existing_photos = [];
         if (!empty($data['foto_kegiatan'])) {
             $decoded = json_decode($data['foto_kegiatan'], true);
@@ -111,23 +125,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($is_edit) {
                 $stmt = $db->prepare("
                     UPDATE ami_siklus4_dokumentasi 
-                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = ?, file_berita_acara = ?, file_daftar_hadir = ?, foto_kegiatan = ? 
+                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = '', file_berita_acara = ?, file_daftar_hadir = ?, file_undangan = ?, foto_kegiatan = ? 
                     WHERE id = ?
                 ");
                 $stmt->execute([
-                    $periode, $tingkat, $fakultas, $prodi, $judul, $narasi_berita_acara,
-                    $file_berita_acara, $file_daftar_hadir, $foto_kegiatan_json, $id
+                    $periode, $tingkat, $fakultas, $prodi, $judul,
+                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json, $id
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil diperbarui.';
             } else {
                 $stmt = $db->prepare("
                     INSERT INTO ami_siklus4_dokumentasi 
-                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, foto_kegiatan) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, file_undangan, foto_kegiatan) 
+                    VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?)
                 ");
                 $stmt->execute([
-                    $periode, $tingkat, $fakultas, $prodi, $judul, $narasi_berita_acara,
-                    $file_berita_acara, $file_daftar_hadir, $foto_kegiatan_json
+                    $periode, $tingkat, $fakultas, $prodi, $judul,
+                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil ditambahkan.';
             }
@@ -220,29 +234,24 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                     </div>
 
-                    <!-- 2. Judul & Narasi Berita Acara -->
+                    <!-- 2. Judul Kegiatan -->
                     <div class="col-12">
                         <label class="form-label fw-bold small">Judul Dokumentasi Audit Lapangan <span class="text-danger">*</span></label>
                         <input type="text" name="judul" class="form-control" placeholder="Contoh: Audit Lapangan Program Studi Sistem Informasi Semester Gasal 2025/2026" value="<?= e($data['judul'] ?? ($_POST['judul'] ?? '')) ?>" required>
                     </div>
 
-                    <div class="col-12">
-                        <label class="form-label fw-bold small">Narasi Ringkasan / Berita Acara Audit</label>
-                        <textarea name="narasi_berita_acara" rows="5" class="form-control" placeholder="Tuliskan narasi berita acara pelaksanaan audit lapangan, temuan ringkas, auditor yang bertugas, dan kesepakatan tindak lanjut..."><?= e($data['narasi_berita_acara'] ?? ($_POST['narasi_berita_acara'] ?? '')) ?></textarea>
-                    </div>
-
-                    <!-- 3. Softfile Dokumen (Berita Acara & Daftar Hadir) -->
-                    <div class="col-md-6">
+                    <!-- 3. Berkas Dokumen (Berita Acara, Daftar Hadir, Undangan) -->
+                    <div class="col-md-4">
                         <div class="p-3 border rounded h-100 bg-white">
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
-                                <span><i class="bi bi-file-earmark-check text-primary me-1"></i> File Berita Acara (Softfile)</span>
+                                <span><i class="bi bi-file-earmark-check text-primary me-1"></i> Berita Acara</span>
                             </label>
                             <input type="file" name="file_berita_acara" class="form-control" accept=".pdf,.doc,.docx">
-                            <div class="form-text">Format PDF / DOC / DOCX (Maks. 20MB)</div>
+                            <div class="form-text">PDF / DOC / DOCX</div>
 
                             <?php if (!empty($data['file_berita_acara'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
-                                <span class="small text-truncate" style="max-width:200px;"><?= basename($data['file_berita_acara']) ?></span>
+                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_berita_acara']) ?></span>
                                 <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_berita_acara']) ?>" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;">
                                     Lihat File
                                 </a>
@@ -251,18 +260,37 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="p-3 border rounded h-100 bg-white">
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
-                                <span><i class="bi bi-card-checklist text-success me-1"></i> File Daftar Hadir (Presensi)</span>
+                                <span><i class="bi bi-card-checklist text-success me-1"></i> Daftar Hadir</span>
                             </label>
                             <input type="file" name="file_daftar_hadir" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                            <div class="form-text">Format PDF / Word / Excel (Maks. 20MB)</div>
+                            <div class="form-text">PDF / Word / Excel</div>
 
                             <?php if (!empty($data['file_daftar_hadir'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
-                                <span class="small text-truncate" style="max-width:200px;"><?= basename($data['file_daftar_hadir']) ?></span>
+                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_daftar_hadir']) ?></span>
                                 <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_daftar_hadir']) ?>" target="_blank" class="btn btn-xs btn-outline-success py-0 px-2" style="font-size:0.75rem;">
+                                    Lihat File
+                                </a>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded h-100 bg-white">
+                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
+                                <span><i class="bi bi-envelope-paper text-warning me-1"></i> Undangan</span>
+                            </label>
+                            <input type="file" name="file_undangan" class="form-control" accept=".pdf,.doc,.docx">
+                            <div class="form-text">PDF / DOC / DOCX</div>
+
+                            <?php if (!empty($data['file_undangan'])): ?>
+                            <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
+                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_undangan']) ?></span>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_undangan']) ?>" target="_blank" class="btn btn-xs btn-outline-warning py-0 px-2" style="font-size:0.75rem;">
                                     Lihat File
                                 </a>
                             </div>

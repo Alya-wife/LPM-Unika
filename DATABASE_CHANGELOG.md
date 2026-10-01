@@ -385,6 +385,19 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
 - **Validasi dan Perbaikan Kolom `kategori_berita`**:
   - Penambahan skrip otomatis untuk merapikan nama kolom (`nama_kategori`) dan menyisipkan kolom `updated_at` jika belum tersedia, mencegah kendala kompatibilitas skema antar lingkungan kolaborator.
 
+### O. Pembersihan Data Dummy Modul Layanan (Layanan, Kunjungan & Survei Kepuasan)
+- **Pengosongan Data Transaksional Uji Coba**:
+  - Seluruh data uji coba/dummy pada formulir publik dan tabel operasional admin layanan telah dibersihkan secara tuntas:
+    1. **`permohonan_kunjungan`**: Mengosongkan data permohonan kunjungan uji coba (`sample_surat_kunjungan.pdf`) dan me-reset indeks `AUTO_INCREMENT = 1`.
+    2. **`feedback`**: Mengosongkan pesan kritik & saran konsultasi uji coba dan me-reset indeks `AUTO_INCREMENT = 1`.
+    3. **`kunjungan_feedback_respon` & `kunjungan_feedback_jawaban`**: Mengosongkan seluruh respon survei kepuasan dan skor evaluasi uji coba.
+    4. **`kunjungan_feedback_token`**: Mengosongkan riwayat kode token akses survei uji coba.
+    5. **`layanan_brosur`**: Mengosongkan data brosur contoh (`brosur_contoh_pelatihan_lpm_2026.pdf`) sehingga halaman publik [`pelatihan.php`](./pelatihan.php) menampilkan status resmi yang bersih (*"Brosur Pelatihan Segera Dirilis"*).
+- **Pemeliharaan Data Standar & Master**:
+  - Struktur master instrumen pertanyaan IKM ([`kunjungan_kuesioner_pertanyaan`](./admin/feedback-kunjungan-pertanyaan.php)) sebanyak 8 butir dan daftar unit kerja tujuan ([`kunjungan_tujuan_unit`](./admin/kunjungan-unit.php)) sebanyak 12 unit tetap dipertahankan utuh untuk fungsi operasional sistem.
+- **Pembaruan Berkas Dump Basis Data**:
+  - Berkas dump utama [`lpm_scu.sql`](./lpm_scu.sql) telah di-regenerate bersih tanpa data dummy transaksional layanan.
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain

@@ -338,16 +338,16 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <span>• Kelola Menu &amp; Konten Layanan</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/kunjungan-list.php" class="admin-subnav-link <?= $current_admin === 'kunjungan-list' ? 'active' : '' ?>">
-                    <span>• Permohonan Kunjungan</span>
+                    <span>• Kunjungan Studi Banding</span>
                     <?php if ($unread_kunjungan > 0): ?>
                         <span class="badge bg-warning text-dark" style="font-size:0.65rem;"><?= $unread_kunjungan ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-list.php" class="admin-subnav-link <?= in_array($current_admin, ['feedback-kunjungan-list', 'feedback-kunjungan-detail']) ? 'active' : '' ?>">
-                    <span>• Feedback Kunjungan</span>
+                    <span>• Survei Kepuasan Layanan LPM</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/feedback-list.php" class="admin-subnav-link <?= $current_admin === 'feedback-list' ? 'active' : '' ?>">
-                    <span>• Kritik &amp; Saran Civitas</span>
+                    <span>• Kotak Masuk Saran Civitas</span>
                     <?php if ($unread_feedback > 0): ?>
                         <span class="badge bg-danger" style="font-size:0.65rem;"><?= $unread_feedback ?></span>
                     <?php endif; ?>
@@ -356,7 +356,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <span>• Pengaturan Tujuan Unit</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-pertanyaan.php" class="admin-subnav-link <?= $current_admin === 'feedback-kunjungan-pertanyaan' ? 'active' : '' ?>">
-                    <span>• Kelola Kuesioner</span>
+                    <span>• Kelola Butir Kuesioner</span>
                 </a>
             </div>
         </div>

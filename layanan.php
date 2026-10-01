@@ -14,15 +14,15 @@ $req_tab = trim($_GET['tab'] ?? '');
 
 // Redirect to dedicated sub-menu pages if requested
 if (in_array($req_tab, ['pelatihan', 'biaya', 'jadwal', 'brosur'])) {
-    redirect(SITE_URL . '/pelatihan-eksternal.php' . ($req_tab !== 'pelatihan' ? '#' . $req_tab : ''));
-} elseif (in_array($req_tab, ['token', 'feedback-kunjungan'])) {
-    redirect(SITE_URL . '/feedback-kunjungan.php');
+    redirect(SITE_URL . '/pelatihan.php' . ($req_tab !== 'pelatihan' ? '#' . $req_tab : ''));
+} elseif (in_array($req_tab, ['token', 'feedback-kunjungan', 'feedback', 'kritik-saran']) || empty($req_tab)) {
+    redirect(SITE_URL . '/survei-kepuasan.php');
 } elseif ($req_tab === 'kunjungan') {
     $active_tab = 'kunjungan';
-    $page_title = 'Pelayanan Permohonan Kunjungan & Studi Banding';
+    $page_title = 'Kunjungan Studi Banding';
     $meta_desc  = 'Formulir Pengajuan Permohonan Kunjungan Resmi dan Studi Banding ke Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata.';
 } else {
-    $active_tab = 'feedback';
+    redirect(SITE_URL . '/survei-kepuasan.php');
 }
 
 // Load operating hours & active visit units

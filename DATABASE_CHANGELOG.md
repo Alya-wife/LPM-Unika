@@ -54,6 +54,27 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
 5. `ami_siklus4_dokumentasi` (Galeri dokumentasi pelaksanaan audit mutu lapangan).
 6. `ami_siklus5_rtm` (Notulensi, presensi, dan hasil Rapat Tinjauan Manajemen).
 
+### E. Tabel Survei Kepuasan Layanan LPM (`kunjungan_feedback_respon` & `kunjungan_kuesioner_pertanyaan`)
+- **Penyesuaian Kolom `kunjungan_feedback_respon`**:
+  - Kolom `token_id`, `nama_institusi`, dan `tanggal_kunjungan` diubah menjadi `NULLABLE` sehingga formulir terbuka langsung untuk umum (sivitas akademika & masyarakat) tanpa wajib menggunakan kode token.
+  - Kolom baru untuk menangkap profil demografi responden:
+    - `jenis_kelamin VARCHAR(20) NULL` (Laki-laki / Perempuan).
+    - `umur VARCHAR(20) NULL` (Angka umur responden).
+    - `pendidikan_terakhir VARCHAR(50) NULL` (Diploma 1-3, S1, S2, S3).
+    - `kategori_layanan VARCHAR(100) DEFAULT 'Pelayanan LPM'` ('Kunjungan Studi Banding' atau 'Pelayanan LPM').
+    - `status_responden VARCHAR(100) NULL` (Dosen, Tendik, Mahasiswa, Alumni, Mitra, Masyarakat Umum).
+    - `saran_masukan TEXT NULL` (Kotak isian masukan & kritik kualitatif).
+- **Standarisasi 8 Butir Pertanyaan Kuesioner**:
+  Tabel `kunjungan_kuesioner_pertanyaan` diperbarui langsung menjadi 8 butir standar kuesioner berskala likert 1–5 dengan ikon emotikon:
+  1. *Kesesuaian persyaratan pelayanan dengan jenis pelayanannya*
+  2. *Kemudahan prosedur pelayanan*
+  3. *Kecepatan waktu pelayanan*
+  4. *Kesesuaian produk layanan dengan hasil yang diberikan*
+  5. *Kompetensi atau kemampuan petugas dalam memberikan pelayanan*
+  6. *Perilaku atau sikap petugas dalam pelayanan terkait keramahan*
+  7. *Kualitas sarana dan prasarana*
+  8. *Penanganan pengaduan, saran dan masukan*
+
 ---
 
 ## 2. Pemulihan & Sinkronisasi Data Konten

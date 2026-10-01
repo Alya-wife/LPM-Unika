@@ -1,13 +1,11 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-$db = getDB();
 
-$page_title = 'Umpan Balik Kunjungan Mitra Institusi';
-$meta_desc = 'Formulir kuesioner umpan balik dan evaluasi kepuasan kunjungan institusi ke Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata.';
+// Dialihkan ke Survei Kepuasan Layanan LPM baru (menggabungkan feedback kunjungan dan kritik & saran)
+$token_param = isset($_GET['token']) ? '?token=' . urlencode($_GET['token']) : '';
+redirect(SITE_URL . '/survei-kepuasan.php' . $token_param);
+exit;
 
-// Handle Token Check & Session
-$submitted    = isset($_GET['submitted']) && $_GET['submitted'] === '1';
-$token_code   = strtoupper(trim($_GET['token'] ?? ($_POST['token'] ?? '')));
 $token_data   = null;
 $token_error  = '';
 $already_used = false;

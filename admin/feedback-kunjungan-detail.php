@@ -157,6 +157,27 @@ foreach ($teks_answers_all as $t_ans) {
     $teks_grouped[$q_id]['items'][] = $t_ans;
 }
 
+// Collect saran_masukan directly from respondents if available
+$saran_masukan_list = [];
+foreach ($responden_list as $resp_item) {
+    if (!empty(trim($resp_item['saran_masukan'] ?? ''))) {
+        $saran_masukan_list[] = [
+            'nama_pengisi'     => $resp_item['nama_pengisi'],
+            'jabatan_pengisi'  => $resp_item['status_responden'] ?? $resp_item['jabatan_pengisi'] ?? '-',
+            'status_responden' => $resp_item['status_responden'] ?? '-',
+            'jawaban_teks'     => $resp_item['saran_masukan'],
+            'created_at'       => $resp_item['created_at']
+        ];
+    }
+}
+if (!empty($saran_masukan_list)) {
+    $teks_grouped['saran_masukan'] = [
+        'pertanyaan' => 'Saran dan masukan untuk peningkatan kualitas layanan LPM',
+        'kategori'   => 'Saran & Masukan',
+        'items'      => $saran_masukan_list
+    ];
+}
+
 // Chart.js Data Preparation
 $chart_labels        = [];
 $chart_scores        = [];
@@ -685,8 +706,10 @@ foreach ($skala_questions as $idx => $sq):
             <thead style="background:#F8FAFC;">
                 <tr>
                     <th style="width:50px;text-align:center;">No</th>
-                    <th>Nama Lengkap &amp; Gelar</th>
-                    <th>Jabatan Pengisi</th>
+                    <th>Nama Lengkap</th>
+                    <th>Status / Jabatan</th>
+                    <th>Demografi</th>
+                    <th>Kategori Layanan</th>
                     <th>Email</th>
                     <th style="text-align:center;width:130px;">Rata-Rata Skor</th>
                     <th>Waktu Pengisian</th>
@@ -703,7 +726,23 @@ foreach ($skala_questions as $idx => $sq):
                     </td>
                     <td>
                         <span style="font-size:0.82rem;color:#334155;font-weight:600;">
-                            <?= !empty($r['jabatan_pengisi']) ? e($r['jabatan_pengisi']) : '-' ?>
+                            <?= !empty($r['status_responden']) ? e($r['status_responden']) : (!empty($r['jabatan_pengisi']) ? e($r['jabatan_pengisi']) : '-') ?>
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size:0.78rem;color:#475569;">
+                            <?php 
+                            $demo = [];
+                            if (!empty($r['jenis_kelamin'])) $demo[] = e($r['jenis_kelamin']);
+                            if (!empty($r['umur'])) $demo[] = e($r['umur']) . ' thn';
+                            if (!empty($r['pendidikan_terakhir'])) $demo[] = e($r['pendidikan_terakhir']);
+                            echo !empty($demo) ? implode(' &bull; ', $demo) : '-';
+                            ?>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;font-size:0.75rem;">
+                            <?= e($r['kategori_layanan'] ?? 'Pelayanan LPM') ?>
                         </span>
                     </td>
                     <td>

@@ -245,7 +245,7 @@ try {
 
                 <!-- 8. Layanan & Feedback (Whimsical Dropdown CTA) -->
                 <li class="nav-item dropdown nav-hover-dropdown">
-                    <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'survei-kepuasan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14" style="margin-right:4px;vertical-align:-1px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                         </svg>
@@ -256,40 +256,31 @@ try {
                             <i class="bi bi-briefcase-fill"></i> Layanan &amp; Kemitraan Mutu
                         </div>
                         <div class="whimsical-grid" style="grid-template-columns: 1fr;">
-                            <!-- Sub Menu 1: Pelatihan Eksternal -->
-                            <a href="<?= SITE_URL ?>/pelatihan-eksternal.php" class="whimsical-item <?= in_array($current_page, ['pelatihan-eksternal', 'pelatihan']) ? 'active' : '' ?>">
+                            <!-- Sub Menu 1: Info Pelatihan -->
+                            <a href="<?= SITE_URL ?>/pelatihan.php" class="whimsical-item <?= in_array($current_page, ['pelatihan-eksternal', 'pelatihan']) ? 'active' : '' ?>">
                                 <div class="whimsical-icon-wrap" style="background:rgba(124,58,237,0.12);color:#7C3AED;">
                                     <i class="bi bi-mortarboard-fill"></i>
                                 </div>
                                 <div class="whimsical-item-body">
-                                    <div class="whimsical-item-title">Pelatihan Eksternal</div>
+                                    <div class="whimsical-item-title">Info Pelatihan</div>
                                 </div>
                             </a>
-                            <!-- Sub Menu 2: Permohonan Kunjungan -->
+                            <!-- Sub Menu 2: Kunjungan Studi Banding -->
                             <a href="<?= SITE_URL ?>/kunjungan.php" class="whimsical-item <?= in_array($current_page, ['kunjungan']) ? 'active' : '' ?>">
-                                <div class="whimsical-icon-wrap" style="background:rgba(124,58,237,0.12);color:#7C3AED;">
+                                <div class="whimsical-icon-wrap" style="background:rgba(2,132,199,0.12);color:#0284C7;">
                                     <i class="bi bi-building-fill-check"></i>
                                 </div>
                                 <div class="whimsical-item-body">
-                                    <div class="whimsical-item-title">Permohonan Kunjungan</div>
+                                    <div class="whimsical-item-title">Kunjungan Studi Banding</div>
                                 </div>
                             </a>
-                            <!-- Sub Menu 3: Kritik & Saran -->
-                            <a href="<?= SITE_URL ?>/layanan.php" class="whimsical-item <?= in_array($current_page, ['layanan', 'kritik-saran']) ? 'active' : '' ?>">
-                                <div class="whimsical-icon-wrap" style="background:rgba(2,132,199,0.12);color:#0284C7;">
-                                    <i class="bi bi-chat-left-heart-fill"></i>
+                            <!-- Sub Menu 3: Survey Kepuasan Layanan LPM -->
+                            <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="whimsical-item <?= in_array($current_page, ['survei-kepuasan', 'feedback-kunjungan', 'kritik-saran', 'layanan']) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(16,185,129,0.12);color:#059669;">
+                                    <i class="bi bi-emoji-smile-fill"></i>
                                 </div>
                                 <div class="whimsical-item-body">
-                                    <div class="whimsical-item-title">Kritik &amp; Saran</div>
-                                </div>
-                            </a>
-                            <!-- Sub Menu 4: Feedback Kunjungan -->
-                            <a href="<?= SITE_URL ?>/feedback-kunjungan.php" class="whimsical-item <?= $current_page === 'feedback-kunjungan' ? 'active' : '' ?>">
-                                <div class="whimsical-icon-wrap" style="background:rgba(245,158,11,0.12);color:#D97706;">
-                                    <i class="bi bi-shield-lock-fill"></i>
-                                </div>
-                                <div class="whimsical-item-body">
-                                    <div class="whimsical-item-title">Feedback Kunjungan</div>
+                                    <div class="whimsical-item-title">Survey Kepuasan Layanan LPM</div>
                                 </div>
                             </a>
                         </div>

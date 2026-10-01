@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Feedback Kunjungan Mitra';
+$admin_page_title = 'Rekapitulasi Survei Kepuasan Layanan LPM';
 $db = getDB();
 
 $tab = $_GET['tab'] ?? 'respon';
@@ -156,6 +156,16 @@ if (
     redirect(SITE_URL . '/admin/feedback-kunjungan-list.php?tab=token&filter=' . urlencode($ret_filter));
 }
 
+// 6. Handle Delete Individual Response
+if ((isset($_GET['action']) && $_GET['action'] === 'delete_respon' && isset($_GET['id']) && is_numeric($_GET['id'])) ||
+    ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_respon' && isset($_POST['id']) && is_numeric($_POST['id']))) {
+    $del_resp_id = (int)($_POST['id'] ?? $_GET['id']);
+    $db->prepare("DELETE FROM kunjungan_feedback_jawaban WHERE respon_id = ?")->execute([$del_resp_id]);
+    $db->prepare("DELETE FROM kunjungan_feedback_respon WHERE id = ?")->execute([$del_resp_id]);
+    $_SESSION['flash'] = 'Data respon survei kepuasan berhasil dihapus.';
+    redirect(SITE_URL . '/admin/feedback-kunjungan-list.php?tab=respon');
+}
+
 // Statistics
 $total_respon    = 0;
 $total_token     = 0;
@@ -180,10 +190,21 @@ try {
     // Fail-safe default stats
 }
 
-// Fetch Data for Tab: Respon (Dikelompokkan per Instansi Kunjungan)
+// Fetch Data for Tab: Respon (Dikelompokkan per Instansi Kunjungan & Respon Individu)
 $respon_instansi_list = [];
+$respon_individu_list = [];
+$kategori_filter = trim($_GET['kategori'] ?? 'all');
+$view_mode       = trim($_GET['view'] ?? 'individu');
+
 if ($tab === 'respon') {
-    $respon_instansi_list = $db->query("SELECT 
+    // 1. Grouped by Instansi
+    $where_inst = "";
+    $params_inst = [];
+    if ($kategori_filter !== 'all') {
+        $where_inst = " WHERE r.kategori_layanan = ? ";
+        $params_inst[] = $kategori_filter;
+    }
+    $stmt_inst = $db->prepare("SELECT 
         COALESCE(r.token_id, 0) as token_id,
         MIN(r.id) as first_respon_id,
         r.nama_institusi,
@@ -196,8 +217,26 @@ if ($tab === 'respon') {
         MAX(r.created_at) as last_submitted_at
     FROM kunjungan_feedback_respon r 
     LEFT JOIN kunjungan_feedback_token t ON r.token_id = t.id 
+    $where_inst
     GROUP BY COALESCE(r.token_id, 0), r.nama_institusi, r.tanggal_kunjungan, t.token, t.perihal 
-    ORDER BY last_submitted_at DESC")->fetchAll();
+    ORDER BY last_submitted_at DESC");
+    $stmt_inst->execute($params_inst);
+    $respon_instansi_list = $stmt_inst->fetchAll();
+
+    // 2. Individual Respondents
+    $where_ind = "";
+    $params_ind = [];
+    if ($kategori_filter !== 'all') {
+        $where_ind = " WHERE r.kategori_layanan = ? ";
+        $params_ind[] = $kategori_filter;
+    }
+    $stmt_ind = $db->prepare("SELECT r.*, t.token, t.perihal 
+        FROM kunjungan_feedback_respon r 
+        LEFT JOIN kunjungan_feedback_token t ON r.token_id = t.id 
+        $where_ind 
+        ORDER BY r.created_at DESC");
+    $stmt_ind->execute($params_ind);
+    $respon_individu_list = $stmt_ind->fetchAll();
 }
 
 // Helper Functions for Quality/Academic Period (1 September – 1 Agustus)
@@ -571,102 +610,247 @@ require_once __DIR__ . '/includes/admin-header.php';
     </li>
 </ul>
 
-<!-- TAB CONTENT 1: Rekapitulasi Respon (Dikelompokkan per Instansi) -->
+<!-- TAB CONTENT 1: Rekapitulasi Respon -->
 <?php if ($tab === 'respon'): ?>
 <div class="admin-table-wrap p-0">
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <h5 style="font-weight:700;color:var(--navy);font-size:1rem;margin:0;">
-                Daftar Respon Umpan Balik Kunjungan (Dikelompokkan per Instansi)
+                <i class="bi bi-ui-checks-grid text-primary me-2"></i> Rekapitulasi Respon Survei Kepuasan Layanan LPM
             </h5>
             <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">
-                Tiap baris merepresentasikan 1 kunjungan instansi tamu. Klik <strong>Rincian</strong> untuk melihat seluruh anggota delegasi, rata-rata tiap butir pertanyaan, dan masukan kualitatif.
+                Memuat data seluruh responden yang telah mengisi survei kepuasan, baik layanan rutin LPM maupun kunjungan studi banding.
             </div>
         </div>
-        <span class="badge bg-light text-dark border px-3 py-2" style="font-size:0.8rem;font-weight:700;">
-            <i class="bi bi-people-fill text-primary me-1"></i> Total <?= $total_respon ?> Responden dari <?= count($respon_instansi_list) ?> Kunjungan
-        </span>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- View Mode Switcher -->
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="feedback-kunjungan-list.php?tab=respon&kategori=<?= urlencode($kategori_filter) ?>&view=individu" 
+                   class="btn <?= $view_mode === 'individu' ? 'btn-primary fw-bold' : 'btn-outline-secondary' ?>">
+                    <i class="bi bi-person-lines-fill me-1"></i> Respon Individu (<?= count($respon_individu_list) ?>)
+                </a>
+                <a href="feedback-kunjungan-list.php?tab=respon&kategori=<?= urlencode($kategori_filter) ?>&view=instansi" 
+                   class="btn <?= $view_mode === 'instansi' ? 'btn-primary fw-bold' : 'btn-outline-secondary' ?>">
+                    <i class="bi bi-buildings me-1"></i> Per Instansi (<?= count($respon_instansi_list) ?>)
+                </a>
+            </div>
+        </div>
     </div>
 
-    <?php if (empty($respon_instansi_list)): ?>
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-clipboard2-x" style="font-size:2.5rem;color:#CBD5E1;display:block;margin-bottom:0.75rem;"></i>
-        <div style="font-weight:700;">Belum Ada Respon Kuesioner Masuk</div>
-        <div style="font-size:0.82rem;margin-top:4px;">Kode token yang dibuat dapat dibagikan kepada instansi yang telah menyelesaikan kunjungan.</div>
+    <!-- Category Filters -->
+    <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span style="font-size:0.82rem;font-weight:700;color:var(--navy);">Filter Kategori:</span>
+            <a href="feedback-kunjungan-list.php?tab=respon&view=<?= $view_mode ?>&kategori=all" 
+               class="btn btn-sm <?= $kategori_filter === 'all' ? 'btn-dark fw-bold' : 'btn-outline-secondary' ?>" 
+               style="font-size:0.78rem;border-radius:20px;padding:0.25rem 0.75rem;">
+                Semua Kategori (<?= $total_respon ?>)
+            </a>
+            <a href="feedback-kunjungan-list.php?tab=respon&view=<?= $view_mode ?>&kategori=<?= urlencode('Kunjungan Studi Banding') ?>" 
+               class="btn btn-sm <?= $kategori_filter === 'Kunjungan Studi Banding' ? 'btn-primary fw-bold' : 'btn-outline-secondary' ?>" 
+               style="font-size:0.78rem;border-radius:20px;padding:0.25rem 0.75rem;">
+                <i class="bi bi-building-check me-1"></i> Kunjungan Studi Banding
+            </a>
+            <a href="feedback-kunjungan-list.php?tab=respon&view=<?= $view_mode ?>&kategori=<?= urlencode('Pelayanan LPM') ?>" 
+               class="btn btn-sm <?= $kategori_filter === 'Pelayanan LPM' ? 'btn-success fw-bold' : 'btn-outline-secondary' ?>" 
+               style="font-size:0.78rem;border-radius:20px;padding:0.25rem 0.75rem;">
+                <i class="bi bi-award me-1"></i> Pelayanan LPM
+            </a>
+        </div>
+        <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem;border-radius:20px;">
+            <i class="bi bi-printer me-1"></i> Cetak Rekapitulasi
+        </button>
     </div>
-    <?php else: ?>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
-            <thead style="background:#F8FAFC;">
-                <tr>
-                    <th style="width:50px;text-align:center;">No</th>
-                    <th>Institusi Tamu</th>
-                    <th>Tanggal Kunjungan &amp; Agenda</th>
-                    <th style="text-align:center;">Jumlah Responden</th>
-                    <th style="text-align:center;">Rata-rata Skor (CSAT)</th>
-                    <th>Waktu Pengisian Terakhir</th>
-                    <th style="text-align:center;width:130px;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($respon_instansi_list as $idx => $r): 
-                    $detail_url = $r['token_id'] > 0 
-                        ? 'feedback-kunjungan-detail.php?token_id=' . $r['token_id'] 
-                        : 'feedback-kunjungan-detail.php?id=' . $r['first_respon_id'];
-                    $avg_inst = $r['avg_skor_instansi'] ? round((float)$r['avg_skor_instansi'], 2) : 0;
-                ?>
-                <tr>
-                    <td style="text-align:center;color:var(--text-muted);font-weight:600;"><?= $idx + 1 ?></td>
-                    <td>
-                        <div style="font-weight:700;color:var(--navy);font-size:0.95rem;"><?= e($r['nama_institusi']) ?></div>
-                        <?php if (!empty($r['token'])): ?>
-                        <div class="mt-1">
-                            <span class="badge" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#0F172A;font-family:monospace;font-size:0.75rem;padding:0.2rem 0.45rem;">
-                                <i class="bi bi-ticket-perforated me-1"></i><?= e($r['token']) ?>
+
+    <?php if ($view_mode === 'individu'): ?>
+        <!-- TABEL INDIVIDU -->
+        <?php if (empty($respon_individu_list)): ?>
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard2-x" style="font-size:2.5rem;color:#CBD5E1;display:block;margin-bottom:0.75rem;"></i>
+            <div style="font-weight:700;">Belum Ada Respon Survei Kepuasan Masuk</div>
+            <div style="font-size:0.82rem;margin-top:4px;">Respon yang diisi melalui formulir publik akan tampil di sini.</div>
+        </div>
+        <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size:0.85rem;">
+                <thead style="background:#F8FAFC;">
+                    <tr>
+                        <th style="width:40px;text-align:center;">No</th>
+                        <th>Responden</th>
+                        <th>Kategori Layanan</th>
+                        <th>Status Responden</th>
+                        <th>Instansi / Lembaga</th>
+                        <th>Demografi</th>
+                        <th style="text-align:center;">CSAT</th>
+                        <th>Saran &amp; Masukan</th>
+                        <th>Waktu Pengisian</th>
+                        <th style="text-align:center;width:110px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($respon_individu_list as $idx => $r): 
+                        $detail_url = 'feedback-kunjungan-detail.php?id=' . $r['id'] . (!empty($r['token_id']) ? '&token_id=' . $r['token_id'] : '');
+                        $skor = $r['rata_rata_skor'] ? round((float)$r['rata_rata_skor'], 2) : 0;
+                    ?>
+                    <tr>
+                        <td style="text-align:center;color:var(--text-muted);font-weight:600;"><?= $idx + 1 ?></td>
+                        <td>
+                            <div style="font-weight:700;color:var(--navy);"><?= e($r['nama_pengisi'] ?: 'Anonim') ?></div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;"><?= e($r['email_pengisi'] ?: '-') ?></div>
+                        </td>
+                        <td>
+                            <?php if (($r['kategori_layanan'] ?? '') === 'Kunjungan Studi Banding'): ?>
+                                <span class="badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:0.73rem;">
+                                    <i class="bi bi-building-check me-1"></i> Studi Banding
+                                </span>
+                            <?php else: ?>
+                                <span class="badge" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;font-size:0.73rem;">
+                                    <i class="bi bi-award me-1"></i> Pelayanan LPM
+                                </span>
+                            <?php endif; ?>
+                            <?php if (!empty($r['token'])): ?>
+                                <div class="mt-1" style="font-family:monospace;font-size:0.7rem;color:#64748B;">
+                                    <i class="bi bi-ticket-perforated"></i> <?= e($r['token']) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <span style="font-size:0.8rem;color:#334155;font-weight:600;">
+                                <?= e($r['status_responden'] ?: ($r['jabatan_pengisi'] ?: '-')) ?>
                             </span>
-                        </div>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <div class="fw-semibold text-dark">
-                            <i class="bi bi-calendar-event me-1 text-muted"></i><?= formatTanggal($r['tanggal_kunjungan']) ?>
-                        </div>
-                        <?php if (!empty($r['perihal'])): ?>
-                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
-                            <?= e(truncate($r['perihal'], 55)) ?>
-                        </div>
-                        <?php endif; ?>
-                    </td>
-                    <td style="text-align:center;">
-                        <span class="badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:0.85rem;padding:0.4rem 0.75rem;font-weight:800;border-radius:20px;">
-                            <i class="bi bi-people-fill me-1"></i> <?= $r['total_responden'] ?> Orang
-                        </span>
-                    </td>
-                    <td style="text-align:center;">
-                        <?php if ($avg_inst > 0): ?>
-                        <span class="badge" style="background:#E0F2FE;color:#0284C7;font-size:0.9rem;padding:0.4rem 0.7rem;font-weight:800;border:1px solid #BAE6FD;">
-                            ⭐ <?= number_format($avg_inst, 2) ?>
-                        </span>
-                        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">
-                            <?= $avg_inst >= 4.5 ? 'Sangat Memuaskan' : ($avg_inst >= 3.5 ? 'Memuaskan' : 'Cukup') ?>
-                        </div>
-                        <?php else: ?>
-                        <span class="text-muted">-</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="font-size:0.8rem;color:var(--text-muted);">
-                        <?= date('d/m/Y H:i', strtotime($r['last_submitted_at'])) ?> WIB
-                    </td>
-                    <td style="text-align:center;">
-                        <a href="<?= $detail_url ?>" class="btn-action btn-edit" style="text-decoration:none;" title="Lihat Rekapitulasi Rincian Instansi">
-                            <i class="bi bi-eye"></i> Rincian
-                        </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                        </td>
+                        <td>
+                            <div style="font-weight:600;color:var(--navy);"><?= e($r['nama_institusi'] ?: '-') ?></div>
+                        </td>
+                        <td>
+                            <div style="font-size:0.76rem;color:#64748B;">
+                                <?php
+                                $d_info = [];
+                                if (!empty($r['jenis_kelamin'])) $d_info[] = e($r['jenis_kelamin']);
+                                if (!empty($r['umur'])) $d_info[] = e($r['umur']) . ' thn';
+                                if (!empty($r['pendidikan_terakhir'])) $d_info[] = e($r['pendidikan_terakhir']);
+                                echo !empty($d_info) ? implode(' &bull; ', $d_info) : '-';
+                                ?>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <?php if ($skor > 0): ?>
+                            <span class="badge" style="background:#E0F2FE;color:#0284C7;font-size:0.85rem;padding:0.35rem 0.6rem;font-weight:800;border:1px solid #BAE6FD;">
+                                ⭐ <?= number_format($skor, 2) ?>
+                            </span>
+                            <?php else: ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($r['saran_masukan'])): ?>
+                                <div style="font-size:0.78rem;color:#334155;line-height:1.4;max-width:220px;" title="<?= e($r['saran_masukan']) ?>">
+                                    &ldquo;<?= e(truncate($r['saran_masukan'], 50)) ?>&rdquo;
+                                </div>
+                            <?php else: ?>
+                                <span class="text-muted fst-italic" style="font-size:0.75rem;">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size:0.78rem;color:var(--text-muted);white-space:nowrap;">
+                            <?= date('d/m/Y H:i', strtotime($r['created_at'])) ?> WIB
+                        </td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <a href="<?= $detail_url ?>" class="btn-action btn-edit me-1" style="text-decoration:none;" title="Lihat Rincian Jawaban">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="feedback-kunjungan-list.php?action=delete_respon&id=<?= $r['id'] ?>" class="btn-action btn-delete" style="text-decoration:none;" onclick="return confirm('Hapus respon survei ini? Data jawaban terkait juga akan dihapus.');" title="Hapus Respon">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+
+    <?php else: ?>
+        <!-- TABEL GRUP INSTANSI -->
+        <?php if (empty($respon_instansi_list)): ?>
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard2-x" style="font-size:2.5rem;color:#CBD5E1;display:block;margin-bottom:0.75rem;"></i>
+            <div style="font-weight:700;">Belum Ada Respon Kunjungan Masuk</div>
+            <div style="font-size:0.82rem;margin-top:4px;">Kode token yang dibuat dapat dibagikan kepada instansi yang telah menyelesaikan kunjungan.</div>
+        </div>
+        <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+                <thead style="background:#F8FAFC;">
+                    <tr>
+                        <th style="width:50px;text-align:center;">No</th>
+                        <th>Institusi Tamu</th>
+                        <th>Tanggal Kunjungan &amp; Agenda</th>
+                        <th style="text-align:center;">Jumlah Responden</th>
+                        <th style="text-align:center;">Rata-rata Skor (CSAT)</th>
+                        <th>Waktu Pengisian Terakhir</th>
+                        <th style="text-align:center;width:130px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($respon_instansi_list as $idx => $r): 
+                        $detail_url = $r['token_id'] > 0 
+                            ? 'feedback-kunjungan-detail.php?token_id=' . $r['token_id'] 
+                            : 'feedback-kunjungan-detail.php?id=' . $r['first_respon_id'];
+                        $avg_inst = $r['avg_skor_instansi'] ? round((float)$r['avg_skor_instansi'], 2) : 0;
+                    ?>
+                    <tr>
+                        <td style="text-align:center;color:var(--text-muted);font-weight:600;"><?= $idx + 1 ?></td>
+                        <td>
+                            <div style="font-weight:700;color:var(--navy);font-size:0.95rem;"><?= e($r['nama_institusi'] ?: 'Lembaga / Umum') ?></div>
+                            <?php if (!empty($r['token'])): ?>
+                            <div class="mt-1">
+                                <span class="badge" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#0F172A;font-family:monospace;font-size:0.75rem;padding:0.2rem 0.45rem;">
+                                    <i class="bi bi-ticket-perforated me-1"></i><?= e($r['token']) ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">
+                                <i class="bi bi-calendar-event me-1 text-muted"></i><?= formatTanggal($r['tanggal_kunjungan']) ?>
+                            </div>
+                            <?php if (!empty($r['perihal'])): ?>
+                            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
+                                <?= e(truncate($r['perihal'], 55)) ?>
+                            </div>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:0.85rem;padding:0.4rem 0.75rem;font-weight:800;border-radius:20px;">
+                                <i class="bi bi-people-fill me-1"></i> <?= $r['total_responden'] ?> Orang
+                            </span>
+                        </td>
+                        <td style="text-align:center;">
+                            <?php if ($avg_inst > 0): ?>
+                            <span class="badge" style="background:#E0F2FE;color:#0284C7;font-size:0.9rem;padding:0.4rem 0.7rem;font-weight:800;border:1px solid #BAE6FD;">
+                                ⭐ <?= number_format($avg_inst, 2) ?>
+                            </span>
+                            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">
+                                <?= $avg_inst >= 4.5 ? 'Sangat Memuaskan' : ($avg_inst >= 3.5 ? 'Memuaskan' : 'Cukup') ?>
+                            </div>
+                            <?php else: ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">
+                            <?= date('d/m/Y H:i', strtotime($r['last_submitted_at'])) ?> WIB
+                        </td>
+                        <td style="text-align:center;">
+                            <a href="<?= $detail_url ?>" class="btn-action btn-edit" style="text-decoration:none;" title="Lihat Rekapitulasi Rincian Instansi">
+                                <i class="bi bi-eye"></i> Rincian
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 

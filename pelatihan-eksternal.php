@@ -1,12 +1,12 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-$page_title = 'Pelatihan Eksternal & Pengembangan Mutu';
-$meta_desc  = 'Program Pelatihan Eksternal, Sertifikasi Auditor Mutu Internal (AMI), Bimtek SPMI PPEPP, Klinik Akreditasi LED/LKPS, dan Brosur Resmi LPM Universitas Katolik Soegijapranata.';
+$page_title = 'Info Pelatihan';
+$meta_desc  = 'Program Info Pelatihan, Sertifikasi Auditor Mutu Internal (AMI), Bimtek SPMI PPEPP, Klinik Akreditasi LED/LKPS, dan Brosur Resmi LPM Universitas Katolik Soegijapranata.';
 
 $db = getDB();
 
 // 1. Pengaturan Teks & Kontak dari Admin
-$pelatihan_hero_title = getPengaturan('pelatihan_hero_title', 'Pelatihan Eksternal & Pengembangan Mutu');
+$pelatihan_hero_title = getPengaturan('pelatihan_hero_title', 'Info Pelatihan & Pengembangan Mutu');
 $pelatihan_hero_desc  = getPengaturan('pelatihan_hero_desc', 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata menyelenggarakan bimbingan teknis, workshop klinik akreditasi, dan pelatihan sertifikasi auditor penjaminan mutu internal bagi perguruan tinggi mitra.');
 $pelatihan_email      = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
 $pelatihan_telepon    = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');

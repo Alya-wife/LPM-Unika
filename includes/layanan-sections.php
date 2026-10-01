@@ -50,60 +50,57 @@ function renderLayananSection($type, $block = [], $is_builder = false, $params =
                         </p>
                     </div>
 
-                    <!-- 3 Kartu Layanan Sesuai 3 Sub Menu -->
+                    <!-- 3 Kartu Layanan Sesuai 3 Sub Menu Baru -->
                     <div class="row g-4 justify-content-center">
-                        <!-- Sub Menu 1: Pelatihan Eksternal -->
+                        <!-- Sub Menu 1: Info Pelatihan -->
                         <div class="col-md-6 col-lg-4">
                             <div class="card-lpm p-4 text-center h-100 d-flex flex-column" style="background:#ffffff;border:1px solid var(--border);border-top:4px solid #7C3AED;border-radius:var(--radius-md);box-shadow:0 2px 12px rgba(10,25,47,0.04);">
                                 <div style="width:58px;height:58px;border-radius:50%;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:#7C3AED;font-size:1.6rem;">
                                     <i class="bi bi-mortarboard-fill"></i>
                                 </div>
-                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Pelatihan Eksternal</h4>
+                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Info Pelatihan</h4>
                                 <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.25rem;">
-                                    Program sertifikasi auditor AMI, pelatihan SPMI PPEPP, klinik borang LED/LKPS, informasi biaya, jadwal terlaksana, dan unduh brosur resmi.
+                                    Program sertifikasi auditor AMI, pelatihan SPMI PPEPP, klinik akreditasi LED/LKPS, informasi biaya, jadwal pelaksanaan, dan unduh brosur resmi.
                                 </p>
                                 <div class="mt-auto">
-                                    <a href="<?= SITE_URL ?>/pelatihan-eksternal.php" class="btn btn-sm btn-outline-primary fw-bold rounded-pill w-100 py-2">
-                                        Lihat Pelatihan Eksternal &rarr;
+                                    <a href="<?= SITE_URL ?>/pelatihan.php" class="btn btn-sm btn-outline-primary fw-bold rounded-pill w-100 py-2">
+                                        Lihat Info Pelatihan &rarr;
                                     </a>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Sub Menu 2: Kritik & Saran -->
+                        <!-- Sub Menu 2: Kunjungan Studi Banding -->
                         <div class="col-md-6 col-lg-4">
                             <div class="card-lpm p-4 text-center h-100 d-flex flex-column" style="background:#ffffff;border:1px solid var(--border);border-top:4px solid #0284C7;border-radius:var(--radius-md);box-shadow:0 2px 12px rgba(10,25,47,0.04);">
                                 <div style="width:58px;height:58px;border-radius:50%;background:rgba(2,132,199,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:#0284C7;font-size:1.6rem;">
-                                    <i class="bi bi-chat-left-heart-fill"></i>
+                                    <i class="bi bi-building-fill-check"></i>
                                 </div>
-                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Kritik &amp; Saran</h4>
+                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Kunjungan Studi Banding</h4>
                                 <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.25rem;">
-                                    Kanal penyampaian kritik konstruktif, saran perbaikan mutu kelembagaan, aspirasi kemitraan, serta formulir permohonan kunjungan resmi.
+                                    Pengajuan formulir permohonan kunjungan benchmarking resmi, audiensi tata kelola penjaminan mutu, dan studi banding institusi ke LPM UNIKA.
                                 </p>
-                                <div class="d-flex flex-wrap gap-2 mt-auto justify-content-center">
-                                    <button type="button" class="btn btn-sm btn-primary fw-bold rounded-pill flex-grow-1 py-2" onclick="switchLayananTab('feedback'); document.getElementById('layanan-form-wrap')?.scrollIntoView({behavior:'smooth'});">
-                                        <i class="bi bi-chat-left-heart me-1"></i> Isi Kritik &amp; Saran
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold rounded-pill flex-grow-1 py-2" onclick="switchLayananTab('kunjungan'); document.getElementById('layanan-form-wrap')?.scrollIntoView({behavior:'smooth'});">
-                                        <i class="bi bi-calendar-plus me-1"></i> Form Kunjungan
-                                    </button>
+                                <div class="mt-auto">
+                                    <a href="<?= SITE_URL ?>/kunjungan.php" class="btn btn-sm btn-outline-info fw-bold rounded-pill w-100 py-2" style="color:#0284C7;border-color:#0284C7;">
+                                        Ajukan Kunjungan &rarr;
+                                    </a>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Sub Menu 3: Feedback Kunjungan -->
+                        <!-- Sub Menu 3: Survey Kepuasan Layanan LPM -->
                         <div class="col-md-6 col-lg-4">
-                            <div class="card-lpm p-4 text-center h-100 d-flex flex-column" style="background:#ffffff;border:1px solid var(--border);border-top:4px solid #D97706;border-radius:var(--radius-md);box-shadow:0 2px 12px rgba(10,25,47,0.04);">
-                                <div style="width:58px;height:58px;border-radius:50%;background:rgba(217,119,6,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:#D97706;font-size:1.6rem;">
-                                    <i class="bi bi-shield-lock-fill"></i>
+                            <div class="card-lpm p-4 text-center h-100 d-flex flex-column" style="background:#ffffff;border:1px solid var(--border);border-top:4px solid #059669;border-radius:var(--radius-md);box-shadow:0 2px 12px rgba(10,25,47,0.04);">
+                                <div style="width:58px;height:58px;border-radius:50%;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:#059669;font-size:1.6rem;">
+                                    <i class="bi bi-emoji-smile-fill"></i>
                                 </div>
-                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Feedback Kunjungan</h4>
+                                <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:0.5rem;">Survey Kepuasan Layanan LPM</h4>
                                 <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.25rem;">
-                                    Pengisian kuesioner evaluasi dan kepuasan pelayanan bagi institusi tamu yang telah selesai berkunjung ke LPM UNIKA berbasis kode token resmi.
+                                    Evaluasi kepuasan pelayanan penjaminan mutu, studi banding, serta penyampaian saran konstruktif demi peningkatan mutu pelayanan berkelanjutan.
                                 </p>
                                 <div class="mt-auto">
-                                    <a href="<?= SITE_URL ?>/feedback-kunjungan.php" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill w-100 py-2 shadow-sm">
-                                        Buka Feedback Kunjungan &rarr;
+                                    <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="btn btn-sm btn-success fw-bold rounded-pill w-100 py-2 shadow-sm" style="background:#059669;border-color:#059669;">
+                                        Isi Survei Kepuasan &rarr;
                                     </a>
                                 </div>
                             </div>

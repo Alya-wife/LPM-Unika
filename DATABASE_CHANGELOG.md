@@ -220,6 +220,15 @@ Pembaruan struktur tampilan banner slider beranda (`includes/beranda-sections.ph
 ### C. Visual Page Builder (`pages`)
 - Pada baris `slug = 'akreditasi'`, blok `akreditasi_dokumen` ("Unduh Dokumen & Sertifikat Akreditasi Institusi") telah dihapus dari `blocks_json` agar tidak terjadi duplikasi komponen unduhan dengan kartu institusi di bagian atas.
 
+### D. Pembersihan Data Dummy Menu Layanan & Kunjungan
+Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap digunakan untuk data operasional riil:
+1. **Permohonan Kunjungan (`permohonan_kunjungan`)**: Data permohonan kunjungan dummy dikosongkan.
+2. **Pesan & Konsultasi Layanan (`feedback`)**: Data pesan konsultasi dummy dikosongkan.
+3. **Hasil Survei Kepuasan Layanan (`kunjungan_feedback_respon` & `kunjungan_feedback_jawaban`)**: Data respon survei dan skor jawaban dummy dikosongkan.
+4. **Token Akses Survei Kunjungan (`kunjungan_feedback_token`)**: Token dummy dikosongkan.
+5. **Brosur Layanan Pelatihan (`layanan_brosur`)**: Entri dummy brosur contoh dikosongkan.
+*Catatan: Struktur master pertanyaan IKM (`kunjungan_kuesioner_pertanyaan`) dan daftar unit tujuan (`kunjungan_tujuan_unit`) tetap dipertahankan utuh sebagai instrumen standar.*
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain

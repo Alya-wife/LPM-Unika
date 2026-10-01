@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
 echo "--- 1. SEEDING PENGATURAN SPMI CHART & PORTAL ---\n";
@@ -71,8 +71,8 @@ echo "AMI Stages settings seeded successfully.\n";
 
 echo "--- 3. VERIFY AMI UPLOAD FILES ---\n";
 // Pastikan file dummy ada, bila belum ada buat salinan dari file yang sudah ada
-$basePdf = __DIR__ . '/uploads/ami/siklus1/panduan_ami_2025_2026.pdf';
-$baseImg = __DIR__ . '/uploads/ami/siklus1/opening_meeting_2025.webp';
+$basePdf = __DIR__ . '/../uploads/ami/siklus1/panduan_ami_2025_2026.pdf';
+$baseImg = __DIR__ . '/../uploads/ami/siklus1/opening_meeting_2025.webp';
 
 if (!file_exists($basePdf)) {
     // buat file dummy bila kosong
@@ -106,7 +106,7 @@ $filesToEnsure = [
 ];
 
 foreach ($filesToEnsure as $relPath => $src) {
-    $fullPath = __DIR__ . '/uploads/' . $relPath;
+    $fullPath = __DIR__ . '/../uploads/' . $relPath;
     if (!file_exists($fullPath)) {
         @mkdir(dirname($fullPath), 0755, true);
         if (file_exists($src)) {

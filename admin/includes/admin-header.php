@@ -294,7 +294,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 6. Halaman AMI (Dropdown) -->
-        <?php $grp_ami = in_array($current_admin, ['ami-pengantar','kalender-ami-list','kalender-ami-form','ami-siklus-list','ami-siklus1-form','ami-siklus4-dok-form','ami-siklus4-form','ami-siklus5-form','ami-periode']); ?>
+        <?php $grp_ami = in_array($current_admin, ['ami-pengantar','ami-siklus-list','ami-siklus1-form','ami-siklus4-dok-form','ami-siklus4-form','ami-siklus5-form','ami-periode']); ?>
         <div class="admin-nav-dropdown <?= $grp_ami ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_ami ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -307,19 +307,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
             </button>
             <div class="admin-dropdown-menu">
                 <a href="<?= SITE_URL ?>/admin/ami-pengantar.php" class="admin-subnav-link <?= $current_admin === 'ami-pengantar' ? 'active' : '' ?>">
-                    <span>• Kelola Pengantar AMI</span>
+                    <span>• Pengantar AMI</span>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/ami-siklus-list.php?tab=isian" class="admin-subnav-link <?= ($current_admin === 'ami-siklus-list' && ($_GET['tab'] ?? 'isian') === 'isian') ? 'active' : '' ?>">
-                    <span>• Isian 5 Tahapan Siklus</span>
-                </a>
-                <a href="<?= SITE_URL ?>/admin/ami-siklus-list.php?tab=siklus1" class="admin-subnav-link <?= ($current_admin === 'ami-siklus-list' && ($_GET['tab'] ?? '') !== 'isian') || in_array($current_admin, ['ami-siklus1-form','ami-siklus4-dok-form','ami-siklus4-form','ami-siklus5-form']) ? 'active' : '' ?>">
-                    <span>• Dokumen &amp; Data Siklus (1-5)</span>
-                </a>
-                <a href="<?= SITE_URL ?>/admin/kalender-ami-list.php" class="admin-subnav-link <?= in_array($current_admin, ['kalender-ami-list','kalender-ami-form']) ? 'active' : '' ?>">
-                    <span>• Jadwal Pelaksanaan AMI</span>
-                </a>
-                <a href="<?= SITE_URL ?>/admin/ami-periode.php" class="admin-subnav-link <?= $current_admin === 'ami-periode' ? 'active' : '' ?>">
-                    <span>• Master Periode AMI</span>
+                <a href="<?= SITE_URL ?>/admin/ami-siklus-list.php" class="admin-subnav-link <?= in_array($current_admin, ['ami-siklus-list','ami-siklus1-form','ami-siklus4-dok-form','ami-siklus4-form','ami-siklus5-form','ami-periode']) ? 'active' : '' ?>">
+                    <span>• Siklus AMI</span>
                 </a>
             </div>
         </div>

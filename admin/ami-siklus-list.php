@@ -14,13 +14,13 @@ if (empty($periodes)) {
 }
 
 $active_tab = trim($_GET['tab'] ?? 'isian');
-if (!in_array($active_tab, ['isian', 'siklus1', 'siklus23', 'siklus4', 'siklus5'])) {
+if (!in_array($active_tab, ['isian', 'siklus1', 'siklus23', 'siklus4', 'siklus5', 'periode'])) {
     $active_tab = 'isian';
 }
 
 $selected_periode = trim($_GET['periode'] ?? '');
 if ($selected_periode === '' || !in_array($selected_periode, array_column($periodes, 'nama_periode'))) {
-    $selected_periode = $periodes[0]['nama_periode'];
+    $selected_periode = $periodes[0]['nama_periode'] ?? '2025/2026';
 }
 
 // 2. Handle Actions (Delete items)
@@ -57,6 +57,49 @@ if (isset($_GET['delete_rtm5']) && is_numeric($_GET['delete_rtm5'])) {
     $db->prepare("DELETE FROM ami_siklus5_rtm WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Data Rapat Tinjauan Manajemen (Siklus 5) berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus5&periode=" . urlencode($selected_periode));
+}
+
+// 2b. Handle Periode Actions (Delete, Toggle, Save)
+if (isset($_GET['delete_periode']) && is_numeric($_GET['delete_periode'])) {
+    $del_id = (int)$_GET['delete_periode'];
+    $db->prepare("DELETE FROM ami_periode WHERE id = ?")->execute([$del_id]);
+    $_SESSION['flash'] = 'Periode AMI berhasil dihapus.';
+    redirect("ami-siklus-list.php?tab=periode");
+}
+
+if (isset($_GET['toggle_periode']) && is_numeric($_GET['toggle_periode'])) {
+    $tog_id = (int)$_GET['toggle_periode'];
+    $db->prepare("UPDATE ami_periode SET is_active = NOT is_active WHERE id = ?")->execute([$tog_id]);
+    $_SESSION['flash'] = 'Status aktif periode berhasil diperbarui.';
+    redirect("ami-siklus-list.php?tab=periode");
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_periode'])) {
+    $p_id = (int)($_POST['periode_id'] ?? 0);
+    $nama_periode = trim($_POST['nama_periode'] ?? '');
+    $urutan = (int)($_POST['urutan'] ?? 1);
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+    if ($nama_periode !== '') {
+        if ($p_id > 0) {
+            $stmt = $db->prepare("UPDATE ami_periode SET nama_periode = ?, urutan = ?, is_active = ? WHERE id = ?");
+            $stmt->execute([$nama_periode, $urutan, $is_active, $p_id]);
+            $_SESSION['flash'] = 'Periode AMI berhasil diperbarui.';
+        } else {
+            $stmt = $db->prepare("INSERT INTO ami_periode (nama_periode, urutan, is_active) VALUES (?, ?, ?)");
+            $stmt->execute([$nama_periode, $urutan, $is_active]);
+            $_SESSION['flash'] = 'Periode AMI baru berhasil ditambahkan.';
+        }
+    }
+    redirect("ami-siklus-list.php?tab=periode");
+}
+
+$edit_periode_id = (int)($_GET['edit_periode'] ?? 0);
+$edit_periode_data = null;
+if ($edit_periode_id > 0) {
+    $stmt_ep = $db->prepare("SELECT * FROM ami_periode WHERE id = ?");
+    $stmt_ep->execute([$edit_periode_id]);
+    $edit_periode_data = $stmt_ep->fetch(PDO::FETCH_ASSOC);
 }
 
 // 3. Handle Save Isian 5 Tahapan Siklus AMI
@@ -175,7 +218,7 @@ require_once __DIR__ . '/includes/admin-header.php';
             </option>
             <?php endforeach; ?>
         </select>
-        <a href="ami-periode.php" class="btn btn-sm btn-outline-secondary" title="Kelola Master Periode">
+        <a href="?tab=periode" class="btn btn-sm btn-outline-secondary" title="Kelola Master Periode">
             <i class="bi bi-gear-fill"></i>
         </a>
     </div>
@@ -206,6 +249,11 @@ require_once __DIR__ . '/includes/admin-header.php';
     <li class="nav-item" role="presentation">
         <a class="nav-link <?= $active_tab === 'siklus5' ? 'active' : '' ?>" href="?tab=siklus5&periode=<?= urlencode($selected_periode) ?>">
             <i class="bi bi-5-circle-fill me-1"></i> Siklus 5: RTM
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link <?= $active_tab === 'periode' ? 'active' : '' ?>" href="?tab=periode">
+            <i class="bi bi-calendar-range-fill me-1"></i> Master Periode
         </a>
     </li>
 </ul>
@@ -865,6 +913,116 @@ require_once __DIR__ . '/includes/admin-header.php';
     <?php endif; ?>
 </div>
 
+<?php endif; ?>
+
+<!-- ==========================================
+     TAB 6: MASTER PERIODE AMI
+     ========================================== -->
+<?php if ($active_tab === 'periode'): 
+$all_periodes_list = $db->query("SELECT * FROM ami_periode ORDER BY urutan ASC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
+?>
+<div class="row g-4">
+    <!-- Form Tambah / Edit Periode -->
+    <div class="col-lg-4">
+        <div class="admin-table-wrap p-4">
+            <h5 class="fw-bold mb-3" style="color:var(--navy);">
+                <?= $edit_periode_id ? '<i class="bi bi-pencil-square me-2"></i>Edit Periode' : '<i class="bi bi-plus-circle me-2"></i>Tambah Periode AMI' ?>
+            </h5>
+            <p class="text-muted small mb-4">
+                Kelola periode tahun pelaksanaan audit AMI untuk filter pada Siklus 1 s.d. 5 baik di CMS admin maupun tampilan web publik.
+            </p>
+
+            <form method="post" action="?tab=periode">
+                <input type="hidden" name="save_periode" value="1">
+                <?php if ($edit_periode_id): ?>
+                <input type="hidden" name="periode_id" value="<?= $edit_periode_id ?>">
+                <?php endif; ?>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Nama Periode <span class="text-danger">*</span></label>
+                    <input type="text" name="nama_periode" class="form-control" placeholder="Contoh: 2025/2026" value="<?= e($edit_periode_data['nama_periode'] ?? '') ?>" required>
+                    <div class="form-text">Format tahun akademik lengkap, contoh: <code>2025/2026</code>.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Urutan Tampil</label>
+                    <input type="number" name="urutan" class="form-control" value="<?= e($edit_periode_data['urutan'] ?? 1) ?>">
+                    <div class="form-text">Urutan prioritas penampilan opsi periode pada filter.</div>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActiveSwitch" value="1" <?= (!isset($edit_periode_data) || !empty($edit_periode_data['is_active'])) ? 'checked' : '' ?>>
+                    <label class="form-check-label small fw-bold" for="isActiveSwitch">Aktifkan Periode Ini</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> <?= $edit_periode_id ? 'Perbarui Periode' : 'Simpan Periode' ?>
+                    </button>
+                    <?php if ($edit_periode_id): ?>
+                    <a href="?tab=periode" class="btn btn-light px-3">Batal</a>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Daftar Periode -->
+    <div class="col-lg-8">
+        <div class="admin-table-wrap">
+            <div class="admin-table-topbar">
+                <div>
+                    <div class="admin-table-title">Daftar Master Periode AMI (<?= count($all_periodes_list) ?>)</div>
+                    <div class="text-muted small">Periode yang aktif akan muncul pada opsi pilihan filter siklus di halaman publik dan formulir pengisian admin.</div>
+                </div>
+            </div>
+
+            <?php if (empty($all_periodes_list)): ?>
+            <div style="padding:3rem;text-align:center;color:var(--text-muted);">
+                Belum ada periode AMI. Silakan tambahkan pada formulir di sebelah kiri.
+            </div>
+            <?php else: ?>
+            <div style="overflow-x:auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th width="70" class="text-center">Urutan</th>
+                            <th>Nama Periode</th>
+                            <th width="130" class="text-center">Status</th>
+                            <th width="140" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($all_periodes_list as $p): ?>
+                        <tr>
+                            <td class="text-center fw-bold"><?= (int)$p['urutan'] ?></td>
+                            <td>
+                                <strong style="color:var(--navy);font-size:0.95rem;"><?= e($p['nama_periode']) ?></strong>
+                            </td>
+                            <td class="text-center">
+                                <a href="?tab=periode&toggle_periode=<?= $p['id'] ?>" class="badge text-decoration-none <?= $p['is_active'] ? 'bg-success' : 'bg-secondary' ?>" title="Klik untuk ubah status aktif">
+                                    <?= $p['is_active'] ? '<i class="bi bi-check-circle me-1"></i>Aktif' : '<i class="bi bi-x-circle me-1"></i>Nonaktif' ?>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-inline-flex gap-1">
+                                    <a href="?tab=periode&edit_periode=<?= $p['id'] ?>" class="btn-action btn-edit" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="?tab=periode&delete_periode=<?= $p['id'] ?>" class="btn-action btn-delete" onclick="return confirm('Hapus periode <?= e($p['nama_periode']) ?>?')" title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

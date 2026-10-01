@@ -255,6 +255,16 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
 - **Perbaikan CSS Card Overflow**:
   - Memperbaiki bug tampilan teks panjang dan tombol download yang keluar dari batas kartu (`.doc-ami-card`) dengan pembagian kontainer `.doc-ami-info` (`min-width: 0`, `word-break: break-word`) dan `.doc-ami-actions`.
 
+### I. Penyelarasan Menu Pengelolaan AMI Admin dengan Web Publik
+- **Struktur Menu Admin AMI**:
+  - Submenu "Halaman AMI" di sidebar admin disederhanakan dan diselaraskan persis dengan navigasi menu web publik:
+    1. **Pengantar AMI** (`admin/ami-pengantar.php` <-> `ami.php`)
+    2. **Siklus AMI** (`admin/ami-siklus-list.php` <-> `siklus-ami.php`)
+- **Pembersihan Submenu Tidak Terpakai**:
+  - Submenu usang "Jadwal Pelaksanaan AMI" (`kalender-ami-list.php`) dihapus dari sidebar dan dashboard karena seluruh agenda dan timeline audit telah terintegrasi penuh di dalam Siklus AMI (1 s.d. 5).
+  - Submenu ganda "Isian 5 Tahapan Siklus" dan "Dokumen & Data Siklus (1-5)" disatukan menjadi satu modul terpadu "Siklus AMI" dengan navigasi tab lengkap (Isian, Siklus 1, Siklus 2 & 3, Siklus 4, Siklus 5, dan Master Periode).
+  - Pengelolaan Master Periode terintegrasi langsung di dalam tab `Master Periode` pada `admin/ami-siklus-list.php`.
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain

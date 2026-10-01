@@ -177,8 +177,8 @@ function renderAmiSection($type, $block = [], $is_builder = false, $selected_tah
                                     </div>
                                 </div>
                                 <div>
-                                    <a href="<?= SITE_URL ?>/kalender-ami.php?tahun_ami=<?= urlencode($selected_tahun_ami) ?>" class="btn btn-sm btn-outline-light" style="border-radius:20px;padding:0.45rem 1.2rem;font-size:0.85rem;font-weight:600;">
-                                        Halaman Khusus Jadwal AMI &rarr;
+                                    <a href="<?= SITE_URL ?>/siklus-ami.php" class="btn btn-sm btn-outline-light" style="border-radius:20px;padding:0.45rem 1.2rem;font-size:0.85rem;font-weight:600;">
+                                        Lihat Siklus AMI (1 s.d. 5) &rarr;
                                     </a>
                                 </div>
                             </div>

@@ -209,9 +209,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
 
                         <div class="p-3 rounded-3" style="background:#FEF3C7;border:1px solid #FDE68A;font-size:0.83rem;color:#92400E;">
-                            💡 <strong>Kelola Jadwal AMI:</strong>
+                            💡 <strong>Kelola Siklus AMI:</strong>
                             <div class="mt-2 d-flex gap-2 flex-wrap">
-                                <a href="kalender-ami-list.php" class="btn btn-sm btn-warning">Kelola Jadwal &amp; Timeline Siklus AMI &rarr;</a>
+                                <a href="ami-siklus-list.php" class="btn btn-sm btn-warning">Kelola Siklus AMI (1 s.d. 5) &rarr;</a>
                             </div>
                         </div>
                     </div>

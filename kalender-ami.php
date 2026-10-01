@@ -1,12 +1,7 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-
-$db = getDB();
-
-$list_tahun_ami = $db->query("SELECT DISTINCT tahun_akademik FROM kalender_ami WHERE is_active = 1 ORDER BY tahun_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
-if (empty($list_tahun_ami)) {
-    $list_tahun_ami = ['2026/2027', '2025/2026', '2024/2025'];
-}
+header("Location: " . SITE_URL . "/siklus-ami.php", true, 301);
+exit;
 
 $selected_tahun_ami = trim($_GET['tahun_ami'] ?? ($list_tahun_ami[0] ?? '2026/2027'));
 

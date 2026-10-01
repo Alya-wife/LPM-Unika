@@ -9,7 +9,10 @@ $db = getDB();
 $pelatihan_hero_title     = getPengaturan('pelatihan_hero_title', 'Info Pelatihan Lembaga Penjaminan Mutu');
 $pelatihan_hero_desc      = getPengaturan('pelatihan_hero_desc', 'Program Pelatihan, Bimbingan Teknis, Sertifikasi Auditor Mutu Internal (AMI), dan Klinik Akreditasi Perguruan Tinggi Mitra');
 $pelatihan_narasi_lengkap = getPengaturan('pelatihan_narasi_lengkap', "Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata berkomitmen mengawal dan menumbuhkan budaya mutu pendidikan tinggi yang unggul, berkelanjutan, dan berdaya saing global.\n\nBerbekal pengalaman mengawal akreditasi institusi UNGGUL serta amanah Kementerian sebagai pelaksana Program Asuh Perguruan Tinggi Unggul selama bertahun-tahun yang telah sukses mendampingi puluhan perguruan tinggi dan program studi di Indonesia, LPM UNIKA secara konsisten menyelenggarakan berbagai program pelatihan, bimbingan teknis, dan sertifikasi penjaminan mutu terstruktur bagi perguruan tinggi mitra, fakultas, serta lembaga pendidikan.\n\nProgram pelatihan difasilitasi langsung oleh para pakar penjaminan mutu, asesor BAN-PT/LAM bersertifikasi nasional, serta auditor mutu internal berpengalaman. Seluruh kurikulum dan materi dirancang aplikatif, berbasis studi kasus riil tata kelola kampus, dan selaras dengan regulasi Permendikbudristek No. 53 Tahun 2023 tentang Penjaminan Mutu Pendidikan Tinggi serta standar instrumen akreditasi terkini.");
-$pelatihan_email          = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
+$pelatihan_email          = getPengaturan('pelatihan_email_kontak', getPengaturan('email', 'lpm@unika.ac.id'));
+if (empty($pelatihan_email)) {
+    $pelatihan_email = 'lpm@unika.ac.id';
+}
 $pelatihan_telepon        = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');
 $pelatihan_jam            = getPengaturan('pelatihan_jam_layanan', 'Senin – Jumat (08:00 – 15:30 WIB)');
 $pelatihan_alamat         = getPengaturan('pelatihan_alamat', 'Kampus UNIKA Bendan Dhuwur, Semarang');
@@ -184,37 +187,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         ?>
                     </div>
 
-                    <!-- 4 Pilar Program Pelatihan Utama -->
-                    <div class="row g-3 mt-4 pt-3 border-top">
-                        <div class="col-md-6 col-lg-3">
-                            <div class="p-3 rounded-4 h-100" style="background:#EFF6FF;border:1px solid #DBEAFE;">
-                                <div class="text-primary mb-2" style="font-size:1.35rem;"><i class="bi bi-patch-check-fill"></i></div>
-                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Sertifikasi Auditor AMI</h6>
-                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Standar audit mutu, kode etik, penyusunan instrumen, dan registrasi kelulusan auditor.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-3">
-                            <div class="p-3 rounded-4 h-100" style="background:#F0FDF4;border:1px solid #DCFCE7;">
-                                <div class="text-success mb-2" style="font-size:1.35rem;"><i class="bi bi-arrow-repeat"></i></div>
-                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Bimtek SPMI PPEPP</h6>
-                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Perumusan Standar Dikti, manual mutu, SOP, serta IKU/IKT berbasis Permendikbudristek 53/2023.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-3">
-                            <div class="p-3 rounded-4 h-100" style="background:#FEF3C7;border:1px solid #FDE68A;">
-                                <div class="text-warning mb-2" style="font-size:1.35rem;"><i class="bi bi-file-earmark-medical-fill"></i></div>
-                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Klinik Borang Akreditasi</h6>
-                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Bedah borang LED &amp; LKPS bersama asesor berpengalaman BAN-PT dan Lembaga Akreditasi Mandiri.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-3">
-                            <div class="p-3 rounded-4 h-100" style="background:#F3E8FF;border:1px solid #E9D5FF;">
-                                <div class="text-purple mb-2" style="font-size:1.35rem;color:#9333EA;"><i class="bi bi-buildings-fill"></i></div>
-                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">In-House Training</h6>
-                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Pelatihan fleksibel langsung di kampus mitra dengan penyesuaian materi spesifik institusi.</p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -226,14 +199,11 @@ require_once __DIR__ . '/includes/navbar.php';
             <div class="col-lg-11 col-xl-10">
 
                 <div class="text-center mb-4">
-                    <div class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold mb-2" style="font-size:0.8rem;">
-                        <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> DOKUMEN RESMI
-                    </div>
                     <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.4rem, 2.5vw, 1.85rem);margin-bottom:0.4rem;">
                         Brosur &amp; Silabus Program Pelatihan Mutu
                     </h3>
                     <p class="text-muted mx-auto" style="max-width:720px;font-size:0.95rem;">
-                        Brosur resmi dapat langsung Anda telaah pada jendela tampilan di bawah ini. Gunakan tombol aksi yang tersedia untuk mengunduh dokumen atau mengakses formulir pendaftaran.
+                        Brosur resmi dapat langsung Anda telaah pada jendela tampilan di bawah ini atau mengunduh dokumen melalui tombol yang tersedia.
                     </p>
 
                     <!-- Nav Selector jika Brosur Aktif Lebih Dari 1 -->
@@ -305,11 +275,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                     <a href="<?= $f_url ?>" target="_blank" class="btn btn-outline-light fw-semibold px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.9rem;" title="Buka berkas di jendela baru">
                                         <i class="bi bi-box-arrow-up-right"></i> Layar Penuh
                                     </a>
-                                    <?php if (!empty($br['link_pendaftaran'])): ?>
-                                    <a href="<?= htmlspecialchars($br['link_pendaftaran']) ?>" target="_blank" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2" style="font-size:0.92rem;">
-                                        <i class="bi bi-pencil-square"></i> Pendaftaran Online
-                                    </a>
-                                    <?php endif; ?>
+
                                 </div>
                             </div>
                         </div>
@@ -409,10 +375,16 @@ require_once __DIR__ . '/includes/navbar.php';
                             <span><i class="bi bi-telephone text-warning me-1"></i> <?= htmlspecialchars($pelatihan_telepon) ?></span>
                         </div>
                     </div>
-                    <div class="flex-shrink-0">
+                    <div class="flex-shrink-0 d-flex flex-wrap gap-2 justify-content-center justify-content-md-end">
                         <a href="mailto:<?= htmlspecialchars($pelatihan_email) ?>?subject=Permohonan%20Konsultasi%20dan%20Kerjasama%20Pelatihan%20LPM%20UNIKA" class="btn btn-warning px-4 py-3 fw-bold rounded-pill text-dark d-inline-flex align-items-center gap-2 shadow" style="font-size:0.95rem;">
                             <i class="bi bi-envelope-fill"></i> Hubungi via Email: <?= htmlspecialchars($pelatihan_email) ?>
                         </a>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=<?= urlencode($pelatihan_email) ?>&su=<?= urlencode('Permohonan Konsultasi dan Kerjasama Pelatihan LPM UNIKA') ?>" target="_blank" class="btn btn-light px-3 py-3 fw-bold rounded-pill text-dark d-inline-flex align-items-center gap-2 shadow-sm" style="font-size:0.92rem;" title="Buka langsung di tab Gmail web">
+                            <i class="bi bi-google text-danger"></i> Buka via Gmail
+                        </a>
+                        <button type="button" class="btn btn-outline-light px-3 py-3 fw-semibold rounded-pill d-inline-flex align-items-center gap-2" onclick="copyEmailLpm('<?= htmlspecialchars($pelatihan_email) ?>', this)" title="Salin alamat email LPM">
+                            <i class="bi bi-clipboard"></i> <span class="copy-lbl">Salin</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -440,6 +412,25 @@ function switchBrosur(targetIndex) {
             btn.classList.remove('active');
         }
     });
+}
+
+function copyEmailLpm(email, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(function() {
+            var lbl = btn.querySelector('.copy-lbl');
+            var icon = btn.querySelector('i');
+            if (lbl) lbl.textContent = 'Tersalin!';
+            if (icon) icon.className = 'bi bi-check2 text-success';
+            setTimeout(function() {
+                if (lbl) lbl.textContent = 'Salin';
+                if (icon) icon.className = 'bi bi-clipboard';
+            }, 2500);
+        }).catch(function() {
+            prompt('Salin alamat email berikut:', email);
+        });
+    } else {
+        prompt('Salin alamat email berikut:', email);
+    }
 }
 </script>
 

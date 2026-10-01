@@ -304,12 +304,17 @@ require_once __DIR__ . '/includes/admin-header.php';
                 Kelola publikasi berita, pengumuman, dan dokumentasi kegiatan LPM.
             </div>
         </div>
-        <a href="berita-form.php" class="btn-add">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Tambah Berita / Kegiatan
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="kategori-berita.php" class="btn-action" style="background:#fff;border:1.5px solid var(--border);color:var(--navy);text-decoration:none;padding:0.45rem 0.9rem;">
+                <i class="bi bi-tags me-1"></i> Kelola Kategori Berita
+            </a>
+            <a href="berita-form.php" class="btn-add">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Tambah Berita / Kegiatan
+            </a>
+        </div>
     </div>
 
     <!-- Status Tabs: Semua, Draft (Perlu Ditinjau), Terbit -->
@@ -359,7 +364,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <select id="adminFilterTipe" class="form-select form-select-sm" style="min-width:140px;font-size:0.82rem;">
                     <option value="">Semua Tipe</option>
                     <?php
-                    $tipes = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];
+                    $tipes = [];
+                    try {
+                        $tipes = $db->query("SELECT nama_kategori FROM kategori_berita ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_COLUMN);
+                    } catch (Exception $e) {}
+                    if (empty($tipes)) {
+                        $tipes = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];
+                    }
                     foreach ($tipes as $tp):
                     ?>
                     <option value="<?= $tp ?>" <?= $tipe_filter === $tp ? 'selected' : '' ?>><?= $tp ?></option>

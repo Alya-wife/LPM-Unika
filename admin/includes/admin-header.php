@@ -263,7 +263,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 6. Halaman FAQ & Edukasi (Dropdown) -->
-        <?php $grp_faq = in_array($current_admin, ['faq-setting','glosarium-setting','kalender-list','kalender-form','buletin-list','buletin-form']); ?>
+        <?php $grp_faq = in_array($current_admin, ['faq-setting','kategori-faq','glosarium-setting','kalender-list','kalender-form','buletin-list','buletin-form']); ?>
         <div class="admin-nav-dropdown <?= $grp_faq ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_faq ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -277,6 +277,9 @@ $accred_nav_alerts = checkAccreditationExpirations();
             <div class="admin-dropdown-menu">
                 <a href="<?= SITE_URL ?>/admin/faq-setting.php" class="admin-subnav-link <?= $current_admin === 'faq-setting' ? 'active' : '' ?>">
                     <span>• Tanya Jawab (FAQ)</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/kategori-faq.php" class="admin-subnav-link <?= $current_admin === 'kategori-faq' ? 'active' : '' ?>">
+                    <span>• Kategori FAQ</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/glosarium-setting.php" class="admin-subnav-link <?= $current_admin === 'glosarium-setting' ? 'active' : '' ?>">
                     <span>• Glosarium Mutu</span>
@@ -321,14 +324,26 @@ $accred_nav_alerts = checkAccreditationExpirations();
             </div>
         </div>
 
-        <!-- 7. Halaman Berita & Kegiatan (Direct Link) -->
-        <div style="margin-bottom:0.35rem;">
-            <a href="<?= SITE_URL ?>/admin/berita-list.php" class="admin-nav-link <?= in_array($current_admin, ['berita-list','berita-form']) ? 'active' : '' ?>">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-                </svg>
-                <span>Halaman Berita &amp; Kegiatan</span>
-            </a>
+        <!-- 7. Halaman Berita & Kegiatan (Dropdown) -->
+        <?php $grp_berita = in_array($current_admin, ['berita-list','berita-form','berita-review','kategori-berita']); ?>
+        <div class="admin-nav-dropdown <?= $grp_berita ? 'open' : '' ?>">
+            <button type="button" class="admin-dropdown-toggle <?= $grp_berita ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
+                <span class="d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                    </svg>
+                    <span>Halaman Berita</span>
+                </span>
+                <i class="bi bi-chevron-down nav-chevron"></i>
+            </button>
+            <div class="admin-dropdown-menu">
+                <a href="<?= SITE_URL ?>/admin/berita-list.php" class="admin-subnav-link <?= in_array($current_admin, ['berita-list','berita-form','berita-review']) ? 'active' : '' ?>">
+                    <span>• Daftar Berita &amp; Kegiatan</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/kategori-berita.php" class="admin-subnav-link <?= $current_admin === 'kategori-berita' ? 'active' : '' ?>">
+                    <span>• Kategori Berita</span>
+                </a>
+            </div>
         </div>
 
         <!-- 8. Halaman Layanan (3 Sub-Menu Selaras Publik) -->
@@ -407,14 +422,26 @@ $accred_nav_alerts = checkAccreditationExpirations();
             </a>
         </div>
 
-        <!-- 10. Kelola Halaman (Pages) -->
-        <div style="margin-bottom:0.35rem;">
-            <a href="<?= SITE_URL ?>/admin/page-list.php" class="admin-nav-link <?= in_array($current_admin, ['page-list','page-form']) ? 'active' : '' ?>">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                </svg>
-                <span>Daftar Halaman Website</span>
-            </a>
+        <!-- 10. Kelola Halaman (Pages - Dropdown) -->
+        <?php $grp_pages = in_array($current_admin, ['page-list','page-form','kategori-page']); ?>
+        <div class="admin-nav-dropdown <?= $grp_pages ? 'open' : '' ?>">
+            <button type="button" class="admin-dropdown-toggle <?= $grp_pages ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
+                <span class="d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <span>Kelola Halaman Web</span>
+                </span>
+                <i class="bi bi-chevron-down nav-chevron"></i>
+            </button>
+            <div class="admin-dropdown-menu">
+                <a href="<?= SITE_URL ?>/admin/page-list.php" class="admin-subnav-link <?= in_array($current_admin, ['page-list','page-form']) ? 'active' : '' ?>">
+                    <span>• Daftar Halaman</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/kategori-page.php" class="admin-subnav-link <?= $current_admin === 'kategori-page' ? 'active' : '' ?>">
+                    <span>• Kategori Halaman</span>
+                </a>
+            </div>
         </div>
 
         <!-- 10. Pengaturan Sistem (Dropdown) -->

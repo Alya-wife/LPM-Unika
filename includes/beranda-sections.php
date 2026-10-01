@@ -12,8 +12,16 @@ function getBerandaData() {
     $db = getDB();
     $data = [];
 
-    // 1. Hero Slides
-    $data['hero_slides'] = $db->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
+    // 1. Hero Slides & Persistent Text Settings
+    $data['hero_slides']        = $db->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
+    $data['hero_welcome_text']  = getPengaturan('hero_welcome_text', 'Selamat datang di');
+    $data['hero_title']         = getPengaturan('hero_title', 'Lembaga Penjaminan Mutu Unika');
+    $data['hero_tagline']       = getPengaturan('hero_tagline', 'GROW WITH QUALITY, SERVE WITH HEART');
+    $data['hero_desc']          = getPengaturan('hero_desc', '');
+    $data['hero_btn_text']      = getPengaturan('hero_btn_text', 'Akses Dokumen SPMI');
+    $data['hero_btn_link']      = getPengaturan('hero_btn_link', 'spmi.php');
+    $data['hero_btn2_text']     = getPengaturan('hero_btn2_text', 'Profil Lembaga');
+    $data['hero_btn2_link']     = getPengaturan('hero_btn2_link', 'profil.php');
 
     // 2. Berita terbaru
     $data['berita_terbaru'] = $db->query("SELECT * FROM berita WHERE status = 'published' ORDER BY tanggal_publikasi DESC LIMIT 3")->fetchAll();
@@ -86,12 +94,21 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
     switch ($type) {
         case 'beranda_hero':
         case 'hero':
-            $hero_slides = $data['hero_slides'];
+            $hero_slides       = $data['hero_slides'];
+            $hero_welcome_text = $data['hero_welcome_text'] ?? 'Selamat datang di';
+            $hero_title        = $data['hero_title'] ?? 'Lembaga Penjaminan Mutu Unika';
+            $hero_tagline      = $data['hero_tagline'] ?? 'GROW WITH QUALITY, SERVE WITH HEART';
+            $hero_desc         = $data['hero_desc'] ?? '';
+            $hero_btn_text     = $data['hero_btn_text'] ?? 'Akses Dokumen SPMI';
+            $hero_btn_link     = $data['hero_btn_link'] ?? 'spmi.php';
+            $hero_btn2_text    = $data['hero_btn2_text'] ?? 'Profil Lembaga';
+            $hero_btn2_link    = $data['hero_btn2_link'] ?? 'profil.php';
             ?>
             <section class="hero-carousel-section" style="<?= $bg ?>">
-                <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-pause="false">
+                <!-- Background Images Carousel (Only Images Change) -->
+                <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
                     <?php if (!empty($hero_slides)): ?>
-                        <div class="carousel-indicators">
+                        <div class="carousel-indicators" style="z-index: 6;">
                             <?php foreach ($hero_slides as $idx => $s): ?>
                                 <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<?= $idx ?>"
                                     class="<?= $idx === 0 ? 'active' : '' ?>" aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
@@ -108,71 +125,85 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                     $bg_img = SITE_URL . '/uploads/slides/' . $s['gambar'];
                                 }
                                 $style_bg = $bg_img ? "background-image: url('{$bg_img}');" : "background: var(--navy);";
-                                $judul_display = e($s['judul']);
-                                if ($s['highlight_text']) {
-                                    $hl = e($s['highlight_text']);
-                                    $judul_display = str_ireplace($hl, '<span class="highlight-navy">' . $hl . '</span>', $judul_display);
-                                }
                                 ?>
                                 <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>" style="<?= $style_bg ?>">
                                     <div class="carousel-overlay"></div>
-                                    <div class="container h-100 position-relative z-index-2">
-                                        <div class="row h-100 align-items-center">
-                                            <div class="col-lg-8">
-                                                <?php if ($s['subjudul']): ?>
-                                                    <div class="hero-badge animate-fadeInUp">
-                                                        <span class="hero-badge-dot"></span>
-                                                        <?= e($s['subjudul']) ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <h1 class="hero-title animate-fadeInUp animate-delay-100">
-                                                    <?= $judul_display ?>
-                                                </h1>
-                                                <?php if ($s['deskripsi']): ?>
-                                                    <p class="hero-desc animate-fadeInUp animate-delay-200">
-                                                        <?= e($s['deskripsi']) ?>
-                                                    </p>
-                                                <?php endif; ?>
-                                                <div class="hero-actions animate-fadeInUp animate-delay-300">
-                                                    <?php if ($s['btn_text']): ?>
-                                                        <a href="<?= e($s['btn_link'] ?: '#') ?>" class="btn-hero-primary">
-                                                            <?= e($s['btn_text']) ?>
-                                                        </a>
-                                                    <?php endif; ?>
-                                                    <?php if ($s['btn_secondary_text']): ?>
-                                                        <a href="<?= e($s['btn_secondary_link'] ?: '#') ?>" class="btn-hero-secondary">
-                                                            <?= e($s['btn_secondary_text']) ?>
-                                                        </a>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                         <?php if (count($hero_slides) > 1): ?>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" style="z-index: 6;">
                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                 <span class="visually-hidden">Previous</span>
                             </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" style="z-index: 6;">
                                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                 <span class="visually-hidden">Next</span>
                             </button>
                         <?php endif; ?>
                     <?php else: ?>
                         <div class="carousel-inner">
-                            <div class="carousel-item active" style="background: var(--navy); min-height: 480px; display:flex; align-items:center;">
-                                <div class="container text-white py-5">
-                                    <div class="hero-badge mb-3"><span class="hero-badge-dot"></span>LPM UNIKA</div>
-                                    <h1 class="hero-title">Lembaga Penjaminan Mutu UNIKA</h1>
-                                    <p class="hero-desc">Berkomitmen mewujudkan mutu pendidikan tinggi yang unggul dan berkelanjutan.</p>
-                                    <a href="spmi.php" class="btn-hero-primary">Akses Dokumen SPMI</a>
-                                </div>
+                            <div class="carousel-item active" style="background: var(--navy); height: 100%;">
+                                <div class="carousel-overlay"></div>
                             </div>
                         </div>
                     <?php endif; ?>
+                </div>
+
+                <!-- Persistent Stationary Text Overlay (Stays in place while background changes) -->
+                <div class="hero-static-overlay">
+                    <div class="container position-relative">
+                        <div class="row align-items-center">
+                            <div class="col-lg-10 col-xl-9">
+                                <!-- Baris 1: Selamat datang di (Text biasa) -->
+                                <div class="hero-welcome-text animate-fadeInUp" style="font-family: var(--font-heading); font-size: clamp(1.4rem, 2.8vw, 2.2rem); font-weight: 600; color: rgba(255, 255, 255, 0.95); margin-bottom: 0.2rem; letter-spacing: -0.3px; text-shadow: 0 2px 10px rgba(0,0,0,0.4);">
+                                    <?= e($hero_welcome_text) ?>
+                                </div>
+
+                                <!-- Baris 2: Lembaga Penjaminan Mutu Unika -->
+                                <h1 class="hero-title animate-fadeInUp animate-delay-100" style="margin-bottom: 1.15rem; text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
+                                    <?= e($hero_title) ?>
+                                </h1>
+
+                                <!-- Baris 3: GROW WITH QUALITY, SERVE WITH HEART -->
+                                <div class="mb-4 animate-fadeInUp animate-delay-200">
+                                    <div class="hero-tagline-badge">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--gold);flex-shrink:0;">
+                                            <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span><?= e($hero_tagline) ?></span>
+                                    </div>
+                                </div>
+
+                                <?php if (!empty($hero_desc)): ?>
+                                    <p class="hero-desc animate-fadeInUp animate-delay-200 mb-4">
+                                        <?= e($hero_desc) ?>
+                                    </p>
+                                <?php endif; ?>
+
+                                <!-- Tombol Aksi -->
+                                <div class="hero-actions animate-fadeInUp animate-delay-300">
+                                    <?php if ($hero_btn_text): 
+                                        $is_ext1 = str_starts_with($hero_btn_link, 'http://') || str_starts_with($hero_btn_link, 'https://');
+                                    ?>
+                                        <a href="<?= e($hero_btn_link) ?>" class="btn-hero-primary" style="text-decoration:none;" <?= $is_ext1 ? 'target="_blank" rel="noopener noreferrer"' : '' ?>>
+                                            <?= e($hero_btn_text) ?>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if ($hero_btn2_text): 
+                                        $is_ext2 = str_starts_with($hero_btn2_link, 'http://') || str_starts_with($hero_btn2_link, 'https://');
+                                    ?>
+                                        <a href="<?= e($hero_btn2_link) ?>" class="btn-hero-secondary" style="text-decoration:none;" <?= $is_ext2 ? 'target="_blank" rel="noopener noreferrer"' : '' ?>>
+                                            <?= e($hero_btn2_text) ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
             <?php

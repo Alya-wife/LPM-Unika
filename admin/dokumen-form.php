@@ -118,6 +118,12 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <option value="<?= e($val) ?>" <?= ($is_edit ? $dokumen['kategori'] : ($_POST['kategori'] ?? '')) === $val ? 'selected' : '' ?>><?= e($val) ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <div class="mt-1 d-flex justify-content-between align-items-center" style="font-size:0.75rem;">
+                                <span class="text-muted">Pilihan kategori diambil dari data Kategori Dokumen SPMI.</span>
+                                <a href="kategori-dokumen.php" target="_blank" class="text-primary text-decoration-none fw-semibold">
+                                    <i class="bi bi-gear-fill me-1"></i> Kelola / Tambah Kategori Baru &rarr;
+                                </a>
+                            </div>
                         </div>
 
                         <div class="col-12">

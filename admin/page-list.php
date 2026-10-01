@@ -70,7 +70,14 @@ $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $pages = $stmt->fetchAll();
 
-$kategori_list = $db->query("SELECT DISTINCT kategori FROM pages WHERE kategori IS NOT NULL AND kategori != '' ORDER BY kategori ASC")->fetchAll(PDO::FETCH_COLUMN);
+try {
+    $kategori_list = $db->query("SELECT nama_kategori FROM kategori_page ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    $kategori_list = [];
+}
+if (empty($kategori_list)) {
+    $kategori_list = $db->query("SELECT DISTINCT kategori FROM pages WHERE kategori IS NOT NULL AND kategori != '' ORDER BY kategori ASC")->fetchAll(PDO::FETCH_COLUMN);
+}
 
 $total_pages     = (int)$db->query("SELECT COUNT(*) FROM pages")->fetchColumn();
 $total_published = (int)$db->query("SELECT COUNT(*) FROM pages WHERE status = 'publish'")->fetchColumn();
@@ -91,6 +98,9 @@ require_once __DIR__ . '/includes/admin-header.php';
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="kategori-page.php" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1" style="border-radius:var(--radius-sm);font-size:0.85rem;padding:0.55rem 1rem;font-weight:600;">
+            <i class="bi bi-tags"></i> Kelola Kategori
+        </a>
         <a href="advance-setting.php" class="btn btn-primary d-inline-flex align-items-center gap-1" style="background:var(--primary);border:none;border-radius:var(--radius-sm);font-size:0.85rem;padding:0.55rem 1.1rem;font-weight:700;">
             <i class="bi bi-layout-text-window-reverse"></i> Visual Page Builder
         </a>

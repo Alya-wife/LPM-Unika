@@ -225,18 +225,32 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 value="<?= e($is_edit ? $berita['judul'] : ($_POST['judul'] ?? '')) ?>" required>
                         </div>
 
-                        <!-- Tipe -->
+                        <!-- Tipe / Kategori Publikasi -->
                         <div class="col-md-4">
-                            <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="tipe">
-                                Tipe Publikasi
-                            </label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="tipe">
+                                    Tipe / Kategori Publikasi
+                                </label>
+                                <a href="kategori-berita.php" target="_blank" class="text-primary text-decoration-none" style="font-size:0.75rem;font-weight:600;">
+                                    + Kelola Kategori
+                                </a>
+                            </div>
                             <select id="tipe" name="tipe" class="form-select" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem 1rem;">
                                 <?php
-                                $tipes = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];
+                                $tipes_db = [];
+                                try {
+                                    $tipes_db = $db->query("SELECT nama_kategori FROM kategori_berita ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_COLUMN);
+                                } catch (Exception $e) {}
+                                if (empty($tipes_db)) {
+                                    $tipes_db = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];
+                                }
                                 $cur_tipe = $is_edit ? ($berita['tipe'] ?? 'Berita') : ($_POST['tipe'] ?? 'Berita');
-                                foreach ($tipes as $t):
+                                if (!in_array($cur_tipe, $tipes_db) && !empty($cur_tipe)) {
+                                    $tipes_db[] = $cur_tipe;
+                                }
+                                foreach ($tipes_db as $t):
                                 ?>
-                                <option value="<?= $t ?>" <?= $cur_tipe === $t ? 'selected' : '' ?>><?= $t ?></option>
+                                <option value="<?= e($t) ?>" <?= $cur_tipe === $t ? 'selected' : '' ?>><?= e($t) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

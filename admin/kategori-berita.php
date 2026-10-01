@@ -1,40 +1,34 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Kelola Kategori Dokumen SPMI';
+$admin_page_title = 'Kelola Kategori Berita & Kegiatan';
 $db = getDB();
 
 $flash = '';
 $error = '';
 
-// Handle Delete (Dengan opsi pemindahan dokumen jika ada dokumen terkait)
+// Handle Delete (Dengan opsi relokasi berita jika ada berita terkait)
 if (isset($_POST['action']) && $_POST['action'] === 'delete') {
     $id = (int)($_POST['id'] ?? 0);
-    $target_kategori = trim($_POST['target_kategori'] ?? '');
+    $target_kategori = trim($_POST['target_kategori'] ?? 'Berita');
 
-    $row = $db->prepare("SELECT id, nama_kategori FROM kategori_dokumen WHERE id = ?");
+    $row = $db->prepare("SELECT id, nama_kategori FROM kategori_berita WHERE id = ?");
     $row->execute([$id]);
     $kat = $row->fetch();
 
     if ($kat) {
-        $count_stmt = $db->prepare("SELECT COUNT(*) FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
+        $count_stmt = $db->prepare("SELECT COUNT(*) FROM berita WHERE CONVERT(tipe USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
         $count_stmt->execute([$kat['nama_kategori']]);
-        $total_dok = (int)$count_stmt->fetchColumn();
+        $total_berita = (int)$count_stmt->fetchColumn();
 
-        if ($total_dok > 0) {
-            if ($target_kategori && $target_kategori !== $kat['nama_kategori']) {
-                $up = $db->prepare("UPDATE dokumen SET kategori = ? WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
-                $up->execute([$target_kategori, $kat['nama_kategori']]);
-            } else {
-                // Fallback jika tidak dipilih kategori lain
-                $up = $db->prepare("UPDATE dokumen SET kategori = 'Umum' WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
-                $up->execute([$kat['nama_kategori']]);
-            }
+        if ($total_berita > 0) {
+            $up = $db->prepare("UPDATE berita SET tipe = ? WHERE CONVERT(tipe USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
+            $up->execute([$target_kategori, $kat['nama_kategori']]);
         }
 
-        $db->prepare("DELETE FROM kategori_dokumen WHERE id = ?")->execute([$id]);
-        $_SESSION['flash'] = 'Kategori "' . $kat['nama_kategori'] . '" berhasil dihapus.' . ($total_dok > 0 ? " ($total_dok dokumen dialihkan ke kategori $target_kategori)" : '');
+        $db->prepare("DELETE FROM kategori_berita WHERE id = ?")->execute([$id]);
+        $_SESSION['flash'] = 'Kategori berita "' . $kat['nama_kategori'] . '" berhasil dihapus.' . ($total_berita > 0 ? " ($total_berita berita dialihkan ke kategori $target_kategori)" : '');
     }
-    redirect(SITE_URL . '/admin/kategori-dokumen.php');
+    redirect(SITE_URL . '/admin/kategori-berita.php');
 }
 
 // Handle Add / Edit
@@ -44,57 +38,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $id     = (int)($_POST['id'] ?? 0);
 
     if (!$nama) {
-        $error = 'Nama kategori wajib diisi.';
+        $error = 'Nama kategori berita wajib diisi.';
     } else {
         $slug = makeSlug($nama);
 
         if ($action === 'create') {
-            $check = $db->prepare("SELECT id FROM kategori_dokumen WHERE slug = ? OR nama_kategori = ?");
+            $check = $db->prepare("SELECT id FROM kategori_berita WHERE slug = ? OR nama_kategori = ?");
             $check->execute([$slug, $nama]);
             if ($check->fetch()) {
-                $error = "Kategori '{$nama}' sudah ada.";
+                $error = "Kategori berita '{$nama}' sudah ada.";
             } else {
-                $stmt = $db->prepare("INSERT INTO kategori_dokumen (nama_kategori, slug) VALUES (?, ?)");
+                $stmt = $db->prepare("INSERT INTO kategori_berita (nama_kategori, slug) VALUES (?, ?)");
                 $stmt->execute([$nama, $slug]);
-                $_SESSION['flash'] = "Kategori dokumen '{$nama}' berhasil ditambahkan.";
-                redirect(SITE_URL . '/admin/kategori-dokumen.php');
+                $_SESSION['flash'] = "Kategori berita baru '{$nama}' berhasil ditambahkan.";
+                redirect(SITE_URL . '/admin/kategori-berita.php');
             }
         } elseif ($action === 'edit' && $id > 0) {
-            $old_stmt = $db->prepare("SELECT id, nama_kategori FROM kategori_dokumen WHERE id = ?");
+            $old_stmt = $db->prepare("SELECT id, nama_kategori FROM kategori_berita WHERE id = ?");
             $old_stmt->execute([$id]);
             $old_kat = $old_stmt->fetch();
 
             if ($old_kat) {
-                $check = $db->prepare("SELECT id FROM kategori_dokumen WHERE (slug = ? OR nama_kategori = ?) AND id != ?");
+                $check = $db->prepare("SELECT id FROM kategori_berita WHERE (slug = ? OR nama_kategori = ?) AND id != ?");
                 $check->execute([$slug, $nama, $id]);
                 if ($check->fetch()) {
-                    $error = "Kategori dengan nama '{$nama}' sudah digunakan kategori lain.";
+                    $error = "Nama kategori '{$nama}' sudah digunakan kategori lain.";
                 } else {
-                    $stmt = $db->prepare("UPDATE kategori_dokumen SET nama_kategori = ?, slug = ? WHERE id = ?");
+                    $stmt = $db->prepare("UPDATE kategori_berita SET nama_kategori = ?, slug = ? WHERE id = ?");
                     $stmt->execute([$nama, $slug, $id]);
 
-                    // Sinkronisasi nama kategori pada tabel dokumen jika berubah
+                    // Sinkronisasi tipe berita pada tabel berita jika berubah
                     if ($old_kat['nama_kategori'] !== $nama) {
-                        $up_dok = $db->prepare("UPDATE dokumen SET kategori = ? WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
-                        $up_dok->execute([$nama, $old_kat['nama_kategori']]);
-                        $affected = $up_dok->rowCount();
+                        $up_berita = $db->prepare("UPDATE berita SET tipe = ? WHERE CONVERT(tipe USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
+                        $up_berita->execute([$nama, $old_kat['nama_kategori']]);
+                        $affected = $up_berita->rowCount();
                     } else {
                         $affected = 0;
                     }
 
-                    $_SESSION['flash'] = "Kategori dokumen berhasil diperbarui menjadi '{$nama}'." . ($affected > 0 ? " ($affected dokumen otomatis diperbarui)" : '');
-                    redirect(SITE_URL . '/admin/kategori-dokumen.php');
+                    $_SESSION['flash'] = "Kategori berita berhasil diperbarui menjadi '{$nama}'." . ($affected > 0 ? " ($affected berita otomatis disinkronkan)" : '');
+                    redirect(SITE_URL . '/admin/kategori-berita.php');
                 }
             }
         }
     }
 }
 
-$kategori_list = $db->query("SELECT id, nama_kategori, slug FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-$count_stmt = $db->prepare("SELECT COUNT(*) FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
+$kategori_list = $db->query("SELECT id, nama_kategori, slug FROM kategori_berita ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+$count_stmt = $db->prepare("SELECT COUNT(*) FROM berita WHERE CONVERT(tipe USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
 foreach ($kategori_list as &$k) {
     $count_stmt->execute([$k['nama_kategori']]);
-    $k['total_dok'] = (int)$count_stmt->fetchColumn();
+    $k['total_berita'] = (int)$count_stmt->fetchColumn();
 }
 unset($k);
 
@@ -106,18 +100,18 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">Kategori Dokumen SPMI</h2>
-        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola master kategori pengelompokan dokumen mutu SPMI untuk formulir upload dan filter website publik.</p>
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">Kategori Berita &amp; Kegiatan</h2>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola master kategori atau tipe publikasi artikel dan kegiatan LPM.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="dokumen-list.php" class="btn-action" style="background:#fff;border:1.5px solid var(--border);color:var(--navy);text-decoration:none;">
-            &larr; Daftar Dokumen
+        <a href="berita-list.php" class="btn-action" style="background:#fff;border:1.5px solid var(--border);color:var(--navy);text-decoration:none;">
+            &larr; Daftar Berita &amp; Kegiatan
         </a>
-        <a href="dokumen-form.php" class="btn-add">
+        <a href="berita-form.php" class="btn-add">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Upload Dokumen
+            Tulis Berita Baru
         </a>
     </div>
 </div>
@@ -141,41 +135,41 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <div class="row g-4">
-    <!-- Form Tambah Kategori -->
+    <!-- Form Tambah Kategori Berita -->
     <div class="col-lg-4">
         <div class="admin-table-wrap">
             <div class="admin-table-topbar">
-                <div class="admin-table-title">Tambah Kategori Baru</div>
+                <div class="admin-table-title">Tambah Kategori Berita Baru</div>
             </div>
             <div style="padding:1.5rem;">
                 <form method="POST">
                     <input type="hidden" name="action" value="create">
                     <div class="mb-3">
                         <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                            Nama Kategori Dokumen <span style="color:#C62828;">*</span>
+                            Nama Kategori / Tipe Publikasi <span style="color:#C62828;">*</span>
                         </label>
-                        <input type="text" name="nama_kategori" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-size:0.88rem;" placeholder="Contoh: Dokumen Regulasi / Panduan" required>
-                        <small class="text-muted d-block mt-1">Kategori baru akan otomatis muncul pada opsi upload dokumen dan tombol filter di halaman SPMI publik.</small>
+                        <input type="text" name="nama_kategori" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-size:0.88rem;" placeholder="Contoh: Workshop Mutu, Pengumuman, dll" required>
+                        <small class="text-muted d-block mt-1">Kategori baru otomatis muncul sebagai pilihan tipe saat menulis berita dan filter pencarian publik.</small>
                     </div>
                     <button type="submit" class="btn-submit w-100 fw-bold py-2" style="background:var(--navy);border-radius:8px;">
-                        <i class="bi bi-plus-circle me-1"></i> Tambah Kategori
+                        <i class="bi bi-plus-circle me-1"></i> Tambah Kategori Berita
                     </button>
                 </form>
             </div>
         </div>
 
         <div class="p-3 mt-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;font-size:0.8rem;color:var(--text-muted);line-height:1.6;">
-            <i class="bi bi-info-circle-fill text-primary me-1"></i> <strong>Catatan Penggunaan:</strong>
-            <br>Jika Anda mengubah nama kategori, semua dokumen yang sebelumnya terhubung dengan kategori tersebut akan otomatis diperbarui secara aman.
+            <i class="bi bi-info-circle-fill text-primary me-1"></i> <strong>Informasi Sinkronisasi:</strong>
+            <br>Perubahan nama kategori akan otomatis menyinkronkan seluruh berita yang memiliki kategori bersangkutan.
         </div>
     </div>
 
-    <!-- Tabel Daftar Kategori -->
+    <!-- Tabel Daftar Kategori Berita -->
     <div class="col-lg-8">
         <div class="admin-table-wrap">
             <div class="admin-table-topbar d-flex justify-content-between align-items-center">
-                <div class="admin-table-title">Daftar Kategori Aktif (<?= count($kategori_list) ?>)</div>
-                <small class="text-muted">Total <?= array_sum(array_column($kategori_list, 'total_dok')) ?> Dokumen Terdistribusi</small>
+                <div class="admin-table-title">Daftar Kategori Berita (<?= count($kategori_list) ?>)</div>
+                <small class="text-muted">Total <?= array_sum(array_column($kategori_list, 'total_berita')) ?> Berita Terdata</small>
             </div>
             <div style="overflow-x:auto;">
                 <table class="admin-table">
@@ -183,14 +177,14 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <tr>
                             <th width="40" style="text-align:center;">#</th>
                             <th>Nama Kategori</th>
-                            <th width="140" style="text-align:center;">Jumlah File</th>
+                            <th width="140" style="text-align:center;">Jumlah Berita</th>
                             <th width="150" style="text-align:center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($kategori_list)): ?>
                         <tr>
-                            <td colspan="4" class="text-center py-4 text-muted">Belum ada kategori dokumen.</td>
+                            <td colspan="4" class="text-center py-4 text-muted">Belum ada kategori berita.</td>
                         </tr>
                         <?php else: ?>
                             <?php foreach ($kategori_list as $idx => $k): ?>
@@ -198,11 +192,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <td style="color:var(--text-muted);text-align:center;font-weight:600;"><?= $idx + 1 ?></td>
                                 <td>
                                     <div style="font-weight:700;color:var(--navy);font-size:0.92rem;"><?= e($k['nama_kategori']) ?></div>
-                                    <div style="font-size:0.75rem;color:var(--text-muted);">Slug URL: <code><?= e($k['slug']) ?></code></div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">Slug: <code><?= e($k['slug']) ?></code></div>
                                 </td>
                                 <td style="text-align:center;">
-                                    <a href="dokumen-list.php?kategori=<?= urlencode($k['nama_kategori']) ?>" class="badge text-decoration-none" style="background:#EDE9FE;color:#6D28D9;font-weight:700;font-size:0.78rem;padding:0.35rem 0.65rem;border-radius:6px;" title="Lihat dokumen dalam kategori ini">
-                                        <i class="bi bi-file-earmark-text me-1"></i> <?= (int)$k['total_dok'] ?> berkas
+                                    <a href="berita-list.php?kategori=<?= urlencode($k['nama_kategori']) ?>" class="badge text-decoration-none" style="background:#EDE9FE;color:#6D28D9;font-weight:700;font-size:0.78rem;padding:0.35rem 0.65rem;border-radius:6px;" title="Lihat berita dalam kategori ini">
+                                        <i class="bi bi-newspaper me-1"></i> <?= (int)$k['total_berita'] ?> berita
                                     </a>
                                 </td>
                                 <td style="text-align:center;">
@@ -210,7 +204,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                         <button type="button" class="btn-action btn-edit" onclick="openEditModal(<?= $k['id'] ?>, '<?= e(addslashes($k['nama_kategori'])) ?>')" title="Edit Nama Kategori">
                                             <i class="bi bi-pencil-square"></i> Edit
                                         </button>
-                                        <button type="button" class="btn-action btn-delete" onclick="openDeleteModal(<?= $k['id'] ?>, '<?= e(addslashes($k['nama_kategori'])) ?>', <?= (int)$k['total_dok'] ?>)" title="Hapus Kategori">
+                                        <button type="button" class="btn-action btn-delete" onclick="openDeleteModal(<?= $k['id'] ?>, '<?= e(addslashes($k['nama_kategori'])) ?>', <?= (int)$k['total_berita'] ?>)" title="Hapus Kategori">
                                             <i class="bi bi-trash"></i> Hapus
                                         </button>
                                     </div>
@@ -225,12 +219,12 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
-<!-- Modal Edit Kategori -->
+<!-- Modal Edit Kategori Berita -->
 <div class="modal fade" id="modalEditKat" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <div class="modal-header" style="background:linear-gradient(135deg, var(--navy) 0%, #1E3A8A 100%);color:#fff;">
-                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-pencil-square me-2"></i> Edit Kategori Dokumen</h5>
+                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-pencil-square me-2"></i> Edit Kategori Berita</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST">
@@ -238,9 +232,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="id" id="edit_kat_id" value="">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Nama Kategori Dokumen <span style="color:#C62828;">*</span></label>
+                        <label class="form-label fw-bold small text-muted">Nama Kategori / Tipe <span style="color:#C62828;">*</span></label>
                         <input type="text" name="nama_kategori" id="edit_kat_nama" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" required>
-                        <small class="text-muted d-block mt-1">Nama kategori baru akan disinkronkan ke seluruh dokumen yang sedang menggunakannya.</small>
+                        <small class="text-muted d-block mt-1">Nama baru akan langsung disinkronkan ke semua berita yang memakai kategori ini.</small>
                     </div>
                 </div>
                 <div class="modal-footer bg-light p-3">
@@ -254,12 +248,12 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
-<!-- Modal Hapus Kategori (Aman dengan Opsi Relokasi Dokumen) -->
+<!-- Modal Hapus Kategori Berita -->
 <div class="modal fade" id="modalDeleteKat" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Konfirmasi Hapus Kategori</h5>
+                <h5 class="modal-title fw-bold" style="font-size:1rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Konfirmasi Hapus Kategori Berita</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST">
@@ -268,15 +262,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <input type="hidden" name="id" id="del_kat_id" value="">
                     
                     <p style="font-size:0.92rem;color:var(--navy);margin-bottom:0.75rem;">
-                        Apakah Anda yakin ingin menghapus kategori <strong id="del_kat_nama"></strong>?
+                        Apakah Anda yakin ingin menghapus kategori berita <strong id="del_kat_nama"></strong>?
                     </p>
 
-                    <div id="del_dok_warning" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:0.85rem;" class="mb-3">
+                    <div id="del_berita_warning" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:0.85rem;" class="mb-3">
                         <div class="d-flex align-items-center gap-2 text-danger fw-bold small mb-1">
-                            <i class="bi bi-info-circle-fill"></i> Peringatan Dokumen Terkait:
+                            <i class="bi bi-info-circle-fill"></i> Peringatan Berita Terkait:
                         </div>
                         <div style="font-size:0.8rem;color:#7F1D1D;" class="mb-2">
-                            Kategori ini masih memiliki <strong id="del_dok_count">0</strong> dokumen. Silakan pilih kategori tujuan untuk memindahkan dokumen tersebut:
+                            Terdapat <strong id="del_berita_count">0</strong> berita di kategori ini. Silakan pilih kategori baru untuk memindahkan berita tersebut:
                         </div>
                         <select name="target_kategori" id="del_target_kategori" class="form-select form-select-sm" style="border-radius:6px;">
                             <?php foreach ($kategori_list as $other_k): ?>
@@ -285,8 +279,8 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </select>
                     </div>
 
-                    <div id="del_dok_safe" style="display:none;font-size:0.82rem;color:var(--text-muted);">
-                        Kategori ini tidak memiliki dokumen terkait dan dapat dihapus langsung dengan aman.
+                    <div id="del_berita_safe" style="display:none;font-size:0.82rem;color:var(--text-muted);">
+                        Kategori ini tidak memiliki berita terkait dan dapat dihapus langsung dengan aman.
                     </div>
                 </div>
                 <div class="modal-footer bg-light p-3">
@@ -311,16 +305,15 @@ function openDeleteModal(id, nama, count) {
     document.getElementById('del_kat_id').value = id;
     document.getElementById('del_kat_nama').textContent = '"' + nama + '"';
     
-    var warningDiv = document.getElementById('del_dok_warning');
-    var safeDiv = document.getElementById('del_dok_safe');
-    var countSpan = document.getElementById('del_dok_count');
+    var warningDiv = document.getElementById('del_berita_warning');
+    var safeDiv = document.getElementById('del_berita_safe');
+    var countSpan = document.getElementById('del_berita_count');
     var selectTarget = document.getElementById('del_target_kategori');
 
     if (count > 0) {
         warningDiv.style.display = 'block';
         safeDiv.style.display = 'none';
         countSpan.textContent = count;
-        // Sembunyikan option yang sedang dihapus dari select
         for (var i = 0; i < selectTarget.options.length; i++) {
             if (selectTarget.options[i].value === nama) {
                 selectTarget.options[i].style.display = 'none';

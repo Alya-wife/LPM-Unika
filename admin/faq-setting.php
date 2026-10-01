@@ -50,8 +50,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_faq'])) {
     }
 }
 
+// Filter Category
+$kategori_filter = trim($_GET['kategori'] ?? '');
+
+// Get category list
+try {
+    $faq_categories = $db->query("SELECT nama_kategori FROM kategori_faq ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    $faq_categories = [];
+}
+if (empty($faq_categories)) {
+    $faq_categories = $db->query("SELECT DISTINCT kategori FROM faqs WHERE kategori IS NOT NULL AND kategori != '' ORDER BY kategori ASC")->fetchAll(PDO::FETCH_COLUMN);
+}
+
 // Get FAQ items
-$faqs = $db->query("SELECT * FROM faqs ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+if ($kategori_filter) {
+    $stmt_faq = $db->prepare("SELECT * FROM faqs WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY urutan ASC, id ASC");
+    $stmt_faq->execute([$kategori_filter]);
+    $faqs = $stmt_faq->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $faqs = $db->query("SELECT * FROM faqs ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+}
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -65,9 +84,12 @@ require_once __DIR__ . '/includes/admin-header.php';
             Kelola daftar pertanyaan yang sering diajukan seputar penjaminan mutu, SPMI, AMI, dan Akreditasi pada halaman publik.
         </p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <a href="<?= SITE_URL ?>/faq.php" target="_blank" class="btn btn-sm btn-outline-secondary fw-semibold d-flex align-items-center gap-1" style="border-radius:8px;">
             <i class="bi bi-box-arrow-up-right"></i> Lihat Halaman FAQ
+        </a>
+        <a href="kategori-faq.php" class="btn btn-sm btn-outline-primary fw-semibold d-flex align-items-center gap-1" style="border-radius:8px;">
+            <i class="bi bi-tags"></i> Kelola Kategori FAQ
         </a>
         <button type="button" class="btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1" style="border-radius:8px;background:var(--navy);border:none;" onclick="openFaqModal()">
             <i class="bi bi-plus-lg"></i> Tambah Pertanyaan FAQ
@@ -88,6 +110,19 @@ require_once __DIR__ . '/includes/admin-header.php';
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <?php endif; ?>
+
+<!-- Filter Kategori Tabs / Badges -->
+<div class="d-flex align-items-center gap-2 mb-3 overflow-auto pb-1 flex-wrap">
+    <span class="small fw-bold text-muted me-1"><i class="bi bi-funnel"></i> Kategori:</span>
+    <a href="faq-setting.php" class="badge rounded-pill text-decoration-none px-3 py-2 <?= empty($kategori_filter) ? 'bg-primary text-white' : 'bg-white text-secondary border' ?>" style="font-size:0.8rem;">
+        Semua Kategori
+    </a>
+    <?php foreach ($faq_categories as $fcat): ?>
+        <a href="faq-setting.php?kategori=<?= urlencode($fcat) ?>" class="badge rounded-pill text-decoration-none px-3 py-2 <?= $kategori_filter === $fcat ? 'bg-primary text-white' : 'bg-white text-secondary border' ?>" style="font-size:0.8rem;">
+            <?= htmlspecialchars($fcat) ?>
+        </a>
+    <?php endforeach; ?>
+</div>
 
 <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
     <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
@@ -176,8 +211,17 @@ require_once __DIR__ . '/includes/admin-header.php';
             <div class="modal-body p-4">
                 <div class="row g-3">
                     <div class="col-md-8">
-                        <label class="form-label small fw-bold">Kategori</label>
-                        <input type="text" name="kategori" id="faq_kategori" class="form-control form-control-sm" placeholder="Contoh: SPMI & PPEPP, AMI, Akreditasi, Umum" value="Umum" required>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold mb-0">Kategori FAQ</label>
+                            <a href="kategori-faq.php" target="_blank" class="small text-decoration-none text-primary fw-semibold" style="font-size:0.75rem;">
+                                <i class="bi bi-gear-fill me-1"></i>Kelola Kategori
+                            </a>
+                        </div>
+                        <select name="kategori" id="faq_kategori" class="form-select form-select-sm" required>
+                            <?php foreach ($faq_categories as $fcat): ?>
+                                <option value="<?= htmlspecialchars($fcat) ?>"><?= htmlspecialchars($fcat) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-bold">Nomor Urutan</label>
@@ -215,7 +259,10 @@ function openFaqModal() {
     document.getElementById('faq_id').value = '0';
     document.getElementById('faq_pertanyaan').value = '';
     document.getElementById('faq_jawaban').value = '';
-    document.getElementById('faq_kategori').value = 'Umum';
+    const katSelect = document.getElementById('faq_kategori');
+    if (katSelect.options.length > 0) {
+        katSelect.selectedIndex = 0;
+    }
     document.getElementById('faq_urutan').value = '<?= count($faqs) + 1 ?>';
     document.getElementById('faq_is_active').checked = true;
     new bootstrap.Modal(document.getElementById('modalFaq')).show();
@@ -226,7 +273,24 @@ function editFaq(item) {
     document.getElementById('faq_id').value = item.id;
     document.getElementById('faq_pertanyaan').value = item.pertanyaan;
     document.getElementById('faq_jawaban').value = item.jawaban;
-    document.getElementById('faq_kategori').value = item.kategori;
+    
+    const katSelect = document.getElementById('faq_kategori');
+    let found = false;
+    for (let i = 0; i < katSelect.options.length; i++) {
+        if (katSelect.options[i].value === item.kategori) {
+            katSelect.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+    if (!found && item.kategori) {
+        const opt = document.createElement('option');
+        opt.value = item.kategori;
+        opt.textContent = item.kategori;
+        katSelect.appendChild(opt);
+        katSelect.value = item.kategori;
+    }
+
     document.getElementById('faq_urutan').value = item.urutan;
     document.getElementById('faq_is_active').checked = (item.is_active == 1);
     new bootstrap.Modal(document.getElementById('modalFaq')).show();

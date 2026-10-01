@@ -17,8 +17,18 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     redirect(SITE_URL . '/admin/dokumen-list.php');
 }
 
-$dok_list = $db->query("SELECT * FROM dokumen ORDER BY kategori, created_at DESC")->fetchAll();
-$flash    = $_SESSION['flash'] ?? '';
+$filter_kategori = trim($_GET['kategori'] ?? '');
+$kategori_options = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+
+if ($filter_kategori !== '') {
+    $stmt = $db->prepare("SELECT * FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY created_at DESC");
+    $stmt->execute([$filter_kategori]);
+    $dok_list = $stmt->fetchAll();
+} else {
+    $dok_list = $db->query("SELECT * FROM dokumen ORDER BY kategori, created_at DESC")->fetchAll();
+}
+
+$flash = $_SESSION['flash'] ?? '';
 unset($_SESSION['flash']);
 
 require_once __DIR__ . '/includes/admin-header.php';
@@ -34,14 +44,32 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <div class="admin-table-wrap">
-    <div class="admin-table-topbar">
-        <div class="admin-table-title">Daftar Dokumen SPMI (<?= count($dok_list) ?>)</div>
-        <a href="dokumen-form.php" class="btn-add">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Upload Dokumen
-        </a>
+    <div class="admin-table-topbar d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="admin-table-title">Daftar Dokumen SPMI (<?= count($dok_list) ?>)</div>
+            <form method="GET" class="d-flex align-items-center gap-2">
+                <select name="kategori" class="form-select form-select-sm" style="font-size:0.8rem;border-radius:6px;min-width:180px;" onchange="this.form.submit()">
+                    <option value="">-- Semua Kategori Dokumen --</option>
+                    <?php foreach ($kategori_options as $k_opt): ?>
+                    <option value="<?= e($k_opt) ?>" <?= $filter_kategori === $k_opt ? 'selected' : '' ?>><?= e($k_opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($filter_kategori): ?>
+                <a href="dokumen-list.php" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;border-radius:6px;">Reset</a>
+                <?php endif; ?>
+            </form>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="kategori-dokumen.php" class="btn-action" style="background:#fff;border:1.5px solid var(--border);color:var(--navy);text-decoration:none;padding:0.45rem 0.9rem;">
+                <i class="bi bi-tags me-1"></i> Kelola Kategori
+            </a>
+            <a href="dokumen-form.php" class="btn-add">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Upload Dokumen
+            </a>
+        </div>
     </div>
 
     <?php if (empty($dok_list)): ?>

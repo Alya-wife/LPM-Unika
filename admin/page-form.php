@@ -231,13 +231,29 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                         <!-- Kategori -->
                         <div class="mb-3">
-                            <label class="form-label" style="font-weight:600;font-size:0.85rem;">Kategori Halaman</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0" style="font-weight:600;font-size:0.85rem;">Kategori Halaman</label>
+                                <a href="kategori-page.php" target="_blank" class="small text-decoration-none text-primary fw-semibold" style="font-size:0.75rem;">
+                                    + Kelola Kategori
+                                </a>
+                            </div>
                             <select name="kategori" class="form-select" style="border:1.5px solid var(--border);">
                                 <?php
-                                $kats = ['Profil', 'SPMI', 'AMI', 'Akreditasi', 'Mutu & Data', 'Dokumen', 'Knowledge Center', 'Layanan', 'Umum'];
+                                try {
+                                    $kats = $db->query("SELECT nama_kategori FROM kategori_page ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_COLUMN);
+                                } catch (Exception $e) {
+                                    $kats = [];
+                                }
+                                if (empty($kats)) {
+                                    $kats = ['Profil', 'SPMI', 'AMI', 'Akreditasi', 'Mutu & Data', 'Dokumen', 'Knowledge Center', 'Layanan', 'Umum'];
+                                }
+                                $curr_selected_cat = $is_edit ? ($page['kategori'] ?? 'Umum') : ($_POST['kategori'] ?? 'Umum');
+                                if (!in_array($curr_selected_cat, $kats) && !empty($curr_selected_cat)) {
+                                    $kats[] = $curr_selected_cat;
+                                }
                                 foreach ($kats as $k):
                                 ?>
-                                <option value="<?= $k ?>" <?= ($is_edit ? ($page['kategori'] ?? 'Umum') : ($_POST['kategori'] ?? 'Umum')) === $k ? 'selected' : '' ?>><?= $k ?></option>
+                                <option value="<?= htmlspecialchars($k) ?>" <?= $curr_selected_cat === $k ? 'selected' : '' ?>><?= htmlspecialchars($k) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

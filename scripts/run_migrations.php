@@ -286,4 +286,103 @@ foreach ($portalSettings as $k => $v) {
 }
 echo "Synced portal & greenmetric settings.\n";
 
+// 10. Table kategori_berita
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `kategori_berita` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `nama_kategori` VARCHAR(100) NOT NULL,
+        `slug` VARCHAR(100) NOT NULL UNIQUE,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$kbCount = (int)$db->query("SELECT COUNT(*) FROM kategori_berita")->fetchColumn();
+if ($kbCount === 0) {
+    $default_news_cats = ['Berita', 'Kegiatan LPM', 'Artikel Mutu', 'Sosialisasi', 'Penghargaan'];
+    $ins_kb = $db->prepare("INSERT IGNORE INTO kategori_berita (nama_kategori, slug) VALUES (?, ?)");
+    foreach ($default_news_cats as $nc) {
+        $ins_kb->execute([$nc, makeSlug($nc)]);
+    }
+    echo "Seeded initial kategori_berita table.\n";
+}
+
+// 11. Table kategori_faq
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `kategori_faq` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `nama_kategori` VARCHAR(100) NOT NULL,
+        `slug` VARCHAR(100) NOT NULL UNIQUE,
+        `keterangan` TEXT NULL,
+        `urutan` INT DEFAULT 0,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$kfaqCount = (int)$db->query("SELECT COUNT(*) FROM kategori_faq")->fetchColumn();
+if ($kfaqCount === 0) {
+    $default_faq_cats = [
+        ['SPMI', 'spmi', 'Pertanyaan seputar Sistem Penjaminan Mutu Internal dan siklus PPEPP', 1],
+        ['AMI', 'ami', 'Pertanyaan seputar pelaksanaan dan instrumen Audit Mutu Internal', 2],
+        ['Layanan', 'layanan', 'Pertanyaan seputar permohonan kunjungan, audiensi, dan kritik saran', 3],
+        ['Akreditasi', 'akreditasi', 'Pertanyaan seputar instrumen dan persiapan akreditasi LAM & BAN-PT', 4],
+        ['Umum', 'umum', 'Pertanyaan umum lainnya terkait mutu pendidikan tinggi', 5],
+    ];
+    $ins_faq = $db->prepare("INSERT IGNORE INTO kategori_faq (nama_kategori, slug, keterangan, urutan) VALUES (?, ?, ?, ?)");
+    foreach ($default_faq_cats as $fc) {
+        $ins_faq->execute($fc);
+    }
+    echo "Seeded initial kategori_faq table.\n";
+}
+
+// 12. Table kategori_page
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `kategori_page` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `nama_kategori` VARCHAR(100) NOT NULL,
+        `slug` VARCHAR(100) NOT NULL UNIQUE,
+        `keterangan` TEXT NULL,
+        `urutan` INT DEFAULT 0,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$kpCount = (int)$db->query("SELECT COUNT(*) FROM kategori_page")->fetchColumn();
+if ($kpCount === 0) {
+    $default_page_cats = [
+        ['Profil', 'profil', 'Halaman informasi profil, sejarah, dan struktur organisasi', 1],
+        ['SPMI', 'spmi', 'Halaman sistem penjaminan mutu internal', 2],
+        ['AMI', 'ami', 'Halaman proses dan pelaporan audit mutu internal', 3],
+        ['Akreditasi', 'akreditasi', 'Halaman akreditasi nasional dan internasional', 4],
+        ['Mutu & Data', 'mutu-data', 'Halaman capaian data mutu dan statistik universitas', 5],
+        ['Dokumen', 'dokumen', 'Halaman repository regulasi dan formulir', 6],
+        ['Knowledge Center', 'knowledge-center', 'Halaman pusat pengetahuan dan edukasi mutu', 7],
+        ['Layanan', 'layanan', 'Halaman layanan LPM kepada unit, dosen, mahasiswa dan mitra', 8],
+        ['Kontak', 'kontak', 'Halaman saluran komunikasi dan alamat LPM', 9],
+        ['Umum', 'umum', 'Halaman umum lainnya', 10],
+    ];
+    $ins_kp = $db->prepare("INSERT IGNORE INTO kategori_page (nama_kategori, slug, keterangan, urutan) VALUES (?, ?, ?, ?)");
+    foreach ($default_page_cats as $pc) {
+        $ins_kp->execute($pc);
+    }
+    echo "Seeded initial kategori_page table.\n";
+}
+
+// 13. Hero Banner Settings (Teks Tetap)
+$heroSettings = [
+    'hero_welcome_text'  => 'Selamat datang di',
+    'hero_title'         => 'Lembaga Penjaminan Mutu Unika',
+    'hero_tagline'       => 'GROW WITH QUALITY, SERVE WITH HEART',
+    'hero_desc'          => 'Mewujudkan tata kelola penjaminan mutu pendidikan tinggi yang unggul, terencana, dan berkelanjutan.',
+    'hero_btn_text'      => 'Akses Dokumen SPMI',
+    'hero_btn_link'      => 'spmi.php',
+    'hero_btn2_text'     => 'Profil Lembaga',
+    'hero_btn2_link'     => 'profil.php',
+];
+foreach ($heroSettings as $k => $v) {
+    if (getPengaturan($k, '') === '') {
+        setPengaturan($k, $v);
+    }
+}
+echo "Synced hero persistent banner settings.\n";
+
 echo "All migrations finished successfully!\n";

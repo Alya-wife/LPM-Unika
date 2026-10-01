@@ -16,8 +16,12 @@ function getSpmiData($kategori_filter = '') {
     $data['spmi_intro_text'] = getPengaturan('spmi_intro_text', 'Sistem Penjaminan Mutu Internal (SPMI) Universitas Katolik Soegijapranata merupakan kegiatan sistemik penjaminan mutu pendidikan tinggi yang dilaksanakan secara mandiri oleh universitas untuk mengendalikan dan meningkatkan penyelenggaraan pendidikan tinggi secara berencana dan berkelanjutan.');
 
     // Dokumen Mutu
+    $categories_dokumen_table = [];
+    try {
+        $categories_dokumen_table = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {}
     $categories_in_db = $db->query("SELECT DISTINCT kategori FROM dokumen")->fetchAll(PDO::FETCH_COLUMN);
-    $data['allowed_kategori'] = array_unique(array_merge(['Kebijakan', 'Manual', 'Standar', 'Formulir'], $categories_in_db));
+    $data['allowed_kategori'] = array_values(array_unique(array_filter(array_merge($categories_dokumen_table, $categories_in_db))));
 
     if ($kategori_filter && in_array($kategori_filter, $data['allowed_kategori'])) {
         $stmt = $db->prepare("SELECT * FROM dokumen WHERE kategori = ? ORDER BY created_at DESC");

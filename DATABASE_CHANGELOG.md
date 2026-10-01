@@ -152,6 +152,32 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
 - Kunci pengaturan UI GreenMetric (`admin/pemeringkatan-setting.php` & `pemeringkatan.php`):
   - `greenmetric_rank`, `greenmetric_scope`, `greenmetric_badge`, `greenmetric_title`, `greenmetric_desc`, `greenmetric_sertifikat`
 
+### I. Tabel Manajemen Kategori Dinamis Admin CMS
+Untuk memungkinkan administrator menambah, mengubah (edit/rename dengan cascading sync), dan menghapus kategori secara aman tanpa merusak integritas relasi data:
+1. **Kategori Dokumen Mutu SPMI (`kategori_dokumen`)**:
+   - Ditingkatkan dengan fitur CRUD penuh (`admin/kategori-dokumen.php`), sinkronisasi otomatis kolom `dokumen.kategori` saat nama kategori diedit, dan modal konfirmasi hapus dengan opsi pengalihan (*reassign*) dokumen agar tidak menjadi yatim (*orphan*).
+   - Filter tab kategori publik pada `spmi.php#dokumen-spmi` terhubung dinamis ke tabel ini melalui `includes/spmi-sections.php`.
+2. **Kategori Berita & Kegiatan (`kategori_berita`)**:
+   - Tabel baru ditambahkan dan di-seed dengan 5 kategori awal: `Berita`, `Kegiatan LPM`, `Artikel Mutu`, `Sosialisasi`, `Penghargaan`.
+   - Modul CRUD penuh di `admin/kategori-berita.php` terintegrasi dengan `admin/berita-form.php` dan `admin/berita-list.php`.
+3. **Kategori Tanya Jawab FAQ (`kategori_faq`)**:
+   - Tabel baru ditambahkan dan di-seed dengan kategori awal: `SPMI`, `AMI`, `Layanan`, `Akreditasi`, `Umum`.
+   - Modul CRUD penuh di `admin/kategori-faq.php` terintegrasi dengan filter kategori dan form tambah/edit di `admin/faq-setting.php`.
+4. **Kategori Halaman Website (`kategori_page`)**:
+   - Tabel baru ditambahkan dan di-seed dengan kategori: `Profil`, `SPMI`, `AMI`, `Akreditasi`, `Mutu & Data`, `Dokumen`, `Knowledge Center`, `Layanan`, `Kontak`, `Umum`.
+   - Modul CRUD penuh di `admin/kategori-page.php` terintegrasi dengan form `admin/page-form.php` dan filter `admin/page-list.php`.
+
+### J. Pengaturan Teks Banner Hero Beranda (Teks Tetap di Atas Slider)
+Pembaruan struktur tampilan banner slider beranda (`includes/beranda-sections.php`) di mana gambar latar belakang dapat berganti secara otomatis (fade/slide), namun susunan teks utama tetap (*stationary/persistent*) di depan layar:
+- Kunci pengaturan baru pada tabel `pengaturan`:
+  - `hero_welcome_text`: Teks pembuka/welcome badge (*default*: `Selamat datang di`).
+  - `hero_title`: Judul utama banner (*default*: `Lembaga Penjaminan Mutu Unika`).
+  - `hero_tagline`: Slogan/tagline mutu berbingkai emas (*default*: `GROW WITH QUALITY, SERVE WITH HEART`).
+  - `hero_desc`: Kalimat penjelasan komitmen mutu universitas.
+  - `hero_btn_text` & `hero_btn_link`: Tombol aksi utama (*default*: `Akses Dokumen SPMI` -> `spmi.php`).
+  - `hero_btn2_text` & `hero_btn2_link`: Tombol aksi sekunder (*default*: `Profil Lembaga` -> `profil.php`).
+- Form editor teks tetap dan live preview disediakan langsung pada [`admin/slider-list.php`](./admin/slider-list.php) bersama daftar gambar slide background.
+
 ---
 
 ## 2. Pemulihan & Sinkronisasi Data Konten

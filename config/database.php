@@ -26,9 +26,17 @@ define('SITE_URL', 'http://localhost/LPM'); // Sesuaikan dengan domain saat onli
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
-// 3. Konfigurasi Google OAuth (Terpisah di berkas config/oauth.php)
-if (file_exists(__DIR__ . '/oauth.php')) {
+// 3. Konfigurasi Google OAuth (Dapat menggunakan config/oauth.local.php atau config/oauth.php)
+if (file_exists(__DIR__ . '/oauth.local.php')) {
+    require_once __DIR__ . '/oauth.local.php';
+} elseif (file_exists(__DIR__ . '/oauth.php')) {
     require_once __DIR__ . '/oauth.php';
+}
+if (!defined('GOOGLE_CLIENT_ID')) {
+    define('GOOGLE_CLIENT_ID', '');
+}
+if (!defined('GOOGLE_CLIENT_SECRET')) {
+    define('GOOGLE_CLIENT_SECRET', '');
 }
 
 // Inisialisasi Sesi jika belum aktif

@@ -201,20 +201,26 @@ function renderAdminBeritaRowsHtml($list, $offset, $cur_status_filter = '') {
         <td>
             <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">
                 <?php if ($item_status === 'draft'): ?>
-                <a href="berita-list.php?publish=<?= $b['id'] ?>&status=<?= e($cur_status_filter) ?>" class="btn-action" style="background:#DCFCE7;color:#15803D;text-decoration:none;font-weight:700;" onclick="return confirm('Terbitkan berita ini ke publik sekarang?')" title="Terbitkan ke Publik">
-                    <i class="bi bi-cloud-arrow-up-fill"></i> Terbitkan
-                </a>
-                <?php else: ?>
-                <a href="berita-list.php?draft=<?= $b['id'] ?>&status=<?= e($cur_status_filter) ?>" class="btn-action" style="background:#F1F5F9;color:#64748B;text-decoration:none;" onclick="return confirm('Tarik kembali berita ini ke status Draft?')" title="Jadikan Draft">
-                    <i class="bi bi-pause-circle"></i> Draft
-                </a>
-                <?php endif; ?>
+                <span class="btn-action" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;cursor:default;" title="Status Berita: Draft">
+                    <i class="bi bi-clock-history"></i> Draft
+                </span>
                 <a href="berita-form.php?id=<?= $b['id'] ?>" class="btn-action btn-edit" style="text-decoration:none;" title="Edit Berita">
                     <i class="bi bi-pencil-square"></i> Edit
                 </a>
-                <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($b['slug']) ?>" target="_blank" class="btn-action" style="background:#E3F2FD;color:#1565C0;text-decoration:none;" title="Lihat Tampilan">
-                    <i class="bi bi-eye"></i> Lihat
+                <a href="berita-review.php?id=<?= $b['id'] ?>" class="btn-action" style="background:#16A34A;color:#fff;text-decoration:none;font-weight:700;" title="Tinjau &amp; Terbitkan">
+                    <i class="bi bi-cloud-arrow-up-fill"></i> Terbitkan
                 </a>
+                <?php else: ?>
+                <a href="berita-list.php?draft=<?= $b['id'] ?>&status=<?= e($cur_status_filter) ?>" class="btn-action" style="background:#FFFBEB;color:#B45309;text-decoration:none;border:1px solid #FDE68A;" onclick="return confirm('Tarik kembali berita ini ke status Draft?')" title="Kembalikan ke Draft">
+                    <i class="bi bi-pause-circle"></i> Draft
+                </a>
+                <a href="berita-form.php?id=<?= $b['id'] ?>" class="btn-action btn-edit" style="text-decoration:none;" title="Edit Berita">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </a>
+                <a href="berita-review.php?id=<?= $b['id'] ?>" class="btn-action" style="background:#EDE9FE;color:#6D28D9;text-decoration:none;" title="Tinjau Berita">
+                    <i class="bi bi-eye"></i> Tinjau
+                </a>
+                <?php endif; ?>
                 <a href="berita-list.php?delete=<?= $b['id'] ?>" class="btn-action btn-delete" style="text-decoration:none;" onclick="return confirm('Yakin hapus berita/kegiatan ini beserta seluruh fotonya?')" title="Hapus">
                     <i class="bi bi-trash"></i>
                 </a>

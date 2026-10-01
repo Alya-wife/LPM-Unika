@@ -139,35 +139,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!$error) {
-            $status = 'draft';
-            if (isset($_POST['save_publish'])) {
-                $status = 'published';
-            } elseif (isset($_POST['save_draft'])) {
-                $status = 'draft';
-            } elseif (isset($_POST['status']) && in_array($_POST['status'], ['draft', 'published'])) {
-                $status = $_POST['status'];
-            } elseif ($is_edit) {
-                $status = $berita['status'] ?? 'draft';
-            }
-
             if ($is_edit && $id) {
+                $status = $berita['status'] ?? 'draft';
                 $stmt = $db->prepare("UPDATE berita SET judul=?, tipe=?, slug=?, konten=?, gambar=?, tanggal_publikasi=?, tampil_di_ami=?, status=? WHERE id=?");
                 $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami, $status, $id]);
                 $berita_id = $id;
-                if ($status === 'published') {
-                    $_SESSION['flash'] = 'Berita/kegiatan berhasil diperbarui dan DITERBITKAN ke publik.';
-                } else {
-                    $_SESSION['flash'] = 'Perubahan berita berhasil disimpan sebagai DRAFT (Belum Terbit).';
-                }
+                $_SESSION['flash'] = 'Perubahan berita/kegiatan berhasil disimpan.';
             } else {
+                $status = 'draft';
                 $stmt = $db->prepare("INSERT INTO berita (judul, tipe, slug, konten, gambar, tanggal_publikasi, tampil_di_ami, status) VALUES (?,?,?,?,?,?,?,?)");
                 $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami, $status]);
                 $berita_id = (int)$db->lastInsertId();
-                if ($status === 'draft') {
-                    $_SESSION['flash'] = 'Berita baru berhasil disimpan sebagai DRAFT. Berita tidak langsung dipublikasikan ke website publik — silakan tinjau ulang terlebih dahulu sebelum menerbitkannya.';
-                } else {
-                    $_SESSION['flash'] = 'Berita/kegiatan berhasil ditambahkan dan langsung diterbitkan ke publik.';
-                }
+                $_SESSION['flash'] = 'Berita baru berhasil disimpan sebagai draft. Silakan klik "Terbitkan" untuk meninjau dan menerbitkannya.';
             }
 
             // Simpan gambar tambahan ke berita_gambar
@@ -462,26 +445,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
 
                         <!-- Tombol Aksi -->
+                        <!-- Tombol Aksi: Hanya Batal dan Selesai -->
                         <div class="col-12" style="padding-top:1rem;border-top:1px solid var(--border);margin-top:0.75rem;">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                <div>
-                                    <?php if ($is_edit): ?>
-                                    <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($berita['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary fw-semibold" style="border-radius:8px;">
-                                        <i class="bi bi-eye me-1"></i> Pratinjau Tampilan
-                                    </a>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <a href="berita-list.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:8px;">
-                                        Batal
-                                    </a>
-                                    <button type="submit" name="save_draft" value="1" class="btn btn-sm btn-secondary fw-bold px-3 py-2" style="border-radius:8px;background:#475569;border:none;">
-                                        <i class="bi bi-file-earmark-text me-1"></i> Simpan sebagai Draft
-                                    </button>
-                                    <button type="submit" name="save_publish" value="1" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-sm" style="border-radius:8px;background:#16A34A;border:none;">
-                                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> <?= $is_edit ? 'Simpan &amp; Terbitkan' : 'Terbitkan Sekarang' ?>
-                                    </button>
-                                </div>
+                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                <a href="berita-list.php" class="btn btn-outline-secondary px-4 py-2 fw-semibold" style="border-radius:8px;font-size:0.88rem;">
+                                    Batal
+                                </a>
+                                <button type="submit" name="submit_selesai" value="1" class="btn btn-primary px-4 py-2 fw-bold shadow-sm" style="border-radius:8px;background:var(--navy);border:none;font-size:0.88rem;">
+                                    <i class="bi bi-check2-circle me-1"></i> Selesai
+                                </button>
                             </div>
                         </div>
                     </div>

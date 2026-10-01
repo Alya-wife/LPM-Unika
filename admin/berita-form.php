@@ -200,28 +200,6 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
         <?php endif; ?>
 
-        <?php 
-        $current_status = $is_edit ? ($berita['status'] ?? 'draft') : 'draft';
-        if ($is_edit && $current_status === 'draft'): 
-        ?>
-        <div class="card mb-4 border-0 shadow-sm" style="background:#FFFBEB;border:1px solid #FCD34D;border-left:5px solid #F59E0B !important;border-radius:12px;">
-            <div class="card-body p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-3">
-                    <div style="width:38px;height:38px;border-radius:8px;background:#FDE68A;display:flex;align-items:center;justify-content:center;color:#D97706;font-size:1.25rem;">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <div>
-                        <strong class="text-warning-emphasis" style="font-size:0.92rem;">Status Artikel: DRAFT (Belum Diterbitkan)</strong>
-                        <div class="small text-muted">Berita ini masih tersimpan sebagai draft dan belum tampil di website publik. Tinjau ulang konten sebelum menerbitkannya.</div>
-                    </div>
-                </div>
-                <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($berita['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-warning fw-bold text-dark px-3 py-1">
-                    <i class="bi bi-eye me-1"></i> Pratinjau Tampilan Publik
-                </a>
-            </div>
-        </div>
-        <?php endif; ?>
-
         <div class="admin-table-wrap">
             <div class="admin-table-topbar">
                 <div class="admin-table-title"><?= $admin_page_title ?></div>
@@ -237,7 +215,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                     <div class="row g-3">
                         <!-- Judul -->
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="judul">
                                 Judul Berita / Kegiatan <span style="color:#C62828;">*</span>
                             </label>
@@ -248,7 +226,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
 
                         <!-- Tipe -->
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="tipe">
                                 Tipe Publikasi
                             </label>
@@ -260,17 +238,6 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 ?>
                                 <option value="<?= $t ?>" <?= $cur_tipe === $t ? 'selected' : '' ?>><?= $t ?></option>
                                 <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <!-- Status Publikasi -->
-                        <div class="col-md-3">
-                            <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="status">
-                                Status Publikasi
-                            </label>
-                            <select id="status" name="status" class="form-select fw-semibold" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem 1rem;">
-                                <option value="draft" <?= $current_status === 'draft' ? 'selected' : '' ?>>Draft (Perlu Ditinjau)</option>
-                                <option value="published" <?= $current_status === 'published' ? 'selected' : '' ?>>Terbitkan ke Publik</option>
                             </select>
                         </div>
 

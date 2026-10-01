@@ -30,12 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Ukuran foto maksimal 3MB.';
             } else {
                 $dir = __DIR__ . '/../uploads/profil/';
-                if (!is_dir($dir)) mkdir($dir, 0755, true);
-                $filename = 'kepala_' . time() . '.' . $ext;
-                if (move_uploaded_file($_FILES['sambutan_foto']['tmp_name'], $dir . $filename)) {
+                $saved_foto = convertAndSaveWebP($_FILES['sambutan_foto']['tmp_name'], $dir, 'kepala_');
+                if ($saved_foto) {
                     $old = getPengaturan('sambutan_foto');
                     if ($old && file_exists($dir . $old)) @unlink($dir . $old);
-                    setPengaturan('sambutan_foto', $filename);
+                    setPengaturan('sambutan_foto', $saved_foto);
+                } else {
+                    $error = 'Gagal mengonversi foto kepala LPM ke format WebP.';
                 }
             }
         }

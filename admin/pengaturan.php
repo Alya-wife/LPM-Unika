@@ -32,14 +32,14 @@ $flash = $_SESSION['flash'] ?? '';
 unset($_SESSION['flash']);
 
 $site_title     = getPengaturan('site_title', 'LPM UNIKA');
-$site_subtitle  = getPengaturan('site_subtitle', 'Soegijapranata Catholic University');
+$site_subtitle  = getPengaturan('site_subtitle', 'Universitas Katolik Soegijapranata');
 $alamat         = getPengaturan('alamat', "Ruang Lembaga Penjaminan Mutu\nGedung Thomas Aquinas Lantai 5\nKampus Universitas Katolik Soegijapranata\nJalan Pawiyatan Luhur IV/1 Bendan Duwur Semarang 50234");
 $telepon        = getPengaturan('telepon', '024-8441555 Ext 1473');
 $email          = getPengaturan('email', 'lpm@unika.ac.id');
 $jam_kerja      = getPengaturan('jam_kerja', 'Senin – Jumat: 08.00 – 16.00 WIB');
 $website_url    = getPengaturan('website_url', 'https://www.unika.ac.id');
 $maps_embed_url = getPengaturan('maps_embed_url', '');
-$footer_desc    = getPengaturan('footer_desc', 'Lembaga Penjaminan Mutu Soegijapranata Catholic University berkomitmen untuk mewujudkan mutu pendidikan tinggi yang unggul, berkelanjutan, dan berdaya saing global.');
+$footer_desc    = getPengaturan('footer_desc', 'Lembaga Penjaminan Mutu Universitas Katolik Soegijapranata berkomitmen untuk mewujudkan mutu pendidikan tinggi yang unggul, berkelanjutan, dan berdaya saing global.');
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -60,6 +60,25 @@ require_once __DIR__ . '/includes/admin-header.php';
             <?= e($flash) ?>
         </div>
         <?php endif; ?>
+
+        <!-- Navigation Sub-tabs for Settings -->
+        <ul class="nav nav-pills mb-4 gap-2 p-2 rounded-3 bg-white border">
+            <li class="nav-item">
+                <a class="nav-link active" href="pengaturan.php" style="font-weight:600;font-size:0.85rem;border-radius:8px;">
+                    <i class="bi bi-building me-1"></i> Identitas &amp; Kontak
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="advance-setting.php" style="font-weight:600;font-size:0.85rem;border-radius:8px;color:#7C3AED;">
+                    <i class="bi bi-layout-text-window-reverse me-1"></i> Visual Page Builder
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="page-list.php" style="font-weight:600;font-size:0.85rem;border-radius:8px;color:var(--navy);">
+                    <i class="bi bi-file-earmark-text me-1"></i> Daftar Halaman
+                </a>
+            </li>
+        </ul>
 
         <div class="admin-table-wrap">
             <div class="admin-table-topbar">
@@ -154,6 +173,19 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Utilitas Pemeliharaan Website -->
+        <div class="card-lpm mb-4 mt-4" style="background:#ffffff;border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+            <div style="padding:1.5rem 1.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <h5 style="margin:0;font-weight:700;color:var(--navy);">Utilitas Optimasi Media &amp; Gambar</h5>
+                    <p style="margin:0.25rem 0 0;font-size:0.85rem;color:var(--text-muted);">Konversi gambar lama di server hosting ke WebP Full HD agar website lebih cepat.</p>
+                </div>
+                <a href="convert-images.php" class="btn btn-outline-primary btn-sm px-3" style="font-weight:600;">
+                    Buka Konverter WebP &rarr;
+                </a>
             </div>
         </div>
     </div>

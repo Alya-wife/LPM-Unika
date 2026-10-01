@@ -14,10 +14,28 @@ if (!$berita) {
     redirect(SITE_URL . '/berita.php');
 }
 
+// Ambil semua foto (Cover + Galeri Slider)
+$all_images = [];
+if (!empty($berita['gambar']) && file_exists(__DIR__ . '/uploads/berita/' . $berita['gambar'])) {
+    $all_images[] = $berita['gambar'];
+}
+$stmt_extras = $db->prepare("SELECT gambar FROM berita_gambar WHERE berita_id = ? ORDER BY urutan ASC, id ASC");
+$stmt_extras->execute([(int)$berita['id']]);
+while ($extra = $stmt_extras->fetch()) {
+    if (!empty($extra['gambar']) && file_exists(__DIR__ . '/uploads/berita/' . $extra['gambar'])) {
+        if (!in_array($extra['gambar'], $all_images)) {
+            $all_images[] = $extra['gambar'];
+        }
+    }
+}
+
 // Berita lainnya
 $related = $db->prepare("SELECT * FROM berita WHERE slug != ? ORDER BY tanggal_publikasi DESC LIMIT 3");
 $related->execute([$slug]);
 $related_list = $related->fetchAll();
+
+$tgl_publikasi = $berita['tanggal_publikasi'] ?: $berita['created_at'];
+$tahun_akademik = getTahunAkademik($tgl_publikasi);
 
 $page_title = $berita['judul'];
 $meta_desc  = truncate($berita['konten'], 160);
@@ -29,7 +47,7 @@ require_once __DIR__ . '/includes/navbar.php';
 <!-- Page Banner -->
 <div class="page-banner">
     <div class="container position-relative">
-        <h1 class="page-banner-title" style="font-size:clamp(1.4rem,3vw,2.2rem);max-width:700px;">
+        <h1 class="page-banner-title" style="font-size:clamp(1.4rem,3vw,2.2rem);max-width:760px;">
             <?= e($berita['judul']) ?>
         </h1>
         <div class="breadcrumb-lpm mt-2">
@@ -47,31 +65,97 @@ require_once __DIR__ . '/includes/navbar.php';
         <div class="row g-5">
             <!-- Main Content -->
             <div class="col-lg-8">
-                <!-- Meta -->
-                <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
-                    <span class="card-category-badge">Kegiatan LPM</span>
-                    <span style="font-size:0.85rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="15" height="15">
+                <!-- Meta Info -->
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-4">
+                    <span class="card-category-badge"><?= e($berita['tipe'] ?: 'Kegiatan LPM') ?></span>
+                    <?php if ($tahun_akademik): ?>
+                    <a href="<?= SITE_URL ?>/berita.php?ta=<?= urlencode($tahun_akademik) ?>" class="badge text-decoration-none" style="background:#EDE9FE;color:#6D28D9;font-weight:700;font-size:0.75rem;padding:0.35rem 0.7rem;border-radius:4px;">
+                        TA <?= e($tahun_akademik) ?>
+                    </a>
+                    <?php endif; ?>
+                    <span style="font-size:0.85rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-left:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                         </svg>
-                        <?= formatTanggal($berita['tanggal_publikasi'] ?: $berita['created_at']) ?>
+                        <?= formatTanggal($tgl_publikasi) ?>
                     </span>
                 </div>
 
-                <!-- Featured Image -->
-                <?php if ($berita['gambar'] && file_exists(__DIR__ . '/uploads/berita/' . $berita['gambar'])): ?>
-                <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:2rem;">
-                    <img src="<?= SITE_URL ?>/uploads/berita/<?= e($berita['gambar']) ?>" alt="<?= e($berita['judul']) ?>" style="width:100%;max-height:450px;object-fit:cover;">
+                <!-- Media Section: Slider vs Single Image -->
+                <?php if (count($all_images) > 1): ?>
+                <!-- Carousel / Slider Kegiatan LPM -->
+                <div class="kegiatan-slider-wrap mb-4" style="background:#0F172A;border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
+                    <div id="kegiatanCarousel" class="carousel slide position-relative" data-bs-ride="carousel" data-bs-interval="4500">
+                        
+                        <!-- Floating Slide Counter -->
+                        <div style="position:absolute;top:16px;right:16px;z-index:10;background:rgba(15,23,42,0.75);backdrop-filter:blur(6px);color:#fff;font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);">
+                            <span id="sliderCurrentIndex">1</span> / <?= count($all_images) ?> Foto
+                        </div>
+
+                        <!-- Slides -->
+                        <div class="carousel-inner" style="max-height:500px;">
+                            <?php foreach ($all_images as $idx => $img_name): ?>
+                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                <img src="<?= SITE_URL ?>/uploads/berita/<?= e($img_name) ?>" 
+                                     alt="<?= e($berita['judul']) ?> - Foto <?= $idx + 1 ?>" 
+                                     class="d-block w-100" 
+                                     style="height:480px;object-fit:contain;background:#090D16;cursor:pointer;"
+                                     onclick="openImageModal('<?= SITE_URL ?>/uploads/berita/<?= e($img_name) ?>')">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <!-- Prev Button -->
+                        <button class="carousel-control-prev" type="button" data-bs-target="#kegiatanCarousel" data-bs-slide="prev" style="width:50px;opacity:0.9;">
+                            <span class="d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);border-radius:50%;border:1px solid rgba(255,255,255,0.25);transition:all 0.2s;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#fff" width="18" height="18">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                                </svg>
+                            </span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+
+                        <!-- Next Button -->
+                        <button class="carousel-control-next" type="button" data-bs-target="#kegiatanCarousel" data-bs-slide="next" style="width:50px;opacity:0.9;">
+                            <span class="d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);border-radius:50%;border:1px solid rgba(255,255,255,0.25);transition:all 0.2s;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#fff" width="18" height="18">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+
+                    <!-- Thumbnails Strip -->
+                    <div class="p-2 d-flex gap-2 justify-content-center flex-wrap" style="background:#0F172A;border-top:1px solid rgba(255,255,255,0.08);">
+                        <?php foreach ($all_images as $idx => $img_name): ?>
+                        <div class="carousel-thumb-item <?= $idx === 0 ? 'active' : '' ?>" 
+                             data-bs-target="#kegiatanCarousel" 
+                             data-bs-slide-to="<?= $idx ?>" 
+                             id="thumb-<?= $idx ?>"
+                             style="width:68px;height:48px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid <?= $idx === 0 ? '#8B5CF6' : 'rgba(255,255,255,0.2)' ?>;opacity:<?= $idx === 0 ? '1' : '0.6' ?>;transition:all 0.2s;"
+                             onmouseover="this.style.opacity='1'" 
+                             onmouseout="if(!this.classList.contains('active')) this.style.opacity='0.6'">
+                            <img src="<?= SITE_URL ?>/uploads/berita/<?= e($img_name) ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <?php elseif (count($all_images) === 1): ?>
+                <!-- Single Featured Image -->
+                <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    <img src="<?= SITE_URL ?>/uploads/berita/<?= e($all_images[0]) ?>" alt="<?= e($berita['judul']) ?>" style="width:100%;max-height:460px;object-fit:cover;cursor:pointer;" onclick="openImageModal('<?= SITE_URL ?>/uploads/berita/<?= e($all_images[0]) ?>')">
                 </div>
                 <?php endif; ?>
 
                 <!-- Content -->
-                <div style="font-size:1rem;color:var(--text-muted);line-height:1.9;">
+                <div style="font-size:1.02rem;color:var(--text-muted);line-height:1.9;margin-bottom:2rem;">
                     <?= nl2br(e($berita['konten'])) ?>
                 </div>
 
-                <!-- Share -->
-                <div style="border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <!-- Share Buttons -->
+                <div style="border-top:1px solid var(--border);padding-top:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
                     <span style="font-size:0.85rem;font-weight:600;color:var(--navy);font-family:var(--font-heading);">Bagikan:</span>
                     <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode(SITE_URL . '/berita-detail.php?slug=' . $berita['slug']) ?>" target="_blank" class="btn-action btn-edit">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
@@ -98,14 +182,17 @@ require_once __DIR__ . '/includes/navbar.php';
             <div class="col-lg-4">
                 <div style="position:sticky;top:100px;">
                     <div style="font-family:var(--font-heading);font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:2px solid var(--purple);">
-                        Berita Lainnya
+                        Berita / Kegiatan Lainnya
                     </div>
                     <?php if (empty($related_list)): ?>
                     <p style="font-size:0.85rem;color:var(--text-muted);">Belum ada berita lainnya.</p>
                     <?php else: ?>
-                    <?php foreach ($related_list as $r): ?>
+                    <?php foreach ($related_list as $r): 
+                        $rel_tgl = $r['tanggal_publikasi'] ?: $r['created_at'];
+                        $rel_ta  = getTahunAkademik($rel_tgl);
+                    ?>
                     <a href="berita-detail.php?slug=<?= e($r['slug']) ?>" class="d-flex gap-3 mb-3 text-decoration-none" style="padding:0.875rem;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition);" onmouseover="this.style.borderColor='rgba(106,27,154,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
-                        <div style="flex-shrink:0;width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--navy-mid),var(--purple-dark));display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                        <div style="flex-shrink:0;width:60px;height:60px;border-radius:8px;background:linear-gradient(135deg,var(--navy-mid),var(--purple-dark));display:flex;align-items:center;justify-content:center;overflow:hidden;">
                             <?php if ($r['gambar'] && file_exists(__DIR__ . '/uploads/berita/' . $r['gambar'])): ?>
                                 <img src="<?= SITE_URL ?>/uploads/berita/<?= e($r['gambar']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
                             <?php else: ?>
@@ -115,20 +202,76 @@ require_once __DIR__ . '/includes/navbar.php';
                             <?php endif; ?>
                         </div>
                         <div>
-                            <div style="font-size:0.83rem;font-weight:600;color:var(--navy);line-height:1.4;"><?= e(mb_substr($r['judul'], 0, 60)) ?><?= mb_strlen($r['judul']) > 60 ? '...' : '' ?></div>
-                            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:3px;"><?= formatTanggal($r['tanggal_publikasi'] ?: $r['created_at']) ?></div>
+                            <div style="font-size:0.83rem;font-weight:600;color:var(--navy);line-height:1.4;"><?= e(mb_substr($r['judul'], 0, 55)) ?><?= mb_strlen($r['judul']) > 55 ? '...' : '' ?></div>
+                            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:0.72rem;color:var(--text-muted);">
+                                <?php if ($rel_ta): ?>
+                                <span class="badge" style="background:#EDE9FE;color:#6D28D9;font-weight:600;font-size:0.68rem;padding:1px 5px;border-radius:3px;">
+                                    TA <?= e($rel_ta) ?>
+                                </span>
+                                <?php endif; ?>
+                                <span><?= formatTanggal($rel_tgl) ?></span>
+                            </div>
                         </div>
                     </a>
                     <?php endforeach; ?>
                     <?php endif; ?>
 
                     <a href="berita.php" class="btn-add mt-3 w-100 justify-content-center">
-                        Lihat Semua Berita
+                        Lihat Semua Berita &amp; Kegiatan
                     </a>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Image Lightbox Modal -->
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="background:transparent;border:none;">
+            <div class="modal-body p-0 position-relative text-center">
+                <button type="button" class="btn-close btn-close-white position-absolute" style="top:-35px;right:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));" data-bs-dismiss="modal" aria-label="Close"></button>
+                <img id="lightboxImg" src="" alt="" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const carouselEl = document.getElementById('kegiatanCarousel');
+    if (carouselEl) {
+        const counterEl = document.getElementById('sliderCurrentIndex');
+        const thumbs = document.querySelectorAll('.carousel-thumb-item');
+
+        carouselEl.addEventListener('slide.bs.carousel', function(event) {
+            const nextIndex = event.to;
+            if (counterEl) {
+                counterEl.textContent = nextIndex + 1;
+            }
+            thumbs.forEach((t, i) => {
+                if (i === nextIndex) {
+                    t.classList.add('active');
+                    t.style.borderColor = '#8B5CF6';
+                    t.style.opacity = '1';
+                } else {
+                    t.classList.remove('active');
+                    t.style.borderColor = 'rgba(255,255,255,0.2)';
+                    t.style.opacity = '0.6';
+                }
+            });
+        });
+    }
+});
+
+function openImageModal(imgSrc) {
+    const modalImg = document.getElementById('lightboxImg');
+    if (modalImg) {
+        modalImg.src = imgSrc;
+        const modal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+        modal.show();
+    }
+}
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

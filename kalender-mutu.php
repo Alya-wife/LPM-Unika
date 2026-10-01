@@ -1,10 +1,22 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-$page_title = 'Kalender Mutu 2026–2027 – LPM UNIKA';
-$meta_desc  = 'Kalender Mutu Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata Tahun Akademik 2026–2027.';
 
 $db = getDB();
-$kalender_list = $db->query("SELECT * FROM kalender_mutu WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
+$periode_aktif = getPengaturan('kalender_periode_aktif', '2026/2027');
+
+$all_periodes_km = $db->query("SELECT DISTINCT tahun_akademik FROM kalender_mutu WHERE is_active = 1 AND tahun_akademik IS NOT NULL AND tahun_akademik != '' ORDER BY tahun_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
+
+$filter_periode = $_GET['periode'] ?? $periode_aktif;
+
+$stmt_km = $db->prepare("SELECT * FROM kalender_mutu WHERE is_active = 1 AND tahun_akademik = ? ORDER BY urutan ASC, id ASC");
+$stmt_km->execute([$filter_periode]);
+$kalender_list = $stmt_km->fetchAll();
+if (empty($kalender_list) && empty($_GET['periode'])) {
+    $kalender_list = $db->query("SELECT * FROM kalender_mutu WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
+}
+
+$page_title = "Kalender Mutu $filter_periode – LPM UNIKA";
+$meta_desc  = "Kalender Mutu Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata Tahun Akademik $filter_periode.";
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
@@ -17,11 +29,11 @@ require_once __DIR__ . '/includes/navbar.php';
             <span class="hero-badge-dot"></span>
             Jadwal &amp; Agenda Resmi Mutu
         </div>
-        <h1 class="page-banner-title">Kalender Mutu 2026–2027</h1>
+        <h1 class="page-banner-title">Kalender Mutu <?= e($filter_periode) ?></h1>
         <div class="breadcrumb-lpm">
             <a href="<?= SITE_URL ?>/">Beranda</a>
             <span>/</span>
-            <a href="<?= SITE_URL ?>/knowledge.php">Knowledge</a>
+            <a href="<?= SITE_URL ?>/knowledge.php">Knowledge Center</a>
             <span>/</span>
             <span class="current">Kalender Mutu</span>
         </div>
@@ -30,6 +42,27 @@ require_once __DIR__ . '/includes/navbar.php';
 
 <section class="py-5 py-md-6" style="background:#F8FAFC;">
     <div class="container">
+        
+        <?php if (!empty($all_periodes_km)): ?>
+        <!-- Period Switcher Pills & AMI Switch -->
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-4">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;margin-right:4px;">Histori Periode Akademik:</span>
+                <?php foreach ($all_periodes_km as $p): ?>
+                <a href="kalender-mutu.php?periode=<?= urlencode($p) ?>" class="btn btn-sm <?= $filter_periode === $p ? 'btn-primary fw-bold shadow-sm' : 'btn-outline-secondary' ?>" style="border-radius:20px;padding:0.4rem 1.2rem;font-size:0.85rem;">
+                    Periode <?= e($p) ?> <?= $p === $periode_aktif ? '(Utama)' : '' ?>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <a href="<?= SITE_URL ?>/kalender-ami.php" class="btn btn-sm btn-outline-primary fw-bold" style="border-radius:20px;padding:0.4rem 1.2rem;font-size:0.85rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="14" height="14" class="me-1">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Lihat Kalender Khusus AMI &rarr;
+            </a>
+        </div>
+        <?php endif; ?>
+
         <!-- Main Poster Card -->
         <div class="card-lpm mb-5" style="border-radius:var(--radius-xl);overflow:hidden;box-shadow:0 15px 40px rgba(10,25,47,0.08);border:1px solid var(--border);">
             <!-- Poster Header (Purple Banner inspired by official poster) -->
@@ -43,7 +76,7 @@ require_once __DIR__ . '/includes/navbar.php';
                     </svg>
                 </div>
                 <h2 style="font-family:var(--font-heading);font-weight:900;font-size:clamp(1.7rem, 3.5vw, 2.5rem);color:#FBBF24;margin-bottom:0.4rem;letter-spacing:1px;text-transform:uppercase;">
-                    KALENDER MUTU 2026–2027
+                    KALENDER MUTU <?= e($filter_periode) ?>
                 </h2>
                 <div style="font-family:var(--font-heading);font-weight:700;font-size:1.15rem;color:#ffffff;margin-bottom:0.25rem;">
                     Lembaga Penjaminan Mutu (LPM)

@@ -11,6 +11,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     if ($slide) $is_edit = true;
 }
 
+$dynamic_pages = $db->query("SELECT slug, judul, kategori FROM pages ORDER BY kategori ASC, judul ASC")->fetchAll();
+
 $admin_page_title = $is_edit ? 'Edit Slide Beranda' : 'Tambah Slide Beranda';
 $error = '';
 
@@ -48,15 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Ukuran file maksimal 5MB.';
             } else {
                 $dir = __DIR__ . '/../uploads/slides/';
-                if (!is_dir($dir)) mkdir($dir, 0755, true);
-                $filename = 'slide_' . uniqid() . '.' . $ext;
-                if (move_uploaded_file($_FILES['gambar_file']['tmp_name'], $dir . $filename)) {
+                $saved_slide = convertAndSaveWebP($_FILES['gambar_file']['tmp_name'], $dir, 'slide_');
+                if ($saved_slide) {
                     // Remove old local image if editing
                     if ($is_edit && $slide['gambar'] && !filter_var($slide['gambar'], FILTER_VALIDATE_URL)) {
                         $old_path = $dir . $slide['gambar'];
                         if (file_exists($old_path)) @unlink($old_path);
                     }
-                    $gambar = $filename;
+                    $gambar = $saved_slide;
+                } else {
+                    $error = 'Gagal mengonversi banner slider ke format WebP.';
                 }
             }
         }
@@ -129,7 +132,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Subjudul / Badge Atas
                             </label>
-                            <input type="text" name="subjudul" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Soegijapranata Catholic University" value="<?= e($is_edit ? $slide['subjudul'] : ($_POST['subjudul'] ?? '')) ?>">
+                            <input type="text" name="subjudul" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Universitas Katolik Soegijapranata" value="<?= e($is_edit ? $slide['subjudul'] : ($_POST['subjudul'] ?? '')) ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
@@ -177,27 +180,81 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Teks Tombol Utama
                             </label>
-                            <input type="text" name="btn_text" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Akses Dokumen SPMI" value="<?= e($is_edit ? $slide['btn_text'] : ($_POST['btn_text'] ?? 'Akses Dokumen SPMI')) ?>">
+                            <input type="text" id="input_btn_text" name="btn_text" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Akses Dokumen SPMI" value="<?= e($is_edit ? $slide['btn_text'] : ($_POST['btn_text'] ?? 'Akses Dokumen SPMI')) ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
-                                Link Tombol Utama
+                                Pilihan Halaman Tujuan (Tombol Utama)
                             </label>
-                            <input type="text" name="btn_link" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: spmi.php" value="<?= e($is_edit ? $slide['btn_link'] : ($_POST['btn_link'] ?? 'spmi.php')) ?>">
+                            <select id="select_btn_link" class="form-select" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-size:0.9rem;">
+                                <option value="">-- Pilih Halaman Tujuan --</option>
+                                <optgroup label="Halaman Utama & Modul Website">
+                                    <option value="spmi.php" data-default-text="Akses Dokumen SPMI">Sistem Penjaminan Mutu Internal (SPMI)</option>
+                                    <option value="profil.php" data-default-text="Profil LPM UNIKA">Profil LPM (Visi, Misi, Struktur)</option>
+                                    <option value="akreditasi.php" data-default-text="Status Akreditasi">Akreditasi Institusi & Program Studi</option>
+                                    <option value="ami.php" data-default-text="Audit Mutu Internal">Audit Mutu Internal (AMI)</option>
+                                    <option value="berita.php" data-default-text="Berita & Kegiatan">Berita & Kegiatan LPM</option>
+                                    <option value="buletin.php" data-default-text="Baca Buletin JAMUS">Buletin JAMUS (Publikasi Mutu)</option>
+                                    <option value="penghargaan.php" data-default-text="Prestasi & Penghargaan">Prestasi & Penghargaan Mutu</option>
+                                    <option value="layanan.php" data-default-text="Layanan Kunjungan">Layanan & Permohonan Kunjungan</option>
+                                    <option value="kalender-mutu.php" data-default-text="Kalender Mutu">Kalender Mutu Universitas</option>
+                                    <option value="faq.php" data-default-text="Tanya Jawab Mutu">Tanya Jawab (FAQ) Mutu</option>
+                                </optgroup>
+                                <?php if (!empty($dynamic_pages)): ?>
+                                <optgroup label="Halaman Khusus (Materi Dinamis)">
+                                    <?php foreach ($dynamic_pages as $dp): ?>
+                                    <option value="page.php?slug=<?= e($dp['slug']) ?>" data-default-text="<?= e($dp['judul']) ?>"><?= e($dp['judul']) ?> (<?= e($dp['kategori']) ?>)</option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <option value="custom">-- Ketik Tautan Manual / URL Luar --</option>
+                            </select>
+
+                            <div id="wrap_btn_link_custom" class="mt-2" style="display:none;">
+                                <small class="text-muted d-block mb-1">Ketik URL kustom atau link luar:</small>
+                                <input type="text" id="input_btn_link" name="btn_link" class="form-control" style="border:1.5px solid var(--border);padding:0.55rem 0.9rem;font-size:0.88rem;" placeholder="Contoh: spmi.php atau https://..." value="<?= e($is_edit ? $slide['btn_link'] : ($_POST['btn_link'] ?? 'spmi.php')) ?>">
+                            </div>
                         </div>
 
                         <!-- Tombol Sekunder -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 mt-3">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Teks Tombol Sekunder (Opsional)
                             </label>
-                            <input type="text" name="btn_secondary_text" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Profil LPM" value="<?= e($is_edit ? $slide['btn_secondary_text'] : ($_POST['btn_secondary_text'] ?? '')) ?>">
+                            <input type="text" id="input_btn_secondary_text" name="btn_secondary_text" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Profil LPM" value="<?= e($is_edit ? $slide['btn_secondary_text'] : ($_POST['btn_secondary_text'] ?? '')) ?>">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mt-3">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
-                                Link Tombol Sekunder (Opsional)
+                                Pilihan Halaman Tujuan (Tombol Sekunder)
                             </label>
-                            <input type="text" name="btn_secondary_link" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: profil.php" value="<?= e($is_edit ? $slide['btn_secondary_link'] : ($_POST['btn_secondary_link'] ?? '')) ?>">
+                            <select id="select_btn_secondary_link" class="form-select" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-size:0.9rem;">
+                                <option value="">-- Tidak Menggunakan Tombol Sekunder --</option>
+                                <optgroup label="Halaman Utama & Modul Website">
+                                    <option value="profil.php" data-default-text="Profil LPM">Profil LPM (Visi, Misi, Struktur)</option>
+                                    <option value="spmi.php" data-default-text="Sistem Penjaminan Mutu">Sistem Penjaminan Mutu Internal (SPMI)</option>
+                                    <option value="akreditasi.php" data-default-text="Status Akreditasi">Akreditasi Institusi & Program Studi</option>
+                                    <option value="ami.php" data-default-text="Audit Mutu Internal">Audit Mutu Internal (AMI)</option>
+                                    <option value="berita.php" data-default-text="Berita & Kegiatan">Berita & Kegiatan LPM</option>
+                                    <option value="buletin.php" data-default-text="Buletin JAMUS">Buletin JAMUS (Publikasi Mutu)</option>
+                                    <option value="penghargaan.php" data-default-text="Prestasi Mutu">Prestasi & Penghargaan Mutu</option>
+                                    <option value="layanan.php" data-default-text="Kunjungan Benchmark">Layanan & Permohonan Kunjungan</option>
+                                    <option value="kalender-mutu.php" data-default-text="Kalender Mutu">Kalender Mutu Universitas</option>
+                                    <option value="faq.php" data-default-text="Tanya Jawab FAQ">Tanya Jawab (FAQ) Mutu</option>
+                                </optgroup>
+                                <?php if (!empty($dynamic_pages)): ?>
+                                <optgroup label="Halaman Khusus (Materi Dinamis)">
+                                    <?php foreach ($dynamic_pages as $dp): ?>
+                                    <option value="page.php?slug=<?= e($dp['slug']) ?>" data-default-text="<?= e($dp['judul']) ?>"><?= e($dp['judul']) ?> (<?= e($dp['kategori']) ?>)</option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <option value="custom">-- Ketik Tautan Manual / URL Luar --</option>
+                            </select>
+
+                            <div id="wrap_btn_sec_link_custom" class="mt-2" style="display:none;">
+                                <small class="text-muted d-block mb-1">Ketik URL kustom atau link luar:</small>
+                                <input type="text" id="input_btn_secondary_link" name="btn_secondary_link" class="form-control" style="border:1.5px solid var(--border);padding:0.55rem 0.9rem;font-size:0.88rem;" placeholder="Contoh: profil.php atau https://..." value="<?= e($is_edit ? $slide['btn_secondary_link'] : ($_POST['btn_secondary_link'] ?? '')) ?>">
+                            </div>
                         </div>
 
                         <div class="col-12 mt-3">
@@ -227,4 +284,103 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Sync Tombol Utama
+    const selectPrimary = document.getElementById('select_btn_link');
+    const inputPrimary  = document.getElementById('input_btn_link');
+    const wrapPrimary   = document.getElementById('wrap_btn_link_custom');
+    const textPrimary   = document.getElementById('input_btn_text');
+
+    function syncPrimary() {
+        const val = inputPrimary.value.trim();
+        let matched = false;
+        for (let opt of selectPrimary.options) {
+            if (opt.value && opt.value === val) {
+                selectPrimary.value = val;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            if (val === '') {
+                selectPrimary.value = '';
+                wrapPrimary.style.display = 'none';
+            } else {
+                selectPrimary.value = 'custom';
+                wrapPrimary.style.display = 'block';
+            }
+        } else {
+            wrapPrimary.style.display = 'none';
+        }
+    }
+
+    selectPrimary.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            wrapPrimary.style.display = 'block';
+            inputPrimary.focus();
+        } else {
+            wrapPrimary.style.display = 'none';
+            inputPrimary.value = this.value;
+            // Auto-fill suggested button text if empty
+            const selOpt = this.options[this.selectedIndex];
+            const defaultText = selOpt ? selOpt.getAttribute('data-default-text') : '';
+            if (defaultText && (!textPrimary.value || textPrimary.value.trim() === '')) {
+                textPrimary.value = defaultText;
+            }
+        }
+    });
+
+    // 2. Sync Tombol Sekunder
+    const selectSec = document.getElementById('select_btn_secondary_link');
+    const inputSec  = document.getElementById('input_btn_secondary_link');
+    const wrapSec   = document.getElementById('wrap_btn_sec_link_custom');
+    const textSec   = document.getElementById('input_btn_secondary_text');
+
+    function syncSec() {
+        const val = inputSec.value.trim();
+        let matched = false;
+        for (let opt of selectSec.options) {
+            if (opt.value && opt.value === val) {
+                selectSec.value = val;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            if (val === '') {
+                selectSec.value = '';
+                wrapSec.style.display = 'none';
+            } else {
+                selectSec.value = 'custom';
+                wrapSec.style.display = 'block';
+            }
+        } else {
+            wrapSec.style.display = 'none';
+        }
+    }
+
+    selectSec.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            wrapSec.style.display = 'block';
+            inputSec.focus();
+        } else {
+            wrapSec.style.display = 'none';
+            inputSec.value = this.value;
+            // Auto-fill suggested button text if empty
+            const selOpt = this.options[this.selectedIndex];
+            const defaultText = selOpt ? selOpt.getAttribute('data-default-text') : '';
+            if (defaultText && (!textSec.value || textSec.value.trim() === '')) {
+                textSec.value = defaultText;
+            }
+        }
+    });
+
+    // Run initial sync
+    syncPrimary();
+    syncSec();
+});
+</script>
+
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>
+

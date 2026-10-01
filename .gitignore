@@ -1,0 +1,21 @@
+# Secrets & Local credentials
+config/oauth.local.php
+oauth.local.php
+.env
+
+# Temporary & scratch files
+found_*.txt
+backup_current.sql
+scratch_*.php
+*.tmp
+*.log
+
+# IDE & subagent files
+.vscode/
+.agent/
+.idea/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store

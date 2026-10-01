@@ -1,194 +1,212 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-$page_title = 'Layanan & Konsultasi Mutu';
-$meta_desc  = 'Layanan Lembaga Penjaminan Mutu SCU: Konsultasi Mutu, Pendampingan Akreditasi, Pelatihan, dan Formulir Aspirasi/Feedback.';
+$page_title = 'Kritik Saran & Permohonan Layanan';
+$meta_desc  = 'Formulir Kritik Saran & Feedback Mutu serta Pengajuan Permohonan Kunjungan Resmi ke Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata.';
 
 $db = getDB();
-$success = '';
-$error = '';
+$success_feedback = '';
+$error_feedback = '';
+$success_kunjungan = '';
+$error_kunjungan = '';
+
+$active_tab = 'feedback'; // Default tab: Kritik Saran & Feedback Mutu
+$req_tab = trim($_GET['tab'] ?? '');
+
+// Redirect to dedicated sub-menu pages if requested
+if (in_array($req_tab, ['pelatihan', 'biaya', 'jadwal', 'brosur'])) {
+    redirect(SITE_URL . '/pelatihan-eksternal.php' . ($req_tab !== 'pelatihan' ? '#' . $req_tab : ''));
+} elseif (in_array($req_tab, ['token', 'feedback-kunjungan'])) {
+    redirect(SITE_URL . '/feedback-kunjungan.php');
+} elseif ($req_tab === 'kunjungan') {
+    $active_tab = 'kunjungan';
+    $page_title = 'Pelayanan Permohonan Kunjungan & Studi Banding';
+    $meta_desc  = 'Formulir Pengajuan Permohonan Kunjungan Resmi dan Studi Banding ke Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata.';
+} else {
+    $active_tab = 'feedback';
+}
+
+// Load operating hours & active visit units
+$jam_mulai = getPengaturan('kunjungan_jam_mulai', '08:00');
+$jam_selesai = getPengaturan('kunjungan_jam_selesai', '15:00');
+
+$tujuan_units = $db->query("SELECT * FROM kunjungan_tujuan_unit WHERE is_active = 1 ORDER BY urutan ASC, nama_unit ASC")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama          = trim($_POST['nama'] ?? '');
-    $email         = trim($_POST['email'] ?? '');
-    $jenis_layanan = trim($_POST['jenis_layanan'] ?? '');
-    $instansi      = trim($_POST['instansi'] ?? '');
-    $pesan         = trim($_POST['pesan'] ?? '');
+    $action_form = $_POST['action_form'] ?? 'feedback';
 
-    if (!$nama || !$email || !$pesan) {
-        $error = 'Nama, email, dan pesan wajib diisi.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Format alamat email tidak valid.';
-    } else {
-        $stmt = $db->prepare("INSERT INTO feedback (nama, email, jenis_layanan, instansi, pesan) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$nama, $email, $jenis_layanan, $instansi, $pesan]);
-        $success = 'Terima kasih! Pesan dan pengajuan Anda telah berhasil dikirim ke tim LPM UNIKA. Kami akan segera menindaklanjutinya.';
+    if ($action_form === 'feedback') {
+        $active_tab = 'feedback';
+        $instansi      = trim($_POST['instansi'] ?? ($_POST['nama'] ?? ''));
+        $nama          = $instansi; // Disimpan sebagai nama instansi
+        $email         = trim($_POST['email'] ?? '');
+        $jenis_layanan = trim($_POST['jenis_layanan'] ?? '');
+        $pesan         = trim($_POST['pesan'] ?? '');
+
+        if (!$nama || !$email || !$pesan) {
+            $error_feedback = 'Nama instansi / institusi, alamat email, dan isi masukan wajib diisi.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error_feedback = 'Format alamat email tidak valid.';
+        } else {
+            $stmt = $db->prepare("INSERT INTO feedback (nama, email, jenis_layanan, instansi, pesan) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$nama, $email, $jenis_layanan, $instansi, $pesan]);
+            kirimNotifikasiEmailAspirasi($nama, $email, $jenis_layanan, $instansi, $pesan);
+            $success_feedback = getPengaturan('form_feedback_success_msg', 'Terima kasih! Kritik, saran, atau masukan dari instansi Anda telah berhasil dikirim ke tim LPM UNIKA.');
+        }
+    } elseif ($action_form === 'kunjungan') {
+        $active_tab = 'kunjungan';
+        $nama_institusi    = trim($_POST['nama_institusi'] ?? '');
+        $email             = trim($_POST['email'] ?? '');
+        $tanggal_kunjungan = trim($_POST['tanggal_kunjungan'] ?? '');
+        $waktu_kunjungan   = trim($_POST['waktu_kunjungan'] ?? '');
+        $perihal           = trim($_POST['perihal'] ?? '');
+        $jumlah_peserta    = min(20, max(1, (int)($_POST['jumlah_peserta'] ?? 1)));
+        $nama_pic          = trim($_POST['nama_pic'] ?? '');
+        $telepon_pic       = trim($_POST['telepon_pic'] ?? '');
+
+        $nama_audiensi_arr  = $_POST['nama_audiensi'] ?? [];
+        $jabatan_audiensi_arr = $_POST['jabatan_audiensi'] ?? [];
+
+        // Build detail audiensi array (maksimal 20 orang)
+        $detail_audiensi_list = [];
+        for ($i = 0; $i < $jumlah_peserta; $i++) {
+            $n = trim($nama_audiensi_arr[$i] ?? '');
+            $j = trim($jabatan_audiensi_arr[$i] ?? '');
+            if ($n !== '' || $j !== '') {
+                $detail_audiensi_list[] = [
+                    'nama' => $n,
+                    'jabatan' => $j
+                ];
+            }
+        }
+
+        // Tujuan kunjungan khusus ke Lembaga Penjaminan Mutu
+        $tujuan_unit_nama = 'Lembaga Penjaminan Mutu (LPM)';
+
+        $jadwal_mode   = getPengaturan('kunjungan_jadwal_mode', 'jumat_minggu_4_flexible');
+        $min_lead_days = (int)getPengaturan('kunjungan_min_lead_days', '14');
+        $min_date      = date('Y-m-d', strtotime("+{$min_lead_days} days"));
+
+        // Validasi input
+        if (!$nama_institusi || !$email || !$tanggal_kunjungan || !$waktu_kunjungan || !$perihal || !$nama_pic || !$telepon_pic) {
+            $error_kunjungan = 'Semua field wajib diisi lengkap.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error_kunjungan = 'Format email institusi tidak valid.';
+        } elseif ($tanggal_kunjungan < date('Y-m-d')) {
+            $error_kunjungan = 'Tanggal kunjungan tidak boleh di masa lalu.';
+        } elseif ($tanggal_kunjungan < $min_date) {
+            $error_kunjungan = "Penyampaian permohonan kunjungan studi banding paling lambat {$min_lead_days} hari sebelum kegiatan berlangsung.";
+        } elseif ($jadwal_mode === 'jumat_minggu_4_strict' && ((int)date('N', strtotime($tanggal_kunjungan)) !== 5 || (int)date('j', strtotime($tanggal_kunjungan)) < 22 || (int)date('j', strtotime($tanggal_kunjungan)) > 28)) {
+            $error_kunjungan = 'Sesuai kebijakan resmi LPM, Studi Banding dijadwalkan khusus pada setiap Jumat Minggu ke-IV.';
+        } elseif (empty($_FILES['surat_permohonan']['name']) || $_FILES['surat_permohonan']['error'] !== UPLOAD_ERR_OK) {
+            $error_kunjungan = 'Surat permohonan kunjungan resmi wajib diupload dalam format PDF.';
+        } else {
+            $file_info = $_FILES['surat_permohonan'];
+            $ext = strtolower(pathinfo($file_info['name'], PATHINFO_EXTENSION));
+
+            if ($ext !== 'pdf') {
+                $error_kunjungan = 'Format berkas surat permohonan harus berformat PDF.';
+            } elseif ($file_info['size'] > 10 * 1024 * 1024) { // 10MB
+                $error_kunjungan = 'Ukuran berkas surat permohonan tidak boleh lebih dari 10 MB.';
+            } else {
+                $upload_dir = __DIR__ . '/uploads/kunjungan/';
+                if (!is_dir($upload_dir)) {
+                    mkdir($upload_dir, 0755, true);
+                }
+
+                $filename = 'surat_kunjungan_' . time() . '_' . rand(1000, 9999) . '.pdf';
+                $target_path = $upload_dir . $filename;
+
+                if (move_uploaded_file($file_info['tmp_name'], $target_path)) {
+                    $json_audiensi = json_encode($detail_audiensi_list, JSON_UNESCAPED_UNICODE);
+
+                    $stmt = $db->prepare("INSERT INTO permohonan_kunjungan 
+                        (nama_institusi, email, tanggal_kunjungan, waktu_kunjungan, perihal, tujuan_unit, jumlah_peserta, data_audiensi, nama_pic, telepon_pic, file_surat, status, is_archived, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Belum Dibaca', 0, NOW())");
+                    
+                    $stmt->execute([
+                        $nama_institusi,
+                        $email,
+                        $tanggal_kunjungan,
+                        $waktu_kunjungan,
+                        $perihal,
+                        $tujuan_unit_nama,
+                        $jumlah_peserta,
+                        $json_audiensi,
+                        $nama_pic,
+                        $telepon_pic,
+                        $filename
+                    ]);
+
+                    $success_kunjungan = getPengaturan('form_kunjungan_success_msg', 'Permohonan kunjungan resmi dari institusi Anda berhasil dikirim ke LPM UNIKA! Tim kami akan melakukan verifikasi dan mengonfirmasi via email/WhatsApp PIC.');
+                } else {
+                    $error_kunjungan = 'Gagal mengunggah berkas surat permohonan. Silakan coba lagi.';
+                }
+            }
+        }
     }
 }
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
+
+$layanan_banner_sub = getPengaturan('layanan_banner_sub', '');
 ?>
 
 <!-- Page Banner -->
 <div class="page-banner">
     <div class="container position-relative">
-        <div class="hero-badge mb-3">
-            <span class="hero-badge-dot"></span>
-            Pelayanan Publik
-        </div>
-        <h1 class="page-banner-title">Layanan &amp; Konsultasi Mutu</h1>
+        <h1 class="page-banner-title" id="page-banner-title"><?= $active_tab === 'kunjungan' ? 'Permohonan Kunjungan Resmi' : 'Kritik &amp; Saran' ?></h1>
+        <?php if ($layanan_banner_sub): ?>
+        <p class="text-white-50 mt-2 mb-0" id="page-banner-desc" style="max-width:700px;font-size:0.95rem;line-height:1.6;"><?= e($layanan_banner_sub) ?></p>
+        <?php else: ?>
+        <p class="text-white-50 mt-2 mb-0" id="page-banner-desc" style="max-width:700px;font-size:0.95rem;line-height:1.6;">
+            <?= $active_tab === 'kunjungan' ? 'Formulir pengajuan kunjungan studi banding, benchmarking pengelolaan mutu, SPMI, AMI, dan akreditasi ke LPM UNIKA.' : 'Formulir penyampaian kritik konstruktif, saran perbaikan mutu kelembagaan, dan pengajuan surat permohonan kunjungan resmi ke LPM UNIKA.' ?>
+        </p>
+        <?php endif; ?>
         <div class="breadcrumb-lpm">
             <a href="<?= SITE_URL ?>/">Beranda</a>
             <span>/</span>
-            <span class="current">Layanan</span>
+            <a href="<?= SITE_URL ?>/layanan.php">Layanan</a>
+            <span>/</span>
+            <span class="current" id="page-breadcrumb-current"><?= $active_tab === 'kunjungan' ? 'Permohonan Kunjungan' : 'Kritik &amp; Saran' ?></span>
         </div>
     </div>
 </div>
 
-<!-- Layanan Cards -->
-<section class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <span class="section-tag">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
-                </svg>
-                Fasilitas
-            </span>
-            <h2 class="section-title">Program Layanan LPM UNIKA</h2>
-            <p class="section-desc mx-auto">Kami mendampingi fakultas, program studi, dan unit kerja dalam mewujudkan standar mutu unggul.</p>
-        </div>
+<?php
+require_once __DIR__ . '/includes/layanan-sections.php';
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card-lpm p-4 text-center h-100">
-                    <div style="width:60px;height:60px;border-radius:50%;background:rgba(10,25,47,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--navy)" width="30" height="30">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                        </svg>
-                    </div>
-                    <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:700;color:var(--navy);">Konsultasi Mutu</h4>
-                    <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;">
-                        Layanan konsultasi implementasi siklus PPEPP, perumusan standar mutu unit, dan penyusunan instrumen evaluasi kinerja berkala.
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card-lpm p-4 text-center h-100">
-                    <div style="width:60px;height:60px;border-radius:50%;background:rgba(106,27,154,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--purple)" width="30" height="30">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .982-3.172M12 3a4.5 4.5 0 0 0-4.5 4.5v1.875a3.375 3.375 0 0 0 3.375 3.375h2.25a3.375 3.375 0 0 0 3.375-3.375V7.5A4.5 4.5 0 0 0 12 3Z" />
-                        </svg>
-                    </div>
-                    <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:700;color:var(--navy);">Pendampingan Akreditasi</h4>
-                    <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;">
-                        Bimbingan intensif persiapan borang akreditasi, simulasi asesmen lapangan, serta pemenuhan syarat unggul BAN-PT dan 7 LAM.
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card-lpm p-4 text-center h-100">
-                    <div style="width:60px;height:60px;border-radius:50%;background:rgba(21,101,192,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#1565C0" width="30" height="30">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-2.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                        </svg>
-                    </div>
-                    <h4 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:700;color:var(--navy);">Pelatihan &amp; Workshop</h4>
-                    <p style="font-size:0.875rem;color:var(--text-muted);line-height:1.7;">
-                        Pelatihan auditor mutu internal, lokakarya kurikulum OBE (Outcome-Based Education), dan sosialisasi kebijakan mutu terbaru.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+$params = [
+    'active_tab'        => $active_tab,
+    'success_feedback'  => $success_feedback,
+    'error_feedback'    => $error_feedback,
+    'success_kunjungan' => $success_kunjungan,
+    'error_kunjungan'   => $error_kunjungan,
+    'tujuan_units'      => $tujuan_units,
+    'jam_mulai'         => $jam_mulai,
+    'jam_selesai'       => $jam_selesai
+];
 
-<!-- Feedback & Consultation Form Section -->
-<section class="py-5" style="background:var(--bg-white);">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card-lpm p-4 p-md-5" style="border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);">
-                    <div class="text-center mb-4">
-                        <span class="section-tag">Formulir Interaktif</span>
-                        <h3 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);">
-                            Pengajuan Layanan &amp; Aspirasi Mutu
-                        </h3>
-                        <p style="font-size:0.875rem;color:var(--text-muted);">
-                            Sampaikan kebutuhan konsultasi, pendampingan akreditasi, permohonan narasumber, atau kritik dan saran kepada LPM UNIKA.
-                        </p>
-                    </div>
+// Ambil susunan seksi dari Visual Page Builder
+$layanan_blocks = null;
+try {
+    $stmt_l = getDB()->query("SELECT blocks_json FROM pages WHERE slug = 'layanan'");
+    $row_l = $stmt_l->fetch();
+    if (!empty($row_l['blocks_json'])) {
+        $layanan_blocks = json_decode($row_l['blocks_json'], true);
+    }
+} catch (Exception $e) {}
 
-                    <?php if ($success): ?>
-                    <div class="alert-lpm alert-success mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                        <?= e($success) ?>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if ($error): ?>
-                    <div class="alert-lpm alert-danger mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                        </svg>
-                        <?= e($error) ?>
-                    </div>
-                    <?php endif; ?>
-
-                    <form method="POST">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                                    Nama Lengkap <span style="color:#C62828;">*</span>
-                                </label>
-                                <input type="text" name="nama" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Nama Anda" value="<?= e($_POST['nama'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                                    Alamat Email Resmi <span style="color:#C62828;">*</span>
-                                </label>
-                                <input type="email" name="email" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="email@unika.ac.id" value="<?= e($_POST['email'] ?? '') ?>" required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                                    Jenis Layanan / Pengajuan
-                                </label>
-                                <select name="jenis_layanan" class="form-select" style="border:1.5px solid var(--border);padding:0.7rem 1rem;">
-                                    <option value="Konsultasi Mutu">Konsultasi Mutu &amp; SPMI</option>
-                                    <option value="Pendampingan Akreditasi">Pendampingan Akreditasi Prodi</option>
-                                    <option value="Pelatihan Mutu">Permohonan Pelatihan / Workshop</option>
-                                    <option value="Permintaan Data Mutu">Permintaan Data &amp; Regulasi</option>
-                                    <option value="Kritik & Saran / Feedback">Kritik, Saran &amp; Feedback</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                                    Fakultas / Program Studi / Unit
-                                </label>
-                                <input type="text" name="instansi" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="Contoh: Fakultas Ilmu Komputer" value="<?= e($_POST['instansi'] ?? '') ?>">
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label" style="font-family:var(--font-heading);font-weight:600;font-size:0.85rem;color:var(--navy);">
-                                    Isi Pesan / Rincian Kebutuhan <span style="color:#C62828;">*</span>
-                                </label>
-                                <textarea name="pesan" rows="5" class="form-control" style="border:1.5px solid var(--border);padding:0.75rem 1rem;line-height:1.7;" placeholder="Jelaskan kebutuhan konsultasi atau sampaikan aspirasi mutu Anda..." required><?= e($_POST['pesan'] ?? '') ?></textarea>
-                            </div>
-
-                            <div class="col-12 text-end mt-3">
-                                <button type="submit" class="btn-hero-primary" style="padding:0.8rem 2.2rem;border:none;">
-                                    Kirim Pengajuan Layanan
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+if (!empty($layanan_blocks) && is_array($layanan_blocks)) {
+    foreach ($layanan_blocks as $block) {
+        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if (($block['type'] ?? '') === 'layanan_cards') continue; // Hilangkan kotak atas sesuai permintaan
+        renderLayananSection($block['type'], $block, false, $params);
+    }
+} else {
+    // Alur Langsung Formulir Kritik & Saran (tanpa kotak atas)
+    renderLayananSection('layanan_form', [], false, $params);
+}
+?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

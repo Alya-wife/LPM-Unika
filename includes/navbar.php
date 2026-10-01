@@ -1,17 +1,27 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
+$current_slug = trim($_GET['slug'] ?? '');
+
+$nav_main_pages = [];
+$nav_dropdown_pages = [];
+try {
+    $db_nav = getDB();
+    $nav_main_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND (nav_position = 'main' OR nav_position IS NULL OR nav_position = '') AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
+    $nav_dropdown_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND nav_position = 'dropdown' AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
+} catch (Exception $e) {
+    $nav_main_pages = [];
+    $nav_dropdown_pages = [];
+}
 ?>
 <nav id="main-navbar" class="navbar navbar-expand-xl sticky-top">
     <div class="container-fluid px-lg-4">
         <!-- Brand Logo & Name -->
         <a class="navbar-brand" href="<?= SITE_URL ?>/">
             <div class="brand-logo-wrap">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-2.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                </svg>
+                <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
             </div>
             <div class="brand-text-wrap">
-                <div class="brand-title">LPM UNIKA</div>
+                <div class="brand-title">Lembaga Penjaminan Mutu</div>
                 <div class="brand-subtitle">Universitas Katolik Soegijapranata</div>
             </div>
         </a>
@@ -32,11 +42,42 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                     </a>
                 </li>
 
-                <!-- 2. Profil -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'profil' ? 'active' : '' ?>" href="<?= SITE_URL ?>/profil.php">
+                <!-- 2. Profil (Whimsical Dropdown) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['profil', 'profil-sejarah', 'visi-misi', 'struktur-organisasi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/profil.php" id="navbarProfil" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Profil
                     </a>
+                    <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarProfil" style="min-width:270px;">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-shield-check"></i> Tata Kelola &amp; Organisasi
+                        </div>
+                        <div class="whimsical-grid" style="grid-template-columns: 1fr;">
+                            <a href="<?= SITE_URL ?>/profil.php?view=sejarah" class="whimsical-item <?= ($current_page === 'profil' && ($_GET['view'] ?? '') === 'sejarah') || $current_page === 'profil-sejarah' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Profil &amp; Sejarah LPM</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/profil.php?view=visi-misi" class="whimsical-item <?= ($current_page === 'profil' && ($_GET['view'] ?? '') === 'visi-misi') || $current_page === 'visi-misi' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-compass"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Visi dan Misi</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/profil.php?view=struktur" class="whimsical-item <?= ($current_page === 'profil' && ($_GET['view'] ?? '') === 'struktur') || $current_page === 'struktur-organisasi' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-diagram-3"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Struktur Organisasi</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
                 <!-- 3. SPMI -->
@@ -46,56 +87,213 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                     </a>
                 </li>
 
-                <!-- 4. AMI -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'ami' ? 'active' : '' ?>" href="<?= SITE_URL ?>/ami.php">
+                <!-- 4. AMI (Whimsical Dropdown) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['ami', 'siklus-ami']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/ami.php" id="navbarAmi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         AMI
                     </a>
+                    <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarAmi" style="min-width:300px;">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-shield-check"></i> Audit Mutu Internal
+                        </div>
+                        <div class="whimsical-grid" style="grid-template-columns: 1fr;">
+                            <a href="<?= SITE_URL ?>/ami.php" class="whimsical-item <?= $current_page === 'ami' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Pengantar AMI</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/siklus-ami.php" class="whimsical-item <?= $current_page === 'siklus-ami' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Siklus AMI</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
-                <!-- 5. Akreditasi -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'akreditasi' ? 'active' : '' ?>" href="<?= SITE_URL ?>/akreditasi.php">
+                <!-- 5. Akreditasi (Whimsical Dropdown) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['akreditasi', 'akreditasi-institusi', 'lembaga-akreditasi', 'penghargaan', 'akreditasi-prodi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/akreditasi.php" id="navbarAkreditasi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Akreditasi
                     </a>
+                    <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarAkreditasi">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-patch-check-fill"></i> Status &amp; Rekognisi Mutu
+                        </div>
+                        <div class="whimsical-grid">
+                            <a href="<?= SITE_URL ?>/akreditasi-institusi.php" class="whimsical-item <?= $current_page === 'akreditasi-institusi' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-award-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Akreditasi Institusi</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/lembaga-akreditasi.php" class="whimsical-item <?= $current_page === 'lembaga-akreditasi' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-bank2"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Lembaga Akreditasi</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/pemeringkatan.php" class="whimsical-item <?= in_array($current_page, ['pemeringkatan', 'penghargaan']) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(217,119,6,0.1);color:#D97706;">
+                                    <i class="bi bi-bar-chart-line-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Pemeringkatan</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/akreditasi-prodi.php" class="whimsical-item <?= $current_page === 'akreditasi-prodi' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-mortarboard-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Daftar Program Studi</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
-                <!-- 6. Mutu & Data -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'mutu-data' ? 'active' : '' ?>" href="<?= SITE_URL ?>/mutu-data.php">
-                        Mutu &amp; Data
+                <!-- 6. FAQ & Knowledge (Whimsical Dropdown) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['faq', 'glosarium', 'kalender-mutu', 'buletin', 'knowledge']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/faq.php" id="navbarFAQ" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        FAQ
                     </a>
+                    <div class="dropdown-menu whimsical-dropdown whimsical-dropdown-faq" aria-labelledby="navbarFAQ">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-lightbulb-fill"></i> Pusat Pengetahuan &amp; Edukasi
+                        </div>
+                        <div class="whimsical-grid">
+                            <a href="<?= SITE_URL ?>/faq.php" class="whimsical-item <?= $current_page === 'faq' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-question-circle-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Tanya Jawab (FAQ)</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/glosarium.php" class="whimsical-item <?= $current_page === 'glosarium' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-book-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Glosarium Mutu</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/kalender-mutu.php" class="whimsical-item <?= $current_page === 'kalender-mutu' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-calendar3-event-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Kalender Mutu</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/buletin.php" class="whimsical-item <?= $current_page === 'buletin' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-journal-bookmark-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Buletin JAMUS</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
-                <!-- 7. Dokumen -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'dokumen' ? 'active' : '' ?>" href="<?= SITE_URL ?>/dokumen.php">
-                        Dokumen
-                    </a>
-                </li>
-
-                <!-- 8. Knowledge -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'knowledge' ? 'active' : '' ?>" href="<?= SITE_URL ?>/knowledge.php">
-                        Knowledge
-                    </a>
-                </li>
-
-                <!-- 9. Kegiatan -->
+                <!-- 7. Kegiatan -->
                 <li class="nav-item">
                     <a class="nav-link <?= in_array($current_page, ['berita', 'berita-detail']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/berita.php">
                         Kegiatan
                     </a>
                 </li>
 
-                <!-- 10. Layanan (CTA Button) -->
+                <!-- Direct Main Navbar Pages -->
+                <?php foreach ($nav_main_pages as $nmp): ?>
                 <li class="nav-item">
-                    <a class="nav-link nav-cta <?= $current_page === 'layanan' ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php">
+                    <a class="nav-link <?= ($current_page === 'page' && $current_slug === $nmp['slug']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/page.php?slug=<?= e($nmp['slug']) ?>">
+                        <?= e($nmp['nav_label'] ?: $nmp['judul']) ?>
+                    </a>
+                </li>
+                <?php endforeach; ?>
+
+                <!-- Dropdown Custom Pages -->
+                <?php if (!empty($nav_dropdown_pages)): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <?= $current_page === 'page' ? 'active' : '' ?>" href="#" id="navbarCustomPages" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Lainnya
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="navbarCustomPages" style="border-radius:10px;border:1px solid var(--border);padding:0.5rem;">
+                        <?php foreach ($nav_dropdown_pages as $ndp): ?>
+                        <li>
+                            <a class="dropdown-item py-2 px-3 <?= ($current_page === 'page' && $current_slug === $ndp['slug']) ? 'active font-weight-bold' : '' ?>" href="<?= SITE_URL ?>/page.php?slug=<?= e($ndp['slug']) ?>" style="border-radius:6px;font-size:0.85rem;">
+                                <?= e($ndp['nav_label'] ?: $ndp['judul']) ?>
+                            </a>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
+                <!-- 8. Layanan & Feedback (Whimsical Dropdown CTA) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14" style="margin-right:4px;vertical-align:-1px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                         </svg>
                         Layanan
                     </a>
+                    <div class="dropdown-menu dropdown-menu-end whimsical-dropdown" aria-labelledby="navbarLayanan" style="min-width:340px;">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-briefcase-fill"></i> Layanan &amp; Kemitraan Mutu
+                        </div>
+                        <div class="whimsical-grid" style="grid-template-columns: 1fr;">
+                            <!-- Sub Menu 1: Pelatihan Eksternal -->
+                            <a href="<?= SITE_URL ?>/pelatihan-eksternal.php" class="whimsical-item <?= in_array($current_page, ['pelatihan-eksternal', 'pelatihan']) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(124,58,237,0.12);color:#7C3AED;">
+                                    <i class="bi bi-mortarboard-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Pelatihan Eksternal</div>
+                                </div>
+                            </a>
+                            <!-- Sub Menu 2: Permohonan Kunjungan -->
+                            <a href="<?= SITE_URL ?>/kunjungan.php" class="whimsical-item <?= in_array($current_page, ['kunjungan']) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(124,58,237,0.12);color:#7C3AED;">
+                                    <i class="bi bi-building-fill-check"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Permohonan Kunjungan</div>
+                                </div>
+                            </a>
+                            <!-- Sub Menu 3: Kritik & Saran -->
+                            <a href="<?= SITE_URL ?>/layanan.php" class="whimsical-item <?= in_array($current_page, ['layanan', 'kritik-saran']) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(2,132,199,0.12);color:#0284C7;">
+                                    <i class="bi bi-chat-left-heart-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Kritik &amp; Saran</div>
+                                </div>
+                            </a>
+                            <!-- Sub Menu 4: Feedback Kunjungan -->
+                            <a href="<?= SITE_URL ?>/feedback-kunjungan.php" class="whimsical-item <?= $current_page === 'feedback-kunjungan' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(245,158,11,0.12);color:#D97706;">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Feedback Kunjungan</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
             </ul>

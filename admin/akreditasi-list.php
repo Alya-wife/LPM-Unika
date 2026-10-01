@@ -59,6 +59,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th>Lembaga Akreditasi</th>
                     <th>Keterangan</th>
                     <th width="120">Warna Label</th>
+                    <th width="110">Sertifikat</th>
                     <th width="130">Aksi</th>
                 </tr>
             </thead>
@@ -82,6 +83,20 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <span style="width:18px;height:18px;border-radius:4px;background:<?= e($a['warna'] ?: '#0A192F') ?>;display:inline-block;border:1px solid #ccc;"></span>
                             <code style="font-size:0.75rem;"><?= e($a['warna']) ?></code>
                         </div>
+                    </td>
+                    <td>
+                        <?php if (!empty($a['link_url'])): ?>
+                            <a href="<?= e($a['link_url']) ?>" target="_blank" class="btn btn-sm btn-outline-primary mb-1 d-inline-block" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:20px;text-decoration:none;">
+                                <i class="bi bi-box-arrow-up-right"></i> Link
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($a['file_path']) && file_exists(__DIR__ . '/../uploads/penghargaan/' . $a['file_path'])): ?>
+                            <a href="<?= SITE_URL ?>/uploads/penghargaan/<?= e($a['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-success d-inline-block" style="font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:20px;text-decoration:none;">
+                                <i class="bi bi-eye"></i> Berkas
+                            </a>
+                        <?php elseif (empty($a['link_url'])): ?>
+                            <span style="font-size:0.75rem;color:var(--text-muted);">-</span>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <div style="display:flex;gap:0.4rem;">

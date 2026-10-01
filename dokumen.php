@@ -1,214 +1,421 @@
 <?php
 require_once __DIR__ . '/config/database.php';
-$page_title = 'Pusat Dokumen & Download Center';
-$meta_desc  = 'Pusat unduhan dokumen resmi LPM UNIKA: Regulasi, Panduan, Instrumen, SOP, Kebijakan, Manual, dan Formulir Mutu.';
+// Halaman Dokumen di-drop (tidak terpakai) - dialihkan ke SPMI (Pusat Dokumen Terpadu)
+header("Location: " . SITE_URL . "/spmi.php#dokumen-spmi", true, 301);
+exit;
+$page_title = 'Pusat Dokumen & Database Pencarian Berkas';
+$meta_desc  = 'Pusat pencarian dan basis data dokumen resmi LPM UNIKA: Regulasi, SPMI, Sertifikat & SK Akreditasi Prodi, Buletin JAMUS, dan Instrumen LAM.';
 
 $db = getDB();
 
+// 1. Gather all documents from all database sources across the web
+$raw_docs = [];
+
+// Sumber 1: Dokumen Mutu / SPMI (Tabel: dokumen)
+$sql_dok = "SELECT id, nama_dokumen AS judul, kategori, file_path, 'dokumen' AS dir_folder, created_at FROM dokumen";
+$stmt = $db->query($sql_dok);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $raw_docs[] = [
+        'id'            => 'dok_' . $r['id'],
+        'judul'         => $r['judul'],
+        'sumber'        => 'SPMI & Mutu Internal',
+        'kategori'      => $r['kategori'] ?: 'Dokumen SPMI',
+        'file_path'     => $r['file_path'],
+        'dir_folder'    => 'dokumen',
+        'created_at'    => $r['created_at'],
+        'info_tambahan' => 'Dokumen Resmi Penjaminan Mutu Internal'
+    ];
+}
+
+// Sumber 2: Akreditasi Program Studi - SK & Sertifikat (Tabel: akreditasi_prodi)
+$sql_prodi = "SELECT id, fakultas, program_studi, strata, peringkat, lembaga, no_sk, file_sk, file_sertifikat, masa_berlaku, created_at FROM akreditasi_prodi";
+$stmt = $db->query($sql_prodi);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    if (!empty($r['file_sk'])) {
+        $raw_docs[] = [
+            'id'            => 'prodi_sk_' . $r['id'],
+            'judul'         => 'SK Akreditasi ' . $r['strata'] . ' ' . $r['program_studi'],
+            'sumber'        => 'Akreditasi Program Studi',
+            'kategori'      => 'SK Akreditasi',
+            'file_path'     => $r['file_sk'],
+            'dir_folder'    => 'akreditasi_prodi',
+            'created_at'    => $r['created_at'],
+            'info_tambahan' => 'Peringkat: ' . $r['peringkat'] . ' • No SK: ' . ($r['no_sk'] ?: '-') . ' • Lembaga: ' . $r['lembaga']
+        ];
+    }
+    if (!empty($r['file_sertifikat'])) {
+        $raw_docs[] = [
+            'id'            => 'prodi_sert_' . $r['id'],
+            'judul'         => 'Sertifikat Akreditasi ' . $r['strata'] . ' ' . $r['program_studi'],
+            'sumber'        => 'Akreditasi Program Studi',
+            'kategori'      => 'Sertifikat Akreditasi',
+            'file_path'     => $r['file_sertifikat'],
+            'dir_folder'    => 'akreditasi_prodi',
+            'created_at'    => $r['created_at'],
+            'info_tambahan' => 'Peringkat: ' . $r['peringkat'] . ' • Masa Berlaku: ' . ($r['masa_berlaku'] ? date('d-m-Y', strtotime($r['masa_berlaku'])) : '-') . ' • ' . $r['lembaga']
+        ];
+    }
+}
+
+// Sumber 3: Instrumen & Panduan Lembaga Akreditasi (Tabel: lembaga_dokumen)
+$sql_ld = "SELECT ld.*, la.kode AS lembaga_kode, la.nama AS lembaga_nama 
+           FROM lembaga_dokumen ld 
+           LEFT JOIN lembaga_akreditasi la ON ld.lembaga_id = la.id";
+$stmt = $db->query($sql_ld);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $raw_docs[] = [
+        'id'            => 'ld_' . $r['id'],
+        'judul'         => $r['nama_dokumen'],
+        'sumber'        => 'Instrumen Lembaga Akreditasi',
+        'kategori'      => 'Instrumen ' . ($r['lembaga_kode'] ?: 'Akreditasi'),
+        'file_path'     => $r['file_path'],
+        'dir_folder'    => 'akreditasi',
+        'created_at'    => $r['created_at'],
+        'info_tambahan' => 'Lembaga: ' . ($r['lembaga_nama'] ?: $r['lembaga_kode']) . ' (' . strtoupper($r['tipe_file'] ?: 'PDF') . ($r['ukuran_file'] ? ' • ' . $r['ukuran_file'] : '') . ')'
+    ];
+}
+
+// Sumber 4: Buletin JAMUS (Tabel: buletin)
+$sql_bul = "SELECT id, judul, edisi, periode_akademik, file_path, tanggal_terbit, created_at FROM buletin WHERE is_aktif = 1";
+$stmt = $db->query($sql_bul);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $raw_docs[] = [
+        'id'            => 'bul_' . $r['id'],
+        'judul'         => $r['judul'] . ($r['edisi'] ? ' (' . $r['edisi'] . ')' : ''),
+        'sumber'        => 'Buletin Mutu (JAMUS)',
+        'kategori'      => 'Buletin JAMUS',
+        'file_path'     => $r['file_path'],
+        'dir_folder'    => 'buletin',
+        'created_at'    => $r['tanggal_terbit'] ?: $r['created_at'],
+        'info_tambahan' => $r['periode_akademik'] ? 'Tahun Akademik: ' . $r['periode_akademik'] : 'Publikasi Penjaminan Mutu'
+    ];
+}
+
+// Sumber 5: Akreditasi Institusi / LAM (Tabel: lembaga_akreditasi)
+$sql_la = "SELECT id, kode, nama, file_akreditasi, masa_berlaku, created_at FROM lembaga_akreditasi WHERE file_akreditasi IS NOT NULL AND file_akreditasi != ''";
+$stmt = $db->query($sql_la);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $raw_docs[] = [
+        'id'            => 'la_' . $r['id'],
+        'judul'         => 'Sertifikat & SK Akreditasi ' . $r['nama'],
+        'sumber'        => 'Akreditasi Institusi',
+        'kategori'      => 'Akreditasi Institusi',
+        'file_path'     => $r['file_akreditasi'],
+        'dir_folder'    => 'akreditasi',
+        'created_at'    => $r['created_at'],
+        'info_tambahan' => 'Lembaga: ' . $r['kode'] . ($r['masa_berlaku'] ? ' • Berlaku: s.d. ' . date('d-m-Y', strtotime($r['masa_berlaku'])) : '')
+    ];
+}
+
+// Sumber 6: Dokumen SPMI Kemendikti (Tabel: spmi_kemendikti)
+$sql_kemen = "SELECT id, judul, deskripsi, file_pdf, tahun, created_at FROM spmi_kemendikti WHERE is_published = 1";
+$stmt = $db->query($sql_kemen);
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $raw_docs[] = [
+        'id'            => 'kemen_' . $r['id'],
+        'judul'         => $r['judul'],
+        'sumber'        => 'SPMI Kemendikti',
+        'kategori'      => 'Regulasi Nasional',
+        'file_path'     => $r['file_pdf'],
+        'dir_folder'    => 'spmi_kemendikti',
+        'created_at'    => $r['created_at'],
+        'info_tambahan' => ($r['tahun'] ? 'Tahun Terbit: ' . $r['tahun'] : 'Pedoman SPMI Nasional')
+    ];
+}
+
+// 2. Preprocess documents with verified paths and full metadata
+$all_docs = [];
+$daftar_sumber = [];
+
+foreach ($raw_docs as $d) {
+    $folder = $d['dir_folder'];
+    $file_full = __DIR__ . '/uploads/' . $folder . '/' . $d['file_path'];
+
+    // Fallback if file in alternate folder
+    if (!file_exists($file_full) && file_exists(__DIR__ . '/uploads/akreditasi/' . $d['file_path'])) {
+        $folder = 'akreditasi';
+        $file_full = __DIR__ . '/uploads/akreditasi/' . $d['file_path'];
+    } elseif (!file_exists($file_full) && file_exists(__DIR__ . '/uploads/akreditasi_prodi/' . $d['file_path'])) {
+        $folder = 'akreditasi_prodi';
+        $file_full = __DIR__ . '/uploads/akreditasi_prodi/' . $d['file_path'];
+    }
+
+    $has_file = !empty($d['file_path']) && file_exists($file_full);
+    $ext = strtolower(pathinfo($d['file_path'], PATHINFO_EXTENSION));
+
+    $d['has_file']       = $has_file;
+    $d['file_url']       = SITE_URL . '/uploads/' . $folder . '/' . rawurlencode($d['file_path']);
+    $d['ext']            = $ext;
+    $d['is_pdf']         = ($ext === 'pdf');
+    $d['formatted_date'] = !empty($d['created_at']) ? formatTanggal($d['created_at']) : '-';
+
+    $all_docs[] = $d;
+
+    $s = $d['sumber'];
+    $daftar_sumber[$s] = ($daftar_sumber[$s] ?? 0) + 1;
+}
+
+// 3. Ambil Parameter Filter & Search dari URL
+$sumber_filter   = trim($_GET['sumber'] ?? '');
 $kategori_filter = trim($_GET['kategori'] ?? '');
 $search          = trim($_GET['q'] ?? '');
 
-// Ambil kategori dokumen unik
-$kategori_list = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
-
-// Add Buletin JAMUS to dropdown if not already there
-if (!in_array('Buletin JAMUS', $kategori_list)) {
-    $kategori_list[] = 'Buletin JAMUS';
-}
-
-$is_buletin_kat = ($kategori_filter === 'Buletin JAMUS');
-
-if ($is_buletin_kat) {
-    // Show only buletin records
-    $sql = "SELECT id, judul AS nama_dokumen, 'Buletin JAMUS' AS kategori,
-                   file_path, 'buletin' AS _source, created_at
-            FROM buletin WHERE is_aktif = 1";
-    $params = [];
-    if ($search) {
-        $sql .= " AND judul LIKE ?";
-        $params[] = '%' . $search . '%';
+// 4. Proses Penyaringan Awal (Server-Side Initial State)
+$filtered_docs = array_filter($all_docs, function($item) use ($sumber_filter, $kategori_filter, $search) {
+    if ($sumber_filter && $item['sumber'] !== $sumber_filter) {
+        return false;
     }
-    $sql .= " ORDER BY tanggal_terbit DESC, id DESC";
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $dokumen_list = $stmt->fetchAll();
-} else {
-    // Normal dokumen query
-    $sql = "SELECT id, nama_dokumen, kategori, file_path, 'dokumen' AS _source, created_at
-            FROM dokumen WHERE 1=1";
-    $params = [];
-    if ($kategori_filter) {
-        $sql .= " AND (kategori = ? OR kategori LIKE ?)";
-        $params[] = $kategori_filter;
-        $params[] = '%' . $kategori_filter . '%';
+    if ($kategori_filter && stripos($item['kategori'], $kategori_filter) === false) {
+        return false;
     }
     if ($search) {
-        $sql .= " AND nama_dokumen LIKE ?";
-        $params[] = '%' . $search . '%';
+        $q = mb_strtolower($search);
+        $search_space = mb_strtolower(
+            $item['judul'] . ' ' . 
+            $item['kategori'] . ' ' . 
+            $item['sumber'] . ' ' . 
+            $item['info_tambahan'] . ' ' . 
+            $item['file_path']
+        );
+        if (mb_strpos($search_space, $q) === false) {
+            return false;
+        }
     }
-    $sql .= " ORDER BY created_at DESC";
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $dokumen_list = $stmt->fetchAll();
+    return true;
+});
+
+// Urutkan dokumen
+usort($filtered_docs, function($a, $b) {
+    $t_a = !empty($a['created_at']) ? strtotime($a['created_at']) : 0;
+    $t_b = !empty($b['created_at']) ? strtotime($b['created_at']) : 0;
+    if ($t_a === $t_b) return strcmp($a['judul'], $b['judul']);
+    return ($t_a > $t_b) ? -1 : 1;
+});
+
+// 5. Pagination Setup
+$total_records = count($filtered_docs);
+$per_page      = 15;
+$total_pages   = max(1, (int)ceil($total_records / $per_page));
+$page          = max(1, min($total_pages, (int)($_GET['page'] ?? 1)));
+$offset        = ($page - 1) * $per_page;
+
+$paginated_docs = array_slice($filtered_docs, $offset, $per_page);
+
+require_once __DIR__ . '/includes/dokumen-sections.php';
+
+// Cek custom layout dari Builder DB
+$saved_blocks = [];
+try {
+    $stmt_page = $db->prepare("SELECT blocks_json FROM pages WHERE slug = 'dokumen' OR custom_url = 'dokumen.php' OR custom_url = '/dokumen.php' LIMIT 1");
+    $stmt_page->execute();
+    $page_row = $stmt_page->fetch(PDO::FETCH_ASSOC);
+    if (!empty($page_row['blocks_json'])) {
+        $saved_blocks = json_decode($page_row['blocks_json'], true);
+    }
+} catch (Exception $e) {}
+
+$default_sections = ['dokumen_header', 'dokumen_table'];
+$sections_to_render = [];
+
+if (!empty($saved_blocks) && is_array($saved_blocks)) {
+    foreach ($saved_blocks as $blk) {
+        $type = $blk['type'] ?? '';
+        if ($type) {
+            $sections_to_render[] = [
+                'type' => $type,
+                'data' => $blk['data'] ?? []
+            ];
+        }
+    }
 }
+
+if (empty($sections_to_render)) {
+    foreach ($default_sections as $sec) {
+        $sections_to_render[] = ['type' => $sec, 'data' => []];
+    }
+}
+
+$ctx = [
+    'all_docs'        => $all_docs,
+    'daftar_sumber'   => $daftar_sumber,
+    'sumber_filter'   => $sumber_filter,
+    'kategori_filter' => $kategori_filter,
+    'search'          => $search,
+    'paginated_docs'  => $paginated_docs,
+    'total_records'   => $total_records,
+    'total_pages'     => $total_pages,
+    'page'            => $page,
+    'offset'          => $offset,
+    'per_page'        => $per_page
+];
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
-<!-- Page Banner -->
-<div class="page-banner">
-    <div class="container position-relative">
-        <div class="hero-badge mb-3">
-            <span class="hero-badge-dot"></span>
-            Pusat Unduhan
-        </div>
-        <h1 class="page-banner-title">Pusat Dokumen &amp; Download Center</h1>
-        <div class="breadcrumb-lpm">
-            <a href="<?= SITE_URL ?>/">Beranda</a>
-            <span>/</span>
-            <span class="current">Dokumen</span>
-        </div>
-    </div>
+<style>
+/* Modern Document Search & Database Styles */
+.doc-search-box {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.doc-source-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.source-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 1.1rem;
+    border-radius: 50px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+
+.source-pill-btn:hover {
+    background: #EDE9FE;
+    border-color: #C4B5FD;
+    color: #6D28D9;
+    transform: translateY(-1px);
+}
+
+.source-pill-btn.active {
+    background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%) !important;
+    border-color: #0F172A !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+    transform: translateY(-1px);
+}
+
+.source-pill-btn .pill-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 12px;
+}
+
+.source-pill-btn:not(.active) .pill-count {
+    background: #E2E8F0;
+    color: #64748B;
+}
+
+.doc-table-card {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+}
+
+.doc-badge-source {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #DBEAFE;
+}
+
+.doc-badge-source.spmi {
+    background: #EDE9FE;
+    color: #6D28D9;
+    border-color: #DDD6FE;
+}
+
+.doc-badge-source.akreditasi {
+    background: #ECFDF5;
+    color: #047857;
+    border-color: #A7F3D0;
+}
+
+.doc-badge-source.buletin {
+    background: #FFFBEB;
+    color: #B45309;
+    border-color: #FDE68A;
+}
+
+.doc-badge-source.instrumen {
+    background: #F1F5F9;
+    color: #334155;
+    border-color: #CBD5E1;
+}
+
+.file-icon-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.file-icon-pdf {
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FCA5A5;
+}
+
+.file-icon-doc {
+    background: #EFF6FF;
+    color: #2563EB;
+    border: 1px solid #BFDBFE;
+}
+
+.file-icon-xls {
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #A7F3D0;
+}
+
+.file-icon-other {
+    background: #F1F5F9;
+    color: #64748B;
+    border: 1px solid #CBD5E1;
+}
+
+.page-btn {
+    text-decoration: none !important;
+    user-select: none;
+}
+
+/* Seamless Fade Transition */
+#docTableBody {
+    transition: opacity 0.15s ease-in-out;
+}
+</style>
+
+<div class="dynamic-page-sections">
+
+<?php
+foreach ($sections_to_render as $sec) {
+    renderDokumenSection($sec['type'], $ctx, $sec['data']);
+}
+?>
 </div>
-
-<section class="py-5" style="background:var(--bg-main);">
-    <div class="container">
-        <!-- Drive Notification Banner -->
-        <div class="p-4 mb-4" style="background:linear-gradient(135deg, var(--navy), var(--navy-mid));border-radius:var(--radius-lg);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;box-shadow:var(--shadow-sm);">
-            <div>
-                <h5 style="font-family:var(--font-heading);font-weight:700;color:#fff;margin-bottom:0.25rem;">
-                    Pusat Dokumen &amp; Regulasi LPM UNIKA
-                </h5>
-                <p style="font-size:0.85rem;color:rgba(255,255,255,0.75);margin:0;">
-                    Unduh dokumen SPMI, panduan akreditasi, instrumen AMI, dan berkas resmi lainnya langsung dari sistem.
-                </p>
-            </div>
-        </div>
-
-        <!-- Search and Filter Bar -->
-        <div class="card-lpm p-4 mb-4" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);">
-            <form method="GET" action="dokumen.php" class="row g-3 align-items-center">
-                <div class="col-md-7">
-                    <div style="position:relative;">
-                        <input type="text" name="q" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem 0.7rem 2.75rem;" placeholder="Cari nama dokumen, regulasi, panduan..." value="<?= e($search) ?>">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--text-muted)" width="18" height="18" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="kategori" class="form-select" style="border:1.5px solid var(--border);padding:0.7rem 1rem;">
-                        <option value="">-- Semua Kategori --</option>
-                        <?php foreach ($kategori_list as $kat): ?>
-                        <option value="<?= e($kat) ?>" <?= $kategori_filter === $kat ? 'selected' : '' ?>><?= e($kat) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn-hero-primary w-100" style="padding:0.7rem 1rem;justify-content:center;border:none;">
-                        Cari Dokumen
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Table of Documents -->
-        <div class="doc-table-wrap">
-            <div class="doc-table-header d-flex justify-content-between align-items-center">
-                <span class="doc-table-header-title">
-                    Daftar Dokumen <?= $kategori_filter ? '– ' . e($kategori_filter) : '' ?>
-                </span>
-                <span style="font-size:0.8rem;color:rgba(255,255,255,0.7);"><?= count($dokumen_list) ?> Dokumen Ditemukan</span>
-            </div>
-
-            <?php if (empty($dokumen_list)): ?>
-            <div class="text-center py-5" style="background:#fff;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--text-muted)" width="48" height="48" style="opacity:0.3;margin-bottom:1rem;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                </svg>
-                <h5 style="color:var(--navy);font-weight:700;">Belum Ada Dokumen</h5>
-                <p style="color:var(--text-muted);font-size:0.875rem;max-width:450px;margin:0 auto 1.5rem;">
-                    Dokumen untuk kategori ini sedang disiapkan oleh Administrator LPM UNIKA.
-                </p>
-                <a href="<?= SITE_URL ?>/layanan.php" class="btn-hero-primary" style="padding:0.6rem 1.4rem;font-size:0.85rem;display:inline-flex;">
-                    Hubungi Kami &rarr;
-                </a>
-            </div>
-            <?php else: ?>
-            <table class="doc-table">
-                <thead>
-                    <tr>
-                        <th width="50">#</th>
-                        <th>Nama Dokumen &amp; Berkas</th>
-                        <th width="160">Kategori</th>
-                        <th width="140">Tanggal Upload</th>
-                        <th width="120">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($dokumen_list as $i => $d):
-                        $source    = $d['_source'] ?? 'dokumen';
-                        $file_dir  = $source === 'buletin' ? 'buletin' : 'dokumen';
-                        $file_full = __DIR__ . '/uploads/' . $file_dir . '/' . $d['file_path'];
-                        $file_url  = SITE_URL . '/uploads/' . $file_dir . '/' . e($d['file_path']);
-                        $ext       = strtolower(pathinfo($d['file_path'], PATHINFO_EXTENSION));
-                        $is_pdf    = ($ext === 'pdf');
-                        $has_file  = $d['file_path'] && file_exists($file_full);
-                        $safe_title = addslashes(htmlspecialchars($d['nama_dokumen'], ENT_QUOTES));
-                    ?>
-                    <tr>
-                        <td style="color:var(--text-muted);font-size:0.85rem;text-align:center;"><?= $i + 1 ?></td>
-                        <td>
-                            <?php if ($has_file && $is_pdf): ?>
-                            <a href="javascript:void(0)" onclick="openPdfViewer('<?= $file_url ?>', '<?= $safe_title ?>')" style="font-weight:600;color:var(--navy);text-decoration:none;cursor:pointer;" class="doc-title-link" title="Klik untuk membuka dokumen PDF">
-                                <?= e($d['nama_dokumen']) ?>
-                            </a>
-                            <?php elseif ($has_file): ?>
-                            <a href="<?= $file_url ?>" download style="font-weight:600;color:var(--navy);text-decoration:none;">
-                                <?= e($d['nama_dokumen']) ?>
-                            </a>
-                            <?php else: ?>
-                            <div style="font-weight:600;color:var(--navy);font-size:0.9rem;"><?= e($d['nama_dokumen']) ?></div>
-                            <?php endif; ?>
-
-                            <?php if ($source === 'buletin'): ?>
-                            <div style="font-size:0.75rem;color:var(--purple);font-weight:600;margin-top:2px;">📚 Buletin JAMUS</div>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <span class="card-category-badge"><?= e($d['kategori']) ?></span>
-                        </td>
-                        <td style="font-size:0.8rem;color:var(--text-muted);"><?= formatTanggal($d['created_at']) ?></td>
-                        <td>
-                            <?php if ($has_file): ?>
-                                <?php if ($is_pdf): ?>
-                                <button type="button" class="btn-download" onclick="openPdfViewer('<?= $file_url ?>', '<?= $safe_title ?>')" style="border:none;background:rgba(123,31,162,0.1);color:var(--purple);font-weight:700;cursor:pointer;" title="Buka dan baca PDF">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    </svg>
-                                    Buka PDF
-                                </button>
-                                <?php else: ?>
-                                <a href="<?= $file_url ?>" class="btn-download" download>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                    </svg>
-                                    Unduh
-                                </a>
-                                <?php endif; ?>
-                            <?php else: ?>
-                            <span style="font-size:0.75rem;color:var(--text-muted);">File tidak tersedia</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php endif; ?>
-        </div>
-    </div>
-</section>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

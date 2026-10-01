@@ -27,7 +27,34 @@ if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
     redirect(SITE_URL . '/admin/buletin-list.php');
 }
 
-$buletin_list = $db->query("SELECT * FROM buletin ORDER BY tanggal_terbit DESC, id DESC")->fetchAll();
+// Filter Periode & Tahun
+$filter_periode = trim($_GET['periode'] ?? '');
+$filter_tahun   = (isset($_GET['tahun']) && is_numeric($_GET['tahun'])) ? (int)$_GET['tahun'] : 0;
+
+$all_periodes_buletin = $db->query("SELECT DISTINCT periode_akademik FROM buletin WHERE periode_akademik IS NOT NULL AND periode_akademik != '' ORDER BY periode_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
+$all_years_buletin    = $db->query("SELECT DISTINCT YEAR(tanggal_terbit) as thn FROM buletin WHERE tanggal_terbit IS NOT NULL AND tanggal_terbit > '1970-01-01' ORDER BY thn DESC")->fetchAll(PDO::FETCH_COLUMN);
+
+$where = [];
+$params = [];
+
+if ($filter_periode !== '') {
+    $where[] = "periode_akademik = ?";
+    $params[] = $filter_periode;
+}
+if ($filter_tahun > 0) {
+    $where[] = "YEAR(tanggal_terbit) = ?";
+    $params[] = $filter_tahun;
+}
+
+$sql = "SELECT * FROM buletin";
+if (!empty($where)) {
+    $sql .= " WHERE " . implode(" AND ", $where);
+}
+$sql .= " ORDER BY tanggal_terbit DESC, id DESC";
+
+$stmt_b = $db->prepare($sql);
+$stmt_b->execute($params);
+$buletin_list = $stmt_b->fetchAll();
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -54,6 +81,33 @@ require_once __DIR__ . '/includes/admin-header.php';
         </svg>
         Upload Buletin Baru
     </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="mb-4 p-3 bg-white border rounded d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-sm">
+    <div style="font-weight:700;color:var(--navy);font-size:0.88rem;display:flex;align-items:center;gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--purple)" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+        </svg>
+        Filter Arsip Buletin:
+    </div>
+    <form method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+        <select name="tahun" class="form-select form-select-sm" onchange="this.form.submit()" style="border:1.5px solid var(--border);min-width:140px;">
+            <option value="">-- Semua Tahun --</option>
+            <?php foreach ($all_years_buletin as $y): ?>
+            <option value="<?= $y ?>" <?= ($filter_tahun == $y) ? 'selected' : '' ?>>Tahun <?= $y ?></option>
+            <?php endforeach; ?>
+        </select>
+        <select name="periode" class="form-select form-select-sm" onchange="this.form.submit()" style="border:1.5px solid var(--border);min-width:180px;">
+            <option value="">-- Semua Periode --</option>
+            <?php foreach ($all_periodes_buletin as $p): ?>
+            <option value="<?= e($p) ?>" <?= $filter_periode === $p ? 'selected' : '' ?>>Periode <?= e($p) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php if ($filter_periode || $filter_tahun): ?>
+        <a href="buletin-list.php" class="btn btn-sm btn-outline-secondary text-nowrap">Reset</a>
+        <?php endif; ?>
+    </form>
 </div>
 
 <!-- Bookshelf Preview Grid (Admin View) -->
@@ -108,11 +162,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($buletin_list as $b): ?>
+                <?php foreach ($buletin_list as $b): 
+                    $cov_file = getOrGenerateBuletinCover($b['cover_path'] ?? null, $b['file_path'] ?? null, (int)$b['id']);
+                ?>
                 <tr style="border-bottom:1px solid var(--border);">
                     <td style="padding:0.75rem 1.25rem;vertical-align:middle;">
-                        <?php if ($b['cover_path']): ?>
-                            <img src="<?= SITE_URL ?>/uploads/buletin/covers/<?= e($b['cover_path']) ?>"
+                        <?php if ($cov_file): ?>
+                            <img src="<?= SITE_URL ?>/uploads/buletin/covers/<?= e($cov_file) ?>"
                                  alt="cover"
                                  style="width:48px;height:64px;object-fit:cover;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
                         <?php else: ?>

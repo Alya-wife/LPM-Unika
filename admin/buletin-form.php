@@ -53,10 +53,20 @@ function extractPdfTitle(string $pdfPath): string {
 function saveCoverFromBase64(string $base64Data, string $coverDir): ?string {
     // Strip data URI prefix
     if (preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/is', $base64Data, $m)) {
-        $ext  = strtolower($m[1]) === 'jpeg' ? 'jpg' : strtolower($m[1]);
         $data = base64_decode($m[2]);
         if ($data === false || strlen($data) < 100) return null;
         if (!is_dir($coverDir)) mkdir($coverDir, 0755, true);
+
+        // Prioritaskan konversi langsung ke WebP
+        $img = @imagecreatefromstring($data);
+        if ($img) {
+            $filename = 'cov_' . uniqid() . '.webp';
+            imagewebp($img, $coverDir . $filename, 85);
+            imagedestroy($img);
+            return $filename;
+        }
+
+        $ext  = strtolower($m[1]) === 'jpeg' ? 'jpg' : strtolower($m[1]);
         $filename = 'cov_' . uniqid() . '.' . $ext;
         file_put_contents($coverDir . $filename, $data);
         return $filename;
@@ -65,13 +75,29 @@ function saveCoverFromBase64(string $base64Data, string $coverDir): ?string {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $judul          = trim($_POST['judul'] ?? '');
-    $edisi          = trim($_POST['edisi'] ?? '');
-    $deskripsi      = trim($_POST['deskripsi'] ?? '');
-    $tanggal_terbit = trim($_POST['tanggal_terbit'] ?? '') ?: null;
-    $is_aktif       = isset($_POST['is_aktif']) ? 1 : 0;
-    $cover_b64      = trim($_POST['cover_b64'] ?? '');
-    $id             = (int)($_POST['id'] ?? 0);
+    $judul            = trim($_POST['judul'] ?? '');
+    $edisi            = trim($_POST['edisi'] ?? '');
+    $p_select         = trim($_POST['periode_select'] ?? '');
+    $p_custom         = trim($_POST['periode_custom'] ?? '');
+    $periode_akademik = ($p_select === 'NEW' || (!empty($p_custom) && $p_select === 'NEW')) ? $p_custom : ($p_select ?: trim($_POST['periode_akademik'] ?? '2025/2026'));
+    $deskripsi        = trim($_POST['deskripsi'] ?? '');
+    $tanggal_terbit   = trim($_POST['tanggal_terbit'] ?? '') ?: null;
+    $is_aktif         = isset($_POST['is_aktif']) ? 1 : 0;
+    $cover_b64        = trim($_POST['cover_b64'] ?? '');
+    $id               = (int)($_POST['id'] ?? 0);
+
+    // Auto-fill fallback jika judul/edisi kosong dan ada file diupload
+    if (!$judul && !empty($_FILES['file_pdf']['name'])) {
+        $base = pathinfo($_FILES['file_pdf']['name'], PATHINFO_FILENAME);
+        $judul = trim(preg_replace('/[_-]+/', ' ', $base));
+    }
+    if (!$edisi && !empty($_FILES['file_pdf']['name'])) {
+        if (preg_match('/(?:Edisi|Vol\.?|Volume)\s*([A-Za-z0-9\.\/-]+(?:\s*(?:No\.?|Tahun|Th\.?)\s*[A-Za-z0-9\.\/-]+)?)/i', $_FILES['file_pdf']['name'], $em)) {
+            $edisi = trim($em[0]);
+        } else {
+            $edisi = 'Edisi ' . date('Y');
+        }
+    }
 
     if (!$judul || !$edisi) {
         $error = 'Judul dan edisi buletin wajib diisi.';
@@ -98,9 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $file_path = 'bul_' . uniqid() . '.pdf';
                 move_uploaded_file($_FILES['file_pdf']['tmp_name'], $upload_dir . $file_path);
-
-                // Auto-extract title from PDF if judul not customized
-                // (judul is already set from POST — user may have overridden the auto-filled value)
             }
         } elseif (!$is_edit) {
             $error = 'File PDF buletin wajib diupload.';
@@ -116,14 +139,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($saved) $cover_path = $saved;
         }
 
+        // ── Fallback: Server-side automatic cover extraction from PDF first page ──
+        if (!$error && empty($cover_path) && !empty($file_path)) {
+            $extracted = getOrGenerateBuletinCover(null, $file_path);
+            if ($extracted) {
+                $cover_path = $extracted;
+            }
+        }
+
         if (!$error) {
             if ($is_edit && $id) {
-                $stmt = $db->prepare("UPDATE buletin SET judul=?, edisi=?, deskripsi=?, file_path=?, cover_path=?, tanggal_terbit=?, is_aktif=? WHERE id=?");
-                $stmt->execute([$judul, $edisi, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif, $id]);
+                $stmt = $db->prepare("UPDATE buletin SET judul=?, edisi=?, periode_akademik=?, deskripsi=?, file_path=?, cover_path=?, tanggal_terbit=?, is_aktif=? WHERE id=?");
+                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif, $id]);
                 $_SESSION['flash'] = 'Buletin berhasil diperbarui.';
             } else {
-                $stmt = $db->prepare("INSERT INTO buletin (judul, edisi, deskripsi, file_path, cover_path, tanggal_terbit, is_aktif) VALUES (?,?,?,?,?,?,?)");
-                $stmt->execute([$judul, $edisi, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif]);
+                $stmt = $db->prepare("INSERT INTO buletin (judul, edisi, periode_akademik, deskripsi, file_path, cover_path, tanggal_terbit, is_aktif) VALUES (?,?,?,?,?,?,?,?)");
+                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif]);
                 $_SESSION['flash'] = 'Buletin berhasil diupload.';
             }
             redirect(SITE_URL . '/admin/buletin-list.php');
@@ -134,10 +165,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 
-<!-- Load PDF.js from CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<!-- Load PDF.js with CDN & local fallback -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-    // Point PDF.js worker to CDN
+    if (typeof pdfjsLib === 'undefined') {
+        document.write('<script src="<?= SITE_URL ?>/assets/js/pdf.min.js"><\/script>');
+    }
+</script>
+<script>
     if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
@@ -248,6 +283,36 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">Misal: "Edisi I / 2026", "Vol.3 No.2 / 2025", "September 2026"</div>
                         </div>
 
+                        <!-- ── Periode Akademik ── -->
+                        <div class="mb-4">
+                            <label class="form-label" style="font-weight:700;color:var(--navy);font-size:0.88rem;">
+                                Periode Akademik <span style="color:#e53935;">*</span>
+                            </label>
+                            <?php
+                            $cur_p = $is_edit ? ($buletin['periode_akademik'] ?? '2025/2026') : ($_POST['periode_select'] ?? $_POST['periode_akademik'] ?? '2025/2026');
+                            $existing_p = $db->query("SELECT DISTINCT periode_akademik FROM buletin WHERE periode_akademik IS NOT NULL AND periode_akademik != '' ORDER BY periode_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
+                            $default_p = ['2024/2025', '2025/2026', '2026/2027', '2027/2028', '2028/2029'];
+                            $all_p_options = array_unique(array_merge($existing_p, $default_p));
+                            rsort($all_p_options);
+                            $is_custom = (!in_array($cur_p, $all_p_options) && $cur_p !== '');
+                            ?>
+                            <select name="periode_select" id="buletin_periode_select" class="form-select mb-2" style="border:1.5px solid var(--border);padding:0.75rem 1rem;" onchange="toggleCustomPeriode(this, 'buletin_periode_custom')">
+                                <?php foreach ($all_p_options as $opt): ?>
+                                <option value="<?= e($opt) ?>" <?= ($cur_p === $opt && !$is_custom) ? 'selected' : '' ?>>Periode <?= e($opt) ?></option>
+                                <?php endforeach; ?>
+                                <option value="NEW" <?= $is_custom ? 'selected' : '' ?>>➕ Tambah Periode Baru...</option>
+                            </select>
+                            
+                            <input type="text" name="periode_custom" id="buletin_periode_custom" class="form-control"
+                                   placeholder="Masukkan Periode Baru (Contoh: 2028/2029)"
+                                   value="<?= e($is_custom ? $cur_p : '') ?>"
+                                   style="border:1.5px solid var(--purple);padding:0.75rem 1rem;display:<?= $is_custom ? 'block' : 'none' ?>;">
+
+                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">
+                                Pilih periode yang tersedia atau pilih "➕ Tambah Periode Baru" untuk menginput tahun akademik baru.
+                            </div>
+                        </div>
+
                         <!-- ── Deskripsi ── -->
                         <div class="mb-4">
                             <label class="form-label" style="font-weight:700;color:var(--navy);font-size:0.88rem;">Deskripsi Singkat</label>
@@ -316,13 +381,16 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <!-- Shine -->
                                 <div style="position:absolute;top:0;left:10%;width:28%;height:100%;background:linear-gradient(105deg,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0) 80%);z-index:3;pointer-events:none;"></div>
 
-                                <?php if ($is_edit && $buletin['cover_path']): ?>
+                                <?php 
+                                $cur_cover = $is_edit ? getOrGenerateBuletinCover($buletin['cover_path'] ?? null, $buletin['file_path'] ?? null, (int)$buletin['id']) : '';
+                                ?>
+                                <?php if ($cur_cover): ?>
                                 <!-- Existing cover -->
                                 <img id="coverPreviewImg"
-                                     src="<?= SITE_URL ?>/uploads/buletin/covers/<?= e($buletin['cover_path']) ?>"
+                                     src="<?= SITE_URL ?>/uploads/buletin/covers/<?= e($cur_cover) ?>"
                                      alt="cover"
                                      style="width:100%;height:100%;object-fit:cover;display:block;">
-                                <div id="coverPreviewPlaceholder" style="display:none;width:100%;height:100%;background:linear-gradient(160deg,#4A148C,#7B1FA2);display:none;align-items:center;justify-content:center;flex-direction:column;padding:10px;position:relative;overflow:hidden;">
+                                <div id="coverPreviewPlaceholder" style="display:none;width:100%;height:100%;background:linear-gradient(160deg,#4A148C,#7B1FA2);align-items:center;justify-content:center;flex-direction:column;padding:10px;position:relative;overflow:hidden;">
                                     <div style="position:absolute;bottom:0;left:0;right:0;height:36%;background:repeating-linear-gradient(-45deg,rgba(206,147,216,0.3) 0,rgba(206,147,216,0.3) 2px,transparent 2px,transparent 12px);"></div>
                                     <span style="font-family:var(--font-heading);font-weight:900;color:#fff;font-size:1.1rem;letter-spacing:1px;z-index:1;text-shadow:0 2px 6px rgba(0,0,0,0.4);">JAMUS</span>
                                     <span id="prevEdisiText" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.35);color:#fff;font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:20px;z-index:1;margin-top:6px;">Edisi</span>
@@ -367,11 +435,25 @@ require_once __DIR__ . '/includes/admin-header.php';
 </div>
 
 <script>
+function toggleCustomPeriode(selectEl, customInputId) {
+    var customInput = document.getElementById(customInputId);
+    if (!customInput) return;
+    if (selectEl.value === 'NEW') {
+        customInput.style.display = 'block';
+        customInput.focus();
+        customInput.required = true;
+    } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+    }
+}
+
 (function () {
     const fileInput   = document.getElementById('filePdf');
     const coverB64    = document.getElementById('cover_b64');
     const judulInput  = document.getElementById('judulInput');
     const judulTag    = document.getElementById('judulAutoTag');
+    const edisiInput  = document.querySelector('[name="edisi"]');
     const pdfStatus   = document.getElementById('pdfStatus');
     const pdfStatusT  = document.getElementById('pdfStatusText');
     const canvas      = document.getElementById('pdfCanvas');
@@ -382,122 +464,196 @@ require_once __DIR__ . '/includes/admin-header.php';
     const prevEdisi   = document.getElementById('prevEdisi');
     const prevEdisiT  = document.getElementById('prevEdisiText');
 
-    // Update live preview from form fields
-    document.querySelector('[name="judul"]').addEventListener('input', function () {
-        prevTitle.textContent = this.value || 'Judul Buletin';
-    });
-    document.querySelector('[name="edisi"]').addEventListener('input', function () {
-        prevEdisi.textContent = this.value || 'Edisi';
-        if (prevEdisiT) prevEdisiT.textContent = this.value || 'Edisi';
-    });
+    // Live preview updates from inputs
+    if (judulInput) {
+        judulInput.addEventListener('input', function () {
+            if (prevTitle) prevTitle.textContent = this.value || 'Judul Buletin';
+            judulInput.dataset.autoFilled = 'false';
+            if (judulTag) judulTag.style.display = 'none';
+        });
+    }
+
+    if (edisiInput) {
+        edisiInput.addEventListener('input', function () {
+            if (prevEdisi) prevEdisi.textContent = this.value || 'Edisi';
+            if (prevEdisiT) prevEdisiT.textContent = this.value || 'Edisi';
+        });
+    }
 
     if (!fileInput) return;
 
+    // Helper: Clean filename into a neat title
+    function formatTitleFromFilename(filename) {
+        if (!filename) return '';
+        // Remove extension
+        let name = filename.replace(/\.[^/.]+$/, '');
+        // Replace underscores, dashes, dots with spaces
+        name = name.replace(/[_-]+/g, ' ').replace(/\.+/g, ' ').replace(/\s+/g, ' ').trim();
+        // Capitalize words if all upper or all lower
+        if (name === name.toUpperCase() || name === name.toLowerCase()) {
+            name = name.toLowerCase().replace(/(?:^|\s)\S/g, function (a) { return a.toUpperCase(); });
+        }
+        return name;
+    }
+
+    // Helper: Extract potential edition from title / filename
+    function extractEdisi(str) {
+        if (!str) return '';
+        const match = str.match(/(?:Edisi|Vol\.?|Volume)\s*([A-Za-z0-9\.\/-]+(?:\s*(?:No\.?|Tahun|Th\.?)\s*[A-Za-z0-9\.\/-]+)?)/i);
+        return match ? match[0].trim() : '';
+    }
+
     fileInput.addEventListener('change', async function () {
         const file = this.files[0];
-        if (!file || file.type !== 'application/pdf') return;
+        if (!file) return;
 
-        // Show processing status
-        pdfStatus.style.display = 'flex';
-        pdfStatusT.textContent = 'Membaca PDF...';
-        coverInfo.textContent  = '⏳ Memproses sampul dari halaman pertama PDF...';
+        // Validasi ekstensi dan MIME type PDF yang fleksibel
+        const isPdf = (file.type && file.type.includes('pdf')) || file.name.toLowerCase().endsWith('.pdf');
+        if (!isPdf) {
+            alert('File yang dipilih harus berformat PDF (.pdf)');
+            return;
+        }
+
+        // 1. LANGSUNG AUTO-FILL JUDUL & EDISI DARI NAMA FILE (Tanpa menunggu PDF.js)
+        const titleFromName = formatTitleFromFilename(file.name);
+        if (judulInput && titleFromName) {
+            const currentVal = judulInput.value.trim();
+            if (!currentVal || judulInput.dataset.autoFilled === 'true') {
+                judulInput.value = titleFromName;
+                judulInput.dataset.autoFilled = 'true';
+                if (prevTitle) prevTitle.textContent = titleFromName;
+                if (judulTag) {
+                    judulTag.textContent = '✓ Otomatis dari file';
+                    judulTag.style.display = 'inline';
+                }
+            }
+        }
+
+        if (edisiInput && !edisiInput.value.trim()) {
+            const detectedEdisi = extractEdisi(titleFromName) || extractEdisi(file.name);
+            if (detectedEdisi) {
+                edisiInput.value = detectedEdisi;
+                if (prevEdisi) prevEdisi.textContent = detectedEdisi;
+                if (prevEdisiT) prevEdisiT.textContent = detectedEdisi;
+            }
+        }
+
+        // 2. PROSES RENDER SAMPUL DARI HALAMAN 1 PDF MENGGUNAKAN PDF.JS
+        if (pdfStatus) {
+            pdfStatus.style.display = 'flex';
+            if (pdfStatusT) pdfStatusT.textContent = 'Membaca file PDF...';
+        }
+        if (coverInfo) {
+            coverInfo.innerHTML = '⏳ <strong>Memproses sampul</strong> dari halaman pertama PDF...';
+            coverInfo.style.color = 'var(--text-muted)';
+        }
 
         try {
             const arrayBuffer = await file.arrayBuffer();
 
-            // ── Try to extract title from PDF metadata (PDF.js) ──────
-            pdfStatusT.textContent = 'Membaca metadata...';
-            let pdfTitle = '';
-            try {
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
-                const pdf = await loadingTask.promise;
-
-                // Get metadata
-                const meta = await pdf.getMetadata().catch(() => null);
-                if (meta && meta.info && meta.info.Title && meta.info.Title.trim()) {
-                    pdfTitle = meta.info.Title.trim();
+            if (typeof pdfjsLib === 'undefined') {
+                console.warn('pdfjsLib is not loaded yet');
+                if (pdfStatus) pdfStatus.style.display = 'none';
+                if (coverInfo) {
+                    coverInfo.innerHTML = 'ℹ️ Judul telah diisi. Foto sampul halaman pertama akan dibuat otomatis saat disimpan.';
                 }
+                return;
+            }
 
-                // ── Render page 1 to canvas → generate cover ────────
-                pdfStatusT.textContent = 'Merender halaman pertama...';
-                const page = await pdf.getPage(1);
+            if (pdfStatusT) pdfStatusT.textContent = 'Membaca dokumen & metadata PDF...';
+            const typedarray = new Uint8Array(arrayBuffer);
+            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+            const pdf = await loadingTask.promise;
 
-                // Render at 2x scale for quality
-                const scale    = 2.0;
-                const viewport = page.getViewport({ scale });
+            // Jika ada metadata title asli dalam PDF yang valid, prioritaskan
+            try {
+                const meta = await pdf.getMetadata();
+                if (meta && meta.info && meta.info.Title && meta.info.Title.trim()) {
+                    const rawTitle = meta.info.Title.trim();
+                    if (!/^microsoft\s+word/i.test(rawTitle) && !/^untitled/i.test(rawTitle) && rawTitle.length > 3) {
+                        if (judulInput && (judulInput.dataset.autoFilled === 'true' || !judulInput.value.trim())) {
+                            judulInput.value = rawTitle;
+                            judulInput.dataset.autoFilled = 'true';
+                            if (prevTitle) prevTitle.textContent = rawTitle;
+                            if (judulTag) {
+                                judulTag.textContent = '✓ Otomatis dari metadata PDF';
+                                judulTag.style.display = 'inline';
+                            }
+                        }
+                    }
+                }
+            } catch (metaErr) {
+                console.warn('Metadata read error:', metaErr);
+            }
 
-                canvas.width  = viewport.width;
-                canvas.height = viewport.height;
+            // Render halaman pertama ke canvas
+            if (pdfStatusT) pdfStatusT.textContent = 'Merender foto sampul halaman 1...';
+            const page = await pdf.getPage(1);
+            const scale = 1.8;
+            const viewport = page.getViewport({ scale: scale });
 
-                const ctx = canvas.getContext('2d');
-                await page.render({ canvasContext: ctx, viewport }).promise;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-                // Crop to portrait 3:4 ratio from top of page
-                const targetW = Math.min(canvas.width, canvas.height * 0.75);
-                const targetH = targetW / 0.75;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-                const outCanvas = document.createElement('canvas');
-                outCanvas.width  = 600;  // fixed output width
-                outCanvas.height = 800;  // fixed output height (3:4)
-                const outCtx = outCanvas.getContext('2d');
+            // Crop & fit ke rasio buku 3:4 yang proporsional
+            const outCanvas = document.createElement('canvas');
+            outCanvas.width = 600;
+            outCanvas.height = 800;
+            const outCtx = outCanvas.getContext('2d');
 
-                // White background
-                outCtx.fillStyle = '#ffffff';
-                outCtx.fillRect(0, 0, 600, 800);
+            outCtx.fillStyle = '#ffffff';
+            outCtx.fillRect(0, 0, 600, 800);
 
-                // Draw PDF page scaled to fit
-                outCtx.drawImage(canvas, 0, 0, targetW, Math.min(targetH, canvas.height), 0, 0, 600, 800);
+            const srcAspect = canvas.width / canvas.height;
+            const dstAspect = 600 / 800; // 0.75
 
-                // Export as JPEG (smaller file size)
-                const dataUrl = outCanvas.toDataURL('image/jpeg', 0.88);
-                coverB64.value = dataUrl;
+            let drawW, drawH, drawX, drawY;
+            if (srcAspect > dstAspect) {
+                drawH = canvas.height;
+                drawW = canvas.height * dstAspect;
+                drawX = (canvas.width - drawW) / 2;
+                drawY = 0;
+            } else {
+                drawW = canvas.width;
+                drawH = canvas.width / dstAspect;
+                drawX = 0;
+                drawY = 0;
+            }
 
-                // Update preview
+            outCtx.drawImage(canvas, drawX, drawY, drawW, Math.min(drawH, canvas.height), 0, 0, 600, 800);
+
+            // Simpan data image base64 ke hidden field
+            const dataUrl = outCanvas.toDataURL('image/jpeg', 0.92);
+            if (coverB64) coverB64.value = dataUrl;
+
+            // Update live preview buku secara langsung
+            if (previewImg) {
                 previewImg.src = dataUrl;
                 previewImg.style.display = 'block';
+            }
+            if (placeholder) {
                 placeholder.style.display = 'none';
+            }
 
-                pdfStatus.style.display = 'none';
-                coverInfo.innerHTML = '✅ <strong>Sampul berhasil digenerate</strong> dari halaman pertama PDF.';
+            if (coverInfo) {
+                coverInfo.innerHTML = '✅ <strong style="color:#2E7D32;">Foto sampul langsung ditampilkan</strong> dari halaman 1 PDF!';
                 coverInfo.style.color = '#2E7D32';
-
-            } catch (pdfErr) {
-                console.warn('PDF.js error:', pdfErr);
-                pdfStatus.style.display = 'none';
-                coverInfo.textContent = '⚠️ Tidak bisa membaca PDF. Sampul placeholder akan digunakan.';
             }
 
-            // ── Fill title if found and field is empty/unchanged ──
-            if (pdfTitle) {
-                const currentVal = judulInput.value.trim();
-                // Auto-fill if empty OR if user hasn't changed from a previous auto-fill
-                if (!currentVal || judulInput.dataset.autoFilled === 'true') {
-                    judulInput.value = pdfTitle;
-                    judulInput.dataset.autoFilled = 'true';
-                    prevTitle.textContent = pdfTitle;
-                    judulTag.style.display = 'inline';
-                }
-            } else {
-                // No metadata title — hint user
-                if (!judulInput.value.trim()) {
-                    judulInput.placeholder = 'Judul tidak ditemukan di metadata PDF, silakan isi manual.';
-                }
-            }
+            if (pdfStatus) pdfStatus.style.display = 'none';
 
         } catch (err) {
             console.error('Error processing PDF:', err);
-            pdfStatus.style.display = 'none';
-            coverInfo.textContent = '❌ Gagal memproses PDF. Pastikan file valid.';
-            coverInfo.style.color = '#c62828';
+            if (pdfStatus) pdfStatus.style.display = 'none';
+            if (coverInfo) {
+                coverInfo.innerHTML = 'ℹ️ Pratinjau lokal browser tidak dapat diproses. Sistem akan otomatis mengekstrak foto sampul PDF saat disimpan.';
+                coverInfo.style.color = 'var(--text-muted)';
+            }
         }
     });
-
-    // Clear auto-filled flag if user manually edits judul
-    judulInput.addEventListener('input', function () {
-        judulInput.dataset.autoFilled = 'false';
-        judulTag.style.display = 'none';
-    });
-
 })();
 </script>
 

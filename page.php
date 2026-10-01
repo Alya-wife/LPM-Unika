@@ -11,6 +11,8 @@ $stmt = $db->prepare("SELECT * FROM pages WHERE slug = ?");
 $stmt->execute([$slug]);
 $page = $stmt->fetch();
 
+$is_admin = !empty($_SESSION['admin_id']);
+
 if (!$page) {
     // 404 Not Found Page
     $page_title = 'Halaman Tidak Ditemukan';
@@ -50,34 +52,132 @@ if (!$page) {
     exit;
 }
 
+// Cek apakah halaman masih berupa Draf dan pengunjung bukan Admin
+$is_draft = ($page['status'] ?? 'publish') === 'draft';
+if ($is_draft && !$is_admin) {
+    $page_title = 'Halaman Sedang Ditinjau';
+    require_once __DIR__ . '/includes/header.php';
+    require_once __DIR__ . '/includes/navbar.php';
+    ?>
+    <div class="page-banner">
+        <div class="container position-relative">
+            <h1 class="page-banner-title">Halaman Dalam Peninjauan</h1>
+            <div class="breadcrumb-lpm">
+                <a href="<?= SITE_URL ?>/">Beranda</a>
+                <span>/</span>
+                <span class="current">Draft</span>
+            </div>
+        </div>
+    </div>
+    <section class="py-5 text-center">
+        <div class="container">
+            <div style="max-width:550px;margin:3rem auto;padding:2.5rem;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+                <div style="width:70px;height:70px;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+                    <i class="bi bi-clock-history text-warning fs-1"></i>
+                </div>
+                <h3 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);margin-bottom:0.75rem;">Halaman Belum Diterbitkan</h3>
+                <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.5rem;">
+                    Halaman ini saat ini masih berstatus Draf dan sedang dalam tahap penyusunan oleh Administrator LPM UNIKA.
+                </p>
+                <a href="<?= SITE_URL ?>/" class="btn-hero-primary" style="display:inline-flex;padding:0.65rem 1.8rem;">
+                    Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+    </section>
+    <?php
+    require_once __DIR__ . '/includes/footer.php';
+    exit;
+}
+
 $page_title = $page['judul'];
-$meta_desc  = $page['ringkasan'] ?: $page['judul'] . ' - Lembaga Penjaminan Mutu Soegijapranata Catholic University (SCU).';
+$meta_desc  = $page['ringkasan'] ?: $page['judul'] . ' - Lembaga Penjaminan Mutu Universitas Katolik Soegijapranata (UNIKA).';
 
 // Check if content is empty
 $raw_konten = trim(strip_tags($page['konten'], '<img><iframe><video><audio>'));
 $is_empty   = empty($raw_konten);
 
-// Ambil halaman lain dalam kategori yang sama untuk sidebar navigasi
-$stmt_related = $db->prepare("SELECT id, judul, slug FROM pages WHERE kategori = ? AND id != ? ORDER BY judul ASC LIMIT 6");
-$stmt_related->execute([$page['kategori'], $page['id']]);
-$related_pages = $stmt_related->fetchAll();
+$layout = $page['layout'] ?? 'default';
+
+// Ambil halaman lain dalam kategori yang sama untuk sidebar navigasi (hanya jika layout bukan fullwidth)
+$related_pages = [];
+if ($layout !== 'fullwidth') {
+    $stmt_related = $db->prepare("SELECT id, judul, slug FROM pages WHERE kategori = ? AND id != ? AND status = 'publish' ORDER BY urutan ASC, judul ASC LIMIT 6");
+    $stmt_related->execute([$page['kategori'], $page['id']]);
+    $related_pages = $stmt_related->fetchAll();
+}
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
+<?php if ($is_draft && $is_admin): ?>
+<!-- Admin Draft Notice Banner -->
+<div style="background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:0.65rem 1rem;font-size:0.85rem;color:#92400E;text-align:center;">
+    <div class="container d-flex align-items-center justify-content-center justify-content-md-between flex-wrap gap-2">
+        <div>
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>Mode Pratinjau Admin:</strong> Halaman ini berstatus <strong>DRAF</strong> dan belum dapat diakses oleh publik umum.
+        </div>
+        <a href="<?= SITE_URL ?>/admin/page-form.php?id=<?= $page['id'] ?>" class="btn btn-xs btn-warning px-3 py-1" style="font-size:0.78rem;font-weight:700;border-radius:4px;">
+            Edit Halaman &rarr;
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php
+$page_blocks = !empty($page['blocks_json']) ? (json_decode($page['blocks_json'], true) ?: []) : [];
+$has_builder_blocks = !empty($page_blocks);
+?>
+
+<?php if ($has_builder_blocks): ?>
+    <!-- Halaman Hasil Desain Visual Builder (Elementor-style) -->
+    <?php if ($is_admin): ?>
+    <div style="background:#0F172A;color:#ffffff;padding:0.5rem 1rem;font-size:0.8rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div>
+            <i class="bi bi-palette text-primary me-1"></i>
+            Halaman ini dikelola dengan <strong>Visual Builder</strong>
+            <?php if ($is_draft): ?>
+                <span class="badge bg-warning text-dark ms-2">Status: Draf</span>
+            <?php endif; ?>
+        </div>
+        <a href="<?= SITE_URL ?>/admin/advance-setting.php?id=<?= $page['id'] ?>" class="btn btn-sm btn-outline-light" style="font-size:0.75rem;padding:0.2rem 0.65rem;border-radius:4px;">
+            <i class="bi bi-pencil me-1"></i> Buka di Visual Builder
+        </a>
+    </div>
+    <?php endif; ?>
+
+    <!-- Render seluruh seksi dinamis -->
+    <main class="page-builder-content">
+        <?= renderPageBlocks($page_blocks) ?>
+    </main>
+
+    <?php
+    require_once __DIR__ . '/includes/footer.php';
+    exit;
+    ?>
+<?php endif; ?>
+
 <!-- Page Banner -->
 <div class="page-banner">
     <div class="container position-relative">
-        <div class="hero-badge mb-3">
-            <span class="hero-badge-dot"></span>
-            <?= e($page['kategori']) ?>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                <?= e($page['kategori'] ?: 'Umum') ?>
+            </div>
+            <?php if ($is_admin): ?>
+            <a href="<?= SITE_URL ?>/admin/advance-setting.php?id=<?= $page['id'] ?>" class="badge bg-light text-dark text-decoration-none px-3 py-2" style="font-size:0.75rem;border:1px solid rgba(255,255,255,0.4);" target="_blank">
+                <i class="bi bi-pencil-square me-1"></i> Edit di Visual Builder
+            </a>
+            <?php endif; ?>
         </div>
         <h1 class="page-banner-title"><?= e($page['judul']) ?></h1>
         <div class="breadcrumb-lpm">
             <a href="<?= SITE_URL ?>/">Beranda</a>
             <span>/</span>
-            <span><?= e($page['kategori']) ?></span>
+            <span><?= e($page['kategori'] ?: 'Halaman') ?></span>
             <span>/</span>
             <span class="current"><?= e(truncate($page['judul'], 30)) ?></span>
         </div>
@@ -87,11 +187,18 @@ require_once __DIR__ . '/includes/navbar.php';
 <!-- Main Content Area -->
 <section class="py-5 py-md-6" style="background:var(--bg-main);">
     <div class="container">
-        <div class="row g-5">
+        <div class="row g-5 <?= $layout === 'fullwidth' ? 'justify-content-center' : '' ?>">
             <!-- Content Column -->
-            <div class="<?= !empty($related_pages) ? 'col-lg-8' : 'col-12' ?>">
+            <div class="<?= ($layout === 'fullwidth' || empty($related_pages)) ? 'col-12' : 'col-lg-8' ?>">
                 <div class="card-lpm p-4 p-md-5" style="border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);background:#fff;">
                     
+                    <!-- Featured Image jika tersedia -->
+                    <?php if (!empty($page['featured_image'])): ?>
+                    <div class="mb-4 text-center">
+                        <img src="<?= UPLOAD_URL . e($page['featured_image']) ?>" alt="<?= e($page['judul']) ?>" class="img-fluid rounded-3 shadow-sm" style="max-height:420px;width:100%;object-fit:cover;border:1px solid var(--border);">
+                    </div>
+                    <?php endif; ?>
+
                     <?php if ($is_empty): ?>
                     <!-- Modern Empty State UI -->
                     <div class="empty-state-box text-center py-5">
@@ -137,8 +244,8 @@ require_once __DIR__ . '/includes/navbar.php';
                 </div>
             </div>
 
-            <!-- Sidebar Navigation -->
-            <?php if (!empty($related_pages)): ?>
+            <!-- Sidebar Navigation jika layout bukan fullwidth -->
+            <?php if ($layout !== 'fullwidth' && !empty($related_pages)): ?>
             <div class="col-lg-4">
                 <div style="position:sticky;top:100px;">
                     <div class="card-lpm p-4 mb-4" style="border:1px solid var(--border);border-radius:var(--radius-lg);background:#fff;">

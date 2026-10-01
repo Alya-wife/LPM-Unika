@@ -7,7 +7,7 @@ $is_edit = ($id > 0);
 
 $item = [
     'bulan_tahun'    => '',
-    'tahun_akademik' => '2026–2027',
+    'tahun_akademik' => '2026/2027',
     'urutan'         => 1,
     'kegiatan'       => '',
     'is_active'      => 1
@@ -32,7 +32,9 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bulan_tahun    = trim($_POST['bulan_tahun'] ?? '');
-    $tahun_akademik = trim($_POST['tahun_akademik'] ?? '2026–2027');
+    $p_select       = trim($_POST['tahun_akademik_select'] ?? '');
+    $p_custom       = trim($_POST['tahun_akademik_custom'] ?? '');
+    $tahun_akademik = ($p_select === 'NEW' || (!empty($p_custom) && $p_select === 'NEW')) ? $p_custom : ($p_select ?: trim($_POST['tahun_akademik'] ?? '2026/2027'));
     $urutan         = (int)($_POST['urutan'] ?? 1);
     $kegiatan       = trim($_POST['kegiatan'] ?? '');
     $id_post        = (int)($_POST['id'] ?? 0);
@@ -89,33 +91,51 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <?php endif; ?>
 
                     <div class="row g-4">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Nama Bulan &amp; Tahun <span style="color:#C62828;">*</span>
                             </label>
-                            <input type="text" name="bulan_tahun" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-weight:600;" placeholder="Contoh: SEPTEMBER 2026" value="<?= e($is_edit ? $item['bulan_tahun'] : ($_POST['bulan_tahun'] ?? '')) ?>" required>
-                            <small class="text-muted">Gunakan format huruf kapital seperti: OKTOBER 2026</small>
+                            <input type="text" name="bulan_tahun" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;font-weight:600;" placeholder="Contoh: SEPTEMBER 2026" value="<?= e($is_edit ? ($item['bulan_tahun'] ?? '') : ($_POST['bulan_tahun'] ?? '')) ?>" required>
+                            <small class="text-muted">Format contoh: OKTOBER 2026</small>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
-                                Periode / Tahun Akademik
+                                Periode / Tahun Akademik <span style="color:#C62828;">*</span>
                             </label>
-                            <input type="text" name="tahun_akademik" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" placeholder="2026–2027" value="<?= e($is_edit ? $item['tahun_akademik'] : ($_POST['tahun_akademik'] ?? '2026–2027')) ?>" required>
+                            <?php
+                            $cur_th = $is_edit ? ($item['tahun_akademik'] ?? '2026/2027') : ($_POST['tahun_akademik_select'] ?? $_POST['tahun_akademik'] ?? '2026/2027');
+                            $existing_th = $db->query("SELECT DISTINCT tahun_akademik FROM kalender_mutu WHERE tahun_akademik IS NOT NULL AND tahun_akademik != '' ORDER BY tahun_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
+                            $default_th = ['2024/2025', '2025/2026', '2026/2027', '2027/2028', '2028/2029'];
+                            $all_th_options = array_unique(array_merge($existing_th, $default_th));
+                            rsort($all_th_options);
+                            $is_custom_th = (!in_array($cur_th, $all_th_options) && $cur_th !== '');
+                            ?>
+                            <select name="tahun_akademik_select" id="km_tahun_select" class="form-select mb-2" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" onchange="toggleCustomPeriode(this, 'km_tahun_custom')">
+                                <?php foreach ($all_th_options as $opt): ?>
+                                <option value="<?= e($opt) ?>" <?= ($cur_th === $opt && !$is_custom_th) ? 'selected' : '' ?>>Periode <?= e($opt) ?></option>
+                                <?php endforeach; ?>
+                                <option value="NEW" <?= $is_custom_th ? 'selected' : '' ?>>➕ Tambah Periode Baru...</option>
+                            </select>
+                            
+                            <input type="text" name="tahun_akademik_custom" id="km_tahun_custom" class="form-control"
+                                   placeholder="Ketik periode baru (contoh: 2028/2029)"
+                                   value="<?= e($is_custom_th ? $cur_th : '') ?>"
+                                   style="border:1.5px solid var(--purple);padding:0.7rem 1rem;display:<?= $is_custom_th ? 'block' : 'none' ?>;">
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
-                                Nomor Urut
+                                Urut
                             </label>
-                            <input type="number" name="urutan" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" min="1" max="50" value="<?= (int)($is_edit ? $item['urutan'] : ($_POST['urutan'] ?? $item['urutan'])) ?>" required>
+                            <input type="number" name="urutan" class="form-control" style="border:1.5px solid var(--border);padding:0.7rem 1rem;" min="1" max="50" value="<?= (int)($is_edit ? ($item['urutan'] ?? 1) : ($_POST['urutan'] ?? $item['urutan'] ?? 1)) ?>" required>
                         </div>
 
                         <div class="col-12">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Rincian Butir Kegiatan / Agenda <span style="color:#C62828;">*</span>
                             </label>
-                            <textarea name="kegiatan" class="form-control" rows="7" style="border:1.5px solid var(--border);padding:0.85rem 1rem;line-height:1.75;" placeholder="Tuliskan setiap agenda pada baris baru..." required><?= e($is_edit ? $item['kegiatan'] : ($_POST['kegiatan'] ?? '')) ?></textarea>
+                            <textarea name="kegiatan" class="form-control" rows="7" style="border:1.5px solid var(--border);padding:0.85rem 1rem;line-height:1.75;" placeholder="Tuliskan setiap agenda pada baris baru..." required><?= e($is_edit ? ($item['kegiatan'] ?? '') : ($_POST['kegiatan'] ?? '')) ?></textarea>
                             <small class="text-muted d-block mt-2">
                                 💡 <strong>Tips:</strong> Masukkan setiap agenda di <strong>baris baru (tekan Enter)</strong>. Website akan otomatis menampilkannya sebagai butir peluru <em>(bullet points)</em> rapi.
                             </small>
@@ -137,6 +157,19 @@ require_once __DIR__ . '/includes/admin-header.php';
             </div>
         </div>
     </div>
-</div>
+<script>
+function toggleCustomPeriode(selectEl, customInputId) {
+    var customInput = document.getElementById(customInputId);
+    if (!customInput) return;
+    if (selectEl.value === 'NEW') {
+        customInput.style.display = 'block';
+        customInput.focus();
+        customInput.required = true;
+    } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+    }
+}
+</script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

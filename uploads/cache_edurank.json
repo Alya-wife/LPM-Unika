@@ -1,0 +1,435 @@
+{
+    "indonesia": {
+        "rank": 65,
+        "total": "562",
+        "formatted": "#65 of 562"
+    },
+    "semarang": {
+        "rank": 3,
+        "total": "14",
+        "formatted": "#3 of 14"
+    },
+    "asia": {
+        "rank": 1242,
+        "total": "5,830",
+        "formatted": "#1242 of 5,830"
+    },
+    "world": {
+        "rank": 3818,
+        "total": "14,131",
+        "formatted": "#3818 of 14,131"
+    },
+    "topics": [
+        {
+            "category": "Liberal Arts & Social Sciences",
+            "subfields": [
+                {
+                    "name": "Human Rights Law",
+                    "indonesia_rank": 33
+                },
+                {
+                    "name": "Philosophy",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Communications and Public Relations",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Theology \/ Divinity \/ Religious studies",
+                    "indonesia_rank": 70
+                },
+                {
+                    "name": "Political Science",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Demography",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Aesthetics",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Education Majors",
+                    "indonesia_rank": 69
+                },
+                {
+                    "name": "Law",
+                    "indonesia_rank": 69
+                },
+                {
+                    "name": "Anthropology",
+                    "indonesia_rank": 69
+                },
+                {
+                    "name": "Sociology",
+                    "indonesia_rank": 71
+                },
+                {
+                    "name": "Linguistics",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Archaeology",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "History",
+                    "indonesia_rank": 67
+                }
+            ]
+        },
+        {
+            "category": "Environmental Science",
+            "subfields": [
+                {
+                    "name": "Forestry",
+                    "indonesia_rank": 60
+                },
+                {
+                    "name": "Agricultural Science",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Oceanography",
+                    "indonesia_rank": 58
+                },
+                {
+                    "name": "Environmental Management",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Geography and Cartography",
+                    "indonesia_rank": 67
+                },
+                {
+                    "name": "Ecology",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Geology",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Paleontology",
+                    "indonesia_rank": 70
+                }
+            ]
+        },
+        {
+            "category": "Business",
+            "subfields": [
+                {
+                    "name": "Investment Banking and Stock trading",
+                    "indonesia_rank": 50
+                },
+                {
+                    "name": "Accounting",
+                    "indonesia_rank": 55
+                },
+                {
+                    "name": "Advertising",
+                    "indonesia_rank": 54
+                },
+                {
+                    "name": "Finance",
+                    "indonesia_rank": 60
+                },
+                {
+                    "name": "Marketing",
+                    "indonesia_rank": 64
+                },
+                {
+                    "name": "Management",
+                    "indonesia_rank": 62
+                },
+                {
+                    "name": "Management Information Systems",
+                    "indonesia_rank": 66
+                }
+            ]
+        },
+        {
+            "category": "Computer Science",
+            "subfields": [
+                {
+                    "name": "Game Design and Development",
+                    "indonesia_rank": 13
+                },
+                {
+                    "name": "Multimedia",
+                    "indonesia_rank": 59
+                },
+                {
+                    "name": "Human-Computer Interaction",
+                    "indonesia_rank": 49
+                },
+                {
+                    "name": "Management Information Systems",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Cyber Security",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Artificial Intelligence (AI)",
+                    "indonesia_rank": 64
+                },
+                {
+                    "name": "Machine Learning",
+                    "indonesia_rank": 71
+                },
+                {
+                    "name": "Computer Vision",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Computer Networking",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Telecommunications",
+                    "indonesia_rank": 67
+                },
+                {
+                    "name": "Neuroscience",
+                    "indonesia_rank": 71
+                }
+            ]
+        },
+        {
+            "category": "Engineering",
+            "subfields": [
+                {
+                    "name": "Human-Computer Interaction",
+                    "indonesia_rank": 49
+                },
+                {
+                    "name": "Civil Engineering",
+                    "indonesia_rank": 61
+                },
+                {
+                    "name": "Electrical Engineering",
+                    "indonesia_rank": 53
+                },
+                {
+                    "name": "Structural Engineering",
+                    "indonesia_rank": 56
+                },
+                {
+                    "name": "Mechanical Engineering",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Materials Science",
+                    "indonesia_rank": 59
+                },
+                {
+                    "name": "Computer Networking",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Aerospace Engineering",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Metallurgical Engineering",
+                    "indonesia_rank": 62
+                },
+                {
+                    "name": "Telecommunications",
+                    "indonesia_rank": 67
+                },
+                {
+                    "name": "Optical Engineering",
+                    "indonesia_rank": 72
+                }
+            ]
+        },
+        {
+            "category": "Biology",
+            "subfields": [
+                {
+                    "name": "Forestry",
+                    "indonesia_rank": 60
+                },
+                {
+                    "name": "Nutrition and Food Science",
+                    "indonesia_rank": 64
+                },
+                {
+                    "name": "Horticulture",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Agricultural Science",
+                    "indonesia_rank": 66
+                },
+                {
+                    "name": "Botany",
+                    "indonesia_rank": 67
+                },
+                {
+                    "name": "Paleontology",
+                    "indonesia_rank": 70
+                },
+                {
+                    "name": "Neuroscience",
+                    "indonesia_rank": 71
+                },
+                {
+                    "name": "Biochemistry",
+                    "indonesia_rank": 71
+                },
+                {
+                    "name": "Genetics",
+                    "indonesia_rank": 72
+                }
+            ]
+        },
+        {
+            "category": "Medicine",
+            "subfields": [
+                {
+                    "name": "Obstetrics and Gynecology (OB-GYN)",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Healthcare Management (MHA)",
+                    "indonesia_rank": 55
+                },
+                {
+                    "name": "Clinical Psychology",
+                    "indonesia_rank": 55
+                },
+                {
+                    "name": "Public Health",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Nursing",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Health Science",
+                    "indonesia_rank": 69
+                },
+                {
+                    "name": "Pathology",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Psychiatry",
+                    "indonesia_rank": 68
+                }
+            ]
+        },
+        {
+            "category": "Psychology",
+            "subfields": [
+                {
+                    "name": "Social Psychology",
+                    "indonesia_rank": 64
+                },
+                {
+                    "name": "Clinical Psychology",
+                    "indonesia_rank": 55
+                },
+                {
+                    "name": "Child Psychology",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Education Majors",
+                    "indonesia_rank": 69
+                },
+                {
+                    "name": "Psychiatry",
+                    "indonesia_rank": 68
+                },
+                {
+                    "name": "Neuroscience",
+                    "indonesia_rank": 71
+                }
+            ]
+        },
+        {
+            "category": "Physics",
+            "subfields": [
+                {
+                    "name": "Materials Science",
+                    "indonesia_rank": 59
+                },
+                {
+                    "name": "Quantum and Particle physics",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Optical Engineering",
+                    "indonesia_rank": 72
+                }
+            ]
+        },
+        {
+            "category": "Economics",
+            "subfields": [
+                {
+                    "name": "Investment Banking and Stock trading",
+                    "indonesia_rank": 50
+                },
+                {
+                    "name": "Finance",
+                    "indonesia_rank": 60
+                },
+                {
+                    "name": "Development Studies",
+                    "indonesia_rank": 70
+                }
+            ]
+        },
+        {
+            "category": "Mathematics",
+            "subfields": [
+                {
+                    "name": "Math Teachers",
+                    "indonesia_rank": 71
+                },
+                {
+                    "name": "Statistics",
+                    "indonesia_rank": 70
+                }
+            ]
+        },
+        {
+            "category": "Art & Design",
+            "subfields": [
+                {
+                    "name": "Game Design and Development",
+                    "indonesia_rank": 13
+                },
+                {
+                    "name": "Multimedia",
+                    "indonesia_rank": 59
+                },
+                {
+                    "name": "Aesthetics",
+                    "indonesia_rank": 63
+                },
+                {
+                    "name": "Fashion Design",
+                    "indonesia_rank": 65
+                },
+                {
+                    "name": "Literature",
+                    "indonesia_rank": 62
+                }
+            ]
+        }
+    ],
+    "url": "https:\/\/edurank.org\/uni\/soegijapranata-catholic-university\/rankings\/",
+    "updated_at": "2026-10-01 08:39:21",
+    "from_cache": false
+}

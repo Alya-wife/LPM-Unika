@@ -8,42 +8,6 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_SESSION['admin_id'])) {
     redirect(SITE_URL . '/admin/dashboard.php');
 }
-
-$error_msg = '';
-
-// Handle Form Login Standar (Username / Email & Password)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
-    $login_input = trim($_POST['username'] ?? '');
-    $password    = trim($_POST['password'] ?? '');
-
-    if ($login_input === '' || $password === '') {
-        $error_msg = 'Username / Email dan Password wajib diisi.';
-    } else {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1");
-        $stmt->execute([$login_input, $login_input]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['admin_id']      = $user['id'];
-            $_SESSION['admin_name']    = $user['nama_lengkap'] ?: $user['username'];
-            $_SESSION['admin_email']   = $user['email'] ?? '';
-            $_SESSION['admin_picture'] = '';
-
-            // Sesi civitas UNIKA
-            $_SESSION['unika_user'] = [
-                'email'     => $user['email'] ?? 'admin@unika.ac.id',
-                'name'      => $user['nama_lengkap'] ?: $user['username'],
-                'picture'   => '',
-                'logged_at' => time()
-            ];
-
-            redirect(SITE_URL . '/admin/dashboard.php');
-        } else {
-            $error_msg = 'Username atau Password salah. Silakan coba lagi.';
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -78,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             border: 1px solid rgba(255,255,255,0.14);
             backdrop-filter: blur(24px);
             border-radius: var(--radius-xl);
-            padding: 2.5rem 2.25rem;
+            padding: 2.75rem 2.25rem;
             width: 100%;
             max-width: 440px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.45);
@@ -95,78 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             font-size: 0.83rem;
             color: rgba(255,255,255,0.65);
             line-height: 1.5;
-            margin-bottom: 1.5rem;
-        }
-        .form-control-admin {
-            background: rgba(255,255,255,0.09);
-            border: 1px solid rgba(255,255,255,0.18);
-            color: #ffffff !important;
-            border-radius: 10px;
-            padding: 0.75rem 1rem 0.75rem 2.6rem;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-        .form-control-admin:focus {
-            background: rgba(255,255,255,0.14);
-            border-color: #FFD54F;
-            box-shadow: 0 0 0 3px rgba(255,213,79,0.25);
-            color: #ffffff;
-        }
-        .form-control-admin::placeholder {
-            color: rgba(255,255,255,0.45);
-        }
-        .input-icon-wrap {
-            position: relative;
-        }
-        .input-icon-wrap i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255,255,255,0.5);
-            font-size: 1rem;
-            pointer-events: none;
-        }
-        .btn-admin-submit {
-            background: linear-gradient(135deg, #FFD54F, #FFC107);
-            color: #0A192F;
-            font-weight: 800;
-            font-size: 0.95rem;
-            border: none;
-            border-radius: 10px;
-            padding: 0.8rem;
-            width: 100%;
-            box-shadow: 0 6px 20px rgba(255,193,7,0.3);
-            transition: all 0.2s ease;
-        }
-        .btn-admin-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255,193,7,0.4);
-            background: #FFD54F;
-            color: #0A192F;
-        }
-        .login-divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 1.5rem 0 1rem;
-            color: rgba(255,255,255,0.4);
-            font-size: 0.78rem;
-            letter-spacing: 0.5px;
-            text-uppercase: uppercase;
-        }
-        .login-divider::before,
-        .login-divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-        }
-        .login-divider span {
-            padding: 0 0.8rem;
+            margin-bottom: 1.75rem;
         }
         .back-link {
             text-align: center;
-            margin-top: 1.5rem;
+            margin-top: 1.75rem;
             font-size: 0.82rem;
             color: rgba(255,255,255,0.4);
         }
@@ -181,68 +78,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 <body>
     <div class="login-card animate-fadeInUp">
         <!-- Logo -->
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.25rem;">
-            <div class="brand-logo-wrap" style="width:44px;height:44px;background:rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:4px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.5rem;">
+            <div class="brand-logo-wrap" style="width:48px;height:48px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:5px;">
                 <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA" class="brand-logo-img" style="max-width:100%;max-height:100%;">
             </div>
             <div style="text-align:left;">
-                <div class="brand-title" style="color:#fff;font-weight:800;font-size:1.05rem;">LPM UNIKA</div>
+                <div class="brand-title" style="color:#fff;font-weight:800;font-size:1.1rem;">LPM UNIKA</div>
                 <div class="brand-subtitle" style="color:var(--text-muted);font-size:0.75rem;">Portal Administrator</div>
             </div>
         </div>
 
         <div class="login-title">Autentikasi Administrator</div>
-        <div class="login-sub">Masuk ke panel kontrol Lembaga Penjaminan Mutu Universitas Katolik Soegijapranata</div>
+        <div class="login-sub">Masuk ke panel kontrol Lembaga Penjaminan Mutu menggunakan akun Google resmi.</div>
 
-        <?php if ($error_msg): ?>
-        <div class="alert alert-danger p-2 mb-3 text-start" style="font-size:0.84rem;border-radius:10px;background:rgba(239,68,68,0.2);border:1px solid #EF4444;color:#ffcaca;">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= htmlspecialchars($error_msg) ?>
-        </div>
-        <?php endif; ?>
-
-        <!-- Form Login Standar (Username & Password) -->
-        <form method="POST" action="" class="text-start mb-3">
-            <input type="hidden" name="action" value="login">
-            
-            <div class="mb-3">
-                <label class="form-label text-white-50" style="font-size:0.8rem;font-weight:600;">Username atau Email</label>
-                <div class="input-icon-wrap">
-                    <i class="bi bi-person-fill"></i>
-                    <input type="text" name="username" class="form-control form-control-admin" placeholder="admin atau tu.lpm@unika.ac.id" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required autofocus autocomplete="username">
-                </div>
+        <!-- Info box akun Google admin -->
+        <div class="p-3 mb-4 rounded-3 text-start" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.6;">
+            <div class="d-flex align-items-center gap-2 mb-1 text-warning fw-bold">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Akses Khusus Pengelola</span>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label text-white-50" style="font-size:0.8rem;font-weight:600;">Kata Sandi (Password)</label>
-                <div class="input-icon-wrap">
-                    <i class="bi bi-lock-fill"></i>
-                    <input type="password" name="password" id="inputPassword" class="form-control form-control-admin" placeholder="Masukkan password" required autocomplete="current-password">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-admin-submit mt-1">
-                <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Sekarang
-            </button>
-        </form>
-
-        <!-- Divider Opsi Google -->
-        <div class="login-divider">
-            <span>atau masuk via google</span>
+            Silakan masuk dengan akun Google Administrator resmi UNIKA (<code>tu.lpm@unika.ac.id</code> atau akun resmi terdaftar).
         </div>
 
         <!-- Loading State Google -->
-        <div id="adminLoginLoading" style="display:none;padding:0.75rem;background:rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:0.85rem;align-items:center;justify-content:center;gap:10px;margin-bottom:1rem;">
+        <div id="adminLoginLoading" style="display:none;padding:0.85rem;background:rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:0.88rem;align-items:center;justify-content:center;gap:10px;margin-bottom:1.25rem;">
             <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
             <span>Memverifikasi akun Google...</span>
         </div>
 
         <!-- Google Sign-In Button Container -->
-        <div class="d-flex flex-column align-items-center mb-2">
-            <div id="gsiAdminBtn" style="min-height:44px;"></div>
-            <div id="googleErrorMsg" style="display:none;width:100%;margin-top:0.75rem;text-align:left;background:rgba(239,68,68,0.18);border:1px solid #EF4444;color:#ffcaca;border-radius:var(--radius-sm);padding:0.65rem 0.9rem;font-size:0.82rem;line-height:1.5;"></div>
+        <div class="d-flex flex-column align-items-center mb-3">
+            <div id="gsiAdminBtn" style="min-height:44px;display:flex;justify-content:center;width:100%;"></div>
+            <div id="googleErrorMsg" style="display:none;width:100%;margin-top:0.85rem;text-align:left;background:rgba(239,68,68,0.18);border:1px solid #EF4444;color:#ffcaca;border-radius:var(--radius-sm);padding:0.75rem 1rem;font-size:0.83rem;line-height:1.5;"></div>
         </div>
 
-        <div class="back-link">
+        <div class="back-link border-top pt-3" style="border-color:rgba(255,255,255,0.1) !important;">
             <a href="<?= SITE_URL ?>/">
                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Beranda Website
             </a>

@@ -4,61 +4,38 @@ date_default_timezone_set('Asia/Jakarta');
  * Konfigurasi Database - LPM SCU
  * Koneksi PDO ke MySQL/MariaDB
  */
-// Deteksi otomatis environment (Localhost vs Hosting)
-$http_host = $_SERVER['HTTP_HOST'] ?? '';
-$is_localhost = (
-    in_array($http_host, ['localhost', '127.0.0.1']) ||
-    strpos($http_host, 'localhost:') === 0 ||
-    strpos($http_host, '127.0.0.1:') === 0 ||
-    strpos($http_host, '.test') !== false ||
-    php_sapi_name() === 'cli'
-);
+/**
+ * ============================================================================
+ * KONFIGURASI DATABASE & WEBSITE
+ * ============================================================================
+ * Saat memindahkan website ke server/hosting lain, pemilik cukup menyesuaikan
+ * parameter di bawah ini:
+ */
 
-if ($is_localhost) {
-    // Konfigurasi Database Localhost (Laragon / XAMPP)
-    define('DB_HOST', 'localhost');
-    define('DB_NAME', 'lpm_scu');
-    define('DB_USER', 'root');
-    define('DB_PASS', '');
-    define('DB_CHARSET', 'utf8mb4');
+// 1. Database MySQL
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'lpm_scu');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
 
-    define('SITE_NAME', 'LPM UNIKA');
-
-    // Auto-detect URL Localhost
-    if (!empty($http_host)) {
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-        if (strpos($http_host, 'lpm.test') !== false) {
-            define('SITE_URL', $protocol . $http_host);
-        } else {
-            define('SITE_URL', $protocol . $http_host . '/LPM');
-        }
-    } else {
-        define('SITE_URL', 'http://localhost/LPM');
-    }
-} else {
-    // Konfigurasi Database Hosting Ezyro (Live)
-    define('DB_HOST', 'sql102.ezyro.com');
-    define('DB_NAME', 'ezyro_42878139_lpm');
-    define('DB_USER', 'ezyro_42878139');        
-    define('DB_PASS', 'kvw0tc9y');
-    define('DB_CHARSET', 'utf8mb4');
-
-    define('SITE_NAME', 'LPM UNIKA');
-    define('SITE_URL', 'https://lpmunika.liveblog365.com');
-}
+// 2. URL & Nama Website
+define('SITE_NAME', 'LPM UNIKA');
+define('SITE_URL', 'http://localhost/LPM'); // Sesuaikan dengan domain saat online (contoh: https://lpm.unika.ac.id)
 
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
-// Google OAuth 2.0 Credentials (dimuat dari config/oauth.local.php atau environment)
+// 3. Google OAuth 2.0 (Login Akun Google Administrator & Civitas)
+// Masukkan Client ID dan Client Secret resmi dari Google Cloud Console di bawah ini:
 if (file_exists(__DIR__ . '/oauth.local.php')) {
     require_once __DIR__ . '/oauth.local.php';
 }
 if (!defined('GOOGLE_CLIENT_ID')) {
-    define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '');
+    define('GOOGLE_CLIENT_ID', 'MASUKKAN_GOOGLE_CLIENT_ID_DISINI.apps.googleusercontent.com');
 }
 if (!defined('GOOGLE_CLIENT_SECRET')) {
-    define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '');
+    define('GOOGLE_CLIENT_SECRET', 'MASUKKAN_GOOGLE_CLIENT_SECRET_DISINI');
 }
 
 // Inisialisasi Sesi jika belum aktif

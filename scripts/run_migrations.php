@@ -202,14 +202,7 @@ $db->exec("
       `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
-$brosurCount = $db->query("SELECT COUNT(*) FROM layanan_brosur")->fetchColumn();
-if ($brosurCount == 0) {
-    $db->exec("
-        INSERT INTO `layanan_brosur` (`id`, `judul_brosur`, `tahun`, `deskripsi`, `file_brosur`, `tipe_file`, `ukuran_file`, `link_pendaftaran`, `urutan`, `is_active`) VALUES
-        (1, 'Brosur Program Pelatihan & Kemitraan Mutu LPM SCU', 2026, 'Panduan silabus materi pelatihan penjaminan mutu, bimtek SPMI PPEPP, sertifikasi auditor mutu internal (AMI), dan klinik borang akreditasi prodi/institusi.', 'Brosur_Layanan_Pelatihan_LPM_UNIKA_2026.pdf', 'pdf', '458 KB', 'https://bit.ly/DaftarPelatihanLPM-SCU', 1, 1);
-    ");
-    echo "Seeded initial layanan_brosur record.\n";
-}
+// Tabel layanan_brosur disiapkan bersih tanpa data dummy awal sesuai komitmen pembersihan data layanan.
 
 // 6. Kolom Status pada Tabel Berita (Draft vs Published)
 $beritaCols = $db->query("SHOW COLUMNS FROM berita LIKE 'status'")->fetchAll();

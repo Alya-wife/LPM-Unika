@@ -398,7 +398,14 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
 - **Pembaruan Berkas Dump Basis Data**:
   - Berkas dump utama [`lpm_scu.sql`](./lpm_scu.sql) telah di-regenerate bersih tanpa data dummy transaksional layanan.
 
+### P. Sinkronisasi Seeder Bersih dan Pembersihan Berkas Root
+- **Penyelarasan Skrip Migrasi (`scripts/run_migrations.php`)**:
+  - Menghapus proses auto-seed dummy brosur pada skrip migrasi agar selaras dengan status bersih `lpm_scu.sql` (Section O), mencegah pengisian ulang data dummy secara tidak sengaja ketika migrasi dijalankan ulang.
+- **Pembersihan Berkas Sisa pada Direktori Root**:
+  - Menghapus berkas sertifikat sisa `Sertifikat Marketing Campus For Impact.pdf` dari direktori utama proyek, karena dokumen resmi telah tersimpan rapi dan terorganisir di direktori yang tepat ([`uploads/pemeringkatan/sertifikat_marketing_campus_for_impact_2026.pdf`](./uploads/pemeringkatan/sertifikat_marketing_campus_for_impact_2026.pdf)).
+
 ---
+
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain
 

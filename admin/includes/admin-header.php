@@ -328,7 +328,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
             </a>
         </div>
 
-        <!-- 8. Halaman Layanan & Kunjungan (Dropdown) -->
+        <!-- 8. Halaman Layanan (3 Sub-Menu Selaras Publik) -->
         <?php
         $unread_feedback  = 0;
         $unread_kunjungan = 0;
@@ -345,7 +345,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
                     </svg>
-                    <span>Layanan &amp; Kunjungan</span>
+                    <span>Menu Layanan</span>
                 </span>
                 <?php if ($unread_kunjungan > 0 || $unread_feedback > 0): ?>
                     <span class="badge bg-danger ms-auto me-2" style="font-size:0.65rem;padding:0.2rem 0.45rem;"><?= ($unread_kunjungan + $unread_feedback) ?></span>
@@ -353,29 +353,43 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
             <div class="admin-dropdown-menu">
-                <a href="<?= SITE_URL ?>/admin/layanan-form-setting.php" class="admin-subnav-link <?= $current_admin === 'layanan-form-setting' ? 'active' : '' ?>">
-                    <span>• Kelola Menu &amp; Konten Layanan</span>
+                <!-- Sub Menu 1: Info Pelatihan -->
+                <div style="padding:0.45rem 1rem 0.15rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;font-weight:700;">
+                    1. Info Pelatihan
+                </div>
+                <a href="<?= SITE_URL ?>/admin/layanan-form-setting.php?tab=pelatihan-umum" class="admin-subnav-link <?= ($current_admin === 'layanan-form-setting' && in_array(($_GET['tab'] ?? ''), ['pelatihan-umum', 'brosur', ''])) ? 'active' : '' ?>">
+                    <span>• Narasi &amp; Brosur Pelatihan</span>
                 </a>
+
+                <!-- Sub Menu 2: Kunjungan Studi Banding -->
+                <div style="padding:0.6rem 1rem 0.15rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;font-weight:700;">
+                    2. Kunjungan Studi Banding
+                </div>
                 <a href="<?= SITE_URL ?>/admin/kunjungan-list.php" class="admin-subnav-link <?= $current_admin === 'kunjungan-list' ? 'active' : '' ?>">
-                    <span>• Kunjungan Studi Banding</span>
+                    <span>• Permohonan Masuk</span>
                     <?php if ($unread_kunjungan > 0): ?>
-                        <span class="badge bg-warning text-dark" style="font-size:0.65rem;"><?= $unread_kunjungan ?></span>
+                        <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;"><?= $unread_kunjungan ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-list.php" class="admin-subnav-link <?= in_array($current_admin, ['feedback-kunjungan-list', 'feedback-kunjungan-detail']) ? 'active' : '' ?>">
-                    <span>• Survei Kepuasan Layanan LPM</span>
-                </a>
-                <a href="<?= SITE_URL ?>/admin/feedback-list.php" class="admin-subnav-link <?= $current_admin === 'feedback-list' ? 'active' : '' ?>">
-                    <span>• Kotak Masuk Saran Civitas</span>
-                    <?php if ($unread_feedback > 0): ?>
-                        <span class="badge bg-danger" style="font-size:0.65rem;"><?= $unread_feedback ?></span>
-                    <?php endif; ?>
+                <a href="<?= SITE_URL ?>/admin/layanan-form-setting.php?tab=kunjungan" class="admin-subnav-link <?= ($current_admin === 'layanan-form-setting' && ($_GET['tab'] ?? '') === 'kunjungan') ? 'active' : '' ?>">
+                    <span>• Pengaturan Form Kunjungan</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/kunjungan-unit.php" class="admin-subnav-link <?= $current_admin === 'kunjungan-unit' ? 'active' : '' ?>">
                     <span>• Pengaturan Tujuan Unit</span>
                 </a>
+
+                <!-- Sub Menu 3: Survey Kepuasan Layanan LPM -->
+                <div style="padding:0.6rem 1rem 0.15rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;font-weight:700;">
+                    3. Survey Kepuasan Layanan
+                </div>
+                <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-list.php" class="admin-subnav-link <?= in_array($current_admin, ['feedback-kunjungan-list', 'feedback-kunjungan-detail']) ? 'active' : '' ?>">
+                    <span>• Rekap Respon Survei</span>
+                </a>
                 <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-pertanyaan.php" class="admin-subnav-link <?= $current_admin === 'feedback-kunjungan-pertanyaan' ? 'active' : '' ?>">
-                    <span>• Kelola Butir Kuesioner</span>
+                    <span>• Kelola 8 Butir Kuesioner</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/layanan-form-setting.php?tab=feedback" class="admin-subnav-link <?= ($current_admin === 'layanan-form-setting' && ($_GET['tab'] ?? '') === 'feedback') ? 'active' : '' ?>">
+                    <span>• Pengaturan Form Survei</span>
                 </a>
             </div>
         </div>

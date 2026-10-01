@@ -11,8 +11,16 @@ $jml_akreditasi = (int)$db->query("SELECT COUNT(*) FROM akreditasi")->fetchColum
 $jml_pages      = (int)$db->query("SELECT COUNT(*) FROM pages")->fetchColumn();
 $jml_feedback   = (int)$db->query("SELECT COUNT(*) FROM feedback")->fetchColumn();
 $jml_unread_fb  = (int)$db->query("SELECT COUNT(*) FROM feedback WHERE status = 'Belum Dibaca'")->fetchColumn();
+
+// Layanan Publik: Kunjungan Studi Banding & Survey Kepuasan Layanan LPM
 $jml_kunjungan  = (int)$db->query("SELECT COUNT(*) FROM permohonan_kunjungan WHERE is_archived = 0")->fetchColumn();
 $jml_pending_kj = (int)$db->query("SELECT COUNT(*) FROM permohonan_kunjungan WHERE status = 'pending' AND is_archived = 0")->fetchColumn();
+$jml_survei     = 0;
+$jml_survei_recent = 0;
+try {
+    $jml_survei = (int)$db->query("SELECT COUNT(*) FROM kunjungan_feedback_respon")->fetchColumn();
+    $jml_survei_recent = (int)$db->query("SELECT COUNT(*) FROM kunjungan_feedback_respon WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
+} catch (Exception $e) {}
 
 // Berita terbaru
 $berita_recent = $db->query("SELECT * FROM berita ORDER BY created_at DESC LIMIT 5")->fetchAll();
@@ -105,40 +113,44 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-icon" style="background:#FCE4EC;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#C2185B" width="26" height="26">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                </svg>
-            </div>
-            <div>
-                <div class="admin-stat-num">
-                    <?= $jml_feedback ?>
-                    <?php if ($jml_unread_fb > 0): ?>
-                    <span style="font-size:0.75rem;color:#C2185B;font-weight:600;">(<?= $jml_unread_fb ?> baru)</span>
-                    <?php endif; ?>
+        <a href="feedback-kunjungan-list.php" style="text-decoration:none;color:inherit;display:block;">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon" style="background:#FCE4EC;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#C2185B" width="26" height="26">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.601a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                    </svg>
                 </div>
-                <div class="admin-stat-label">Kotak Masuk Layanan</div>
+                <div>
+                    <div class="admin-stat-num">
+                        <?= $jml_survei ?>
+                        <?php if ($jml_survei_recent > 0): ?>
+                        <span style="font-size:0.75rem;color:#C2185B;font-weight:600;">(+<?= $jml_survei_recent ?> minggu ini)</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="admin-stat-label">Survey Kepuasan Layanan</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="admin-stat-card">
-            <div class="admin-stat-icon" style="background:#E0F2F1;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00796B" width="26" height="26">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
-            </div>
-            <div>
-                <div class="admin-stat-num">
-                    <?= $jml_kunjungan ?>
-                    <?php if ($jml_pending_kj > 0): ?>
-                    <span style="font-size:0.75rem;color:#D97706;font-weight:600;">(<?= $jml_pending_kj ?> pending)</span>
-                    <?php endif; ?>
+        <a href="kunjungan-list.php" style="text-decoration:none;color:inherit;display:block;">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon" style="background:#E0F2F1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00796B" width="26" height="26">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
+                    </svg>
                 </div>
-                <div class="admin-stat-label">Permohonan Kunjungan</div>
+                <div>
+                    <div class="admin-stat-num">
+                        <?= $jml_kunjungan ?>
+                        <?php if ($jml_pending_kj > 0): ?>
+                        <span style="font-size:0.75rem;color:#D97706;font-weight:600;">(<?= $jml_pending_kj ?> pending)</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="admin-stat-label">Kunjungan Studi Banding</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -329,16 +341,42 @@ $traffic_datasets = [
                         </a>
                     </div>
 
-                    <!-- 9. Feedback & Kunjungan -->
+                    <!-- 9a. Layanan: Info Pelatihan -->
                     <div class="col-md-4 col-lg-3">
-                        <a href="feedback-kunjungan-list.php" class="quick-link-card text-decoration-none h-100">
+                        <a href="layanan-form-setting.php?tab=pelatihan-umum" class="quick-link-card text-decoration-none h-100">
+                            <div class="quick-link-icon" style="background:#EEF2FF;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#4F46E5" width="24" height="24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-2.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                                </svg>
+                            </div>
+                            <span class="quick-link-label">1. Info Pelatihan</span>
+                            <span style="font-size:0.75rem;color:var(--text-muted);text-align:center;">Narasi pelatihan &amp; upload brosur</span>
+                        </a>
+                    </div>
+
+                    <!-- 9b. Layanan: Kunjungan Studi Banding -->
+                    <div class="col-md-4 col-lg-3">
+                        <a href="kunjungan-list.php" class="quick-link-card text-decoration-none h-100">
                             <div class="quick-link-icon" style="background:#E0F2F1;">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00796B" width="24" height="24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
                                 </svg>
                             </div>
-                            <span class="quick-link-label">Hasil Feedback Kunjungan</span>
-                            <span style="font-size:0.75rem;color:var(--text-muted);text-align:center;">Survey kepuasan instansi luar</span>
+                            <span class="quick-link-label">2. Kunjungan Studi Banding</span>
+                            <span style="font-size:0.75rem;color:var(--text-muted);text-align:center;">Permohonan masuk &amp; form</span>
+                        </a>
+                    </div>
+
+                    <!-- 9c. Layanan: Survey Kepuasan Layanan -->
+                    <div class="col-md-4 col-lg-3">
+                        <a href="feedback-kunjungan-list.php" class="quick-link-card text-decoration-none h-100">
+                            <div class="quick-link-icon" style="background:#FCE4EC;">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#C2185B" width="24" height="24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.601a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                                </svg>
+                            </div>
+                            <span class="quick-link-label">3. Survey Kepuasan Layanan</span>
+                            <span style="font-size:0.75rem;color:var(--text-muted);text-align:center;">Rekap CSAT &amp; butir kuesioner</span>
                         </a>
                     </div>
 

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Pengaturan Kunjungan (Jam Operasional)';
+$admin_page_title = 'Pengaturan Kunjungan Studi Banding';
 $db = getDB();
 
 // Handle Save Jam Operasional Settings
@@ -27,14 +27,20 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">Pengaturan Kunjungan ke LPM (Jam
-            Operasional)</h2>
-        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola batasan jam operasional pelaksanaan
-            kunjungan resmi institusi luar ke Lembaga Penjaminan Mutu.</p>
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px;">
+            <i class="bi bi-clock-history text-primary"></i>
+            <span>Pengaturan Kunjungan Studi Banding (Jam Operasional)</span>
+        </h2>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola batasan jam operasional pelaksanaan kunjungan studi banding resmi institusi luar ke LPM.</p>
     </div>
-    <a href="kunjungan-list.php" class="btn-outline">
-        &larr; Kembali ke Kotak Masuk Kunjungan
-    </a>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="kunjungan-list.php" class="btn-outline">
+            &larr; Permohonan Kunjungan
+        </a>
+        <a href="layanan-form-setting.php?tab=kunjungan" class="btn-outline">
+            <i class="bi bi-gear me-1"></i> Pengaturan Form Kunjungan
+        </a>
+    </div>
 </div>
 
 <?php if ($flash): ?>

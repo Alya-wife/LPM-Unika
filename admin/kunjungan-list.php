@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Kotak Masuk Permohonan Kunjungan';
+$admin_page_title = 'Kunjungan Studi Banding - Permohonan Masuk';
 $db = getDB();
 
 $tab = $_GET['tab'] ?? 'active';
@@ -291,12 +291,23 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">Kotak Masuk Pelayanan Kunjungan ke LPM (Instansi Luar)</h2>
-        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola permohonan kunjungan resmi dari universitas/lembaga lain ke Lembaga Penjaminan Mutu UNIKA Soegijapranata.</p>
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px;">
+            <i class="bi bi-building-fill-check text-primary"></i>
+            <span>Layanan Kunjungan Studi Banding LPM</span>
+        </h2>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Kelola permohonan kunjungan studi banding resmi dari universitas / instansi luar ke Lembaga Penjaminan Mutu UNIKA Soegijapranata.</p>
     </div>
-    <a href="kunjungan-unit.php" class="btn-outline">
-        <i class="bi bi-clock me-1"></i> Pengaturan Jam Operasional Kunjungan
-    </a>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="layanan-form-setting.php?tab=kunjungan" class="btn-outline">
+            <i class="bi bi-gear me-1"></i> Pengaturan Form Kunjungan
+        </a>
+        <a href="kunjungan-unit.php" class="btn-outline">
+            <i class="bi bi-clock me-1"></i> Jam Operasional &amp; Unit
+        </a>
+        <a href="<?= SITE_URL ?>/kunjungan.php" target="_blank" class="btn-outline text-primary">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Halaman Publik &nearr;
+        </a>
+    </div>
 </div>
 
 <?php if ($flash): ?>

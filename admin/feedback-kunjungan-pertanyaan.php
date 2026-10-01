@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Kelola Butir Kuesioner Kunjungan';
+$admin_page_title = 'Kelola 8 Butir Kuesioner Survei Kepuasan';
 $db = getDB();
 
 // 1. Handle Add Question
@@ -72,19 +72,26 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px;">
-            <span>Kelola Butir Kuesioner Kunjungan</span>
+            <i class="bi bi-list-check text-primary"></i>
+            <span>Kelola 8 Butir Kuesioner Survei Kepuasan Layanan</span>
         </h2>
         <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">
-            Atur daftar pertanyaan skala likert 1-5 dan pertanyaan terbuka masukan saran untuk evaluasi kunjungan tamu.
+            Atur butir pertanyaan skala Likert 1-5 dan masukan saran terbuka untuk formulir Survey Kepuasan Layanan LPM.
         </p>
     </div>
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
         <a href="feedback-kunjungan-list.php" class="btn-outline">
-            <i class="bi bi-arrow-left me-1"></i> Rekap &amp; Token
+            <i class="bi bi-arrow-left me-1"></i> Rekap Survei
+        </a>
+        <a href="layanan-form-setting.php?tab=feedback" class="btn-outline">
+            <i class="bi bi-gear me-1"></i> Pengaturan Form Survei
         </a>
         <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#modalAddQuestion">
             <i class="bi bi-plus-circle me-1"></i> Tambah Pertanyaan
         </button>
+        <a href="<?= SITE_URL ?>/survei-kepuasan.php" target="_blank" class="btn-outline text-primary">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Form Publik &nearr;
+        </a>
     </div>
 </div>
 

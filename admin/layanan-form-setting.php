@@ -471,21 +471,21 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin:0;display:flex;align-items:center;gap:10px;">
-            <i class="bi bi-briefcase-fill text-primary"></i> Kelola Konten &amp; Formulir Layanan
+            <i class="bi bi-briefcase-fill text-primary"></i> Pengelolaan Layanan LPM (3 Sub-Menu Publik)
         </h2>
         <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">
-            Kelola sub-menu layanan: Pelatihan Eksternal, Biaya Pelatihan, Jadwal Terlaksana, Brosur, serta Formulir Publik.
+            Kelola narasi, brosur, formulir pendaftaran, dan survei mutu yang tersinkronisasi langsung dengan 3 sub-menu layanan di web publik.
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= SITE_URL ?>/pelatihan-eksternal.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
-            <i class="bi bi-mortarboard me-1"></i> Pelatihan Eksternal
+        <a href="<?= SITE_URL ?>/pelatihan.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
+            <i class="bi bi-mortarboard me-1"></i> 1. Info Pelatihan
         </a>
-        <a href="<?= SITE_URL ?>/layanan.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
-            <i class="bi bi-chat-left-heart me-1"></i> Kritik &amp; Saran
+        <a href="<?= SITE_URL ?>/kunjungan.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
+            <i class="bi bi-building-fill-check me-1"></i> 2. Kunjungan Studi Banding
         </a>
-        <a href="<?= SITE_URL ?>/feedback-kunjungan.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
-            <i class="bi bi-shield-lock me-1"></i> Feedback Kunjungan
+        <a href="<?= SITE_URL ?>/survei-kepuasan.php" target="_blank" class="btn-outline" style="font-size:0.82rem;">
+            <i class="bi bi-emoji-smile me-1"></i> 3. Survey Kepuasan
         </a>
     </div>
 </div>
@@ -504,31 +504,31 @@ require_once __DIR__ . '/includes/admin-header.php';
 </div>
 <?php endif; ?>
 
-<!-- Tabs Switcher -->
+<!-- Tabs Switcher Selaras 3 Sub-Menu Layanan Publik -->
 <div class="d-flex gap-2 border-bottom mb-4 pb-2 flex-wrap" style="overflow-x:auto;">
     <a href="layanan-form-setting.php?tab=pelatihan-umum" class="btn btn-sm <?= $tab === 'pelatihan-umum' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-card-text me-1"></i> 1. Narasi Info Pelatihan
+        <i class="bi bi-card-text me-1"></i> 1.1 Narasi Info Pelatihan
     </a>
     <a href="layanan-form-setting.php?tab=brosur" class="btn btn-sm <?= $tab === 'brosur' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-file-earmark-pdf me-1"></i> 2. Upload Brosur Pelatihan (<?= count($brosur_list) ?>)
-    </a>
-    <a href="layanan-form-setting.php?tab=jadwal" class="btn btn-sm <?= $tab === 'jadwal' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-calendar-check me-1"></i> 3. Kalender &amp; Jadwal (<?= count($jadwal_list) ?>)
-    </a>
-    <a href="layanan-form-setting.php?tab=feedback" class="btn btn-sm <?= $tab === 'feedback' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-chat-heart me-1"></i> 4. Form Kritik &amp; Saran
+        <i class="bi bi-file-earmark-richtext me-1"></i> 1.2 Upload Brosur Pelatihan (<?= count($brosur_list) ?>)
     </a>
     <a href="layanan-form-setting.php?tab=kunjungan" class="btn btn-sm <?= $tab === 'kunjungan' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-building-check me-1"></i> 5. Form Kunjungan
+        <i class="bi bi-building-check me-1"></i> 2. Form Kunjungan Studi Banding
+    </a>
+    <a href="layanan-form-setting.php?tab=feedback" class="btn btn-sm <?= $tab === 'feedback' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-emoji-smile me-1"></i> 3. Form Survey Kepuasan Layanan
+    </a>
+    <a href="layanan-form-setting.php?tab=jadwal" class="btn btn-sm <?= $tab === 'jadwal' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-calendar-check me-1"></i> Arsip Jadwal (<?= count($jadwal_list) ?>)
     </a>
     <a href="layanan-form-setting.php?tab=keunggulan" class="btn btn-sm <?= $tab === 'keunggulan' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-award me-1"></i> 6. Standar Keunggulan (<?= count($keunggulan_list) ?>)
+        <i class="bi bi-award me-1"></i> Standar Keunggulan (<?= count($keunggulan_list) ?>)
     </a>
     <a href="layanan-form-setting.php?tab=alur" class="btn btn-sm <?= $tab === 'alur' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-diagram-3 me-1"></i> 7. Alur Kerjasama (<?= count($alur_list) ?>)
+        <i class="bi bi-diagram-3 me-1"></i> Alur Kerjasama (<?= count($alur_list) ?>)
     </a>
     <a href="layanan-form-setting.php?tab=faq" class="btn btn-sm <?= $tab === 'faq' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-question-circle me-1"></i> 8. FAQ Pelatihan (<?= count($faq_list) ?>)
+        <i class="bi bi-question-circle me-1"></i> FAQ Pelatihan (<?= count($faq_list) ?>)
     </a>
 </div>
 
@@ -1490,18 +1490,23 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- TAB 6: BANNER HERO & KONTAK EMAIL PELATIHAN                                -->
+<!-- SUB-MENU 1: NARASI & KONTAK INFO PELATIHAN                                -->
 <!-- ========================================================================= -->
 <?php if ($tab === 'pelatihan-umum'): ?>
 <div class="admin-table-wrap p-4" style="border-top:4px solid var(--navy);">
-    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3 flex-wrap gap-2">
         <div>
             <h5 style="font-weight:700;color:var(--navy);margin:0;">
-                <i class="bi bi-sliders text-primary me-2"></i> Pengaturan Banner Hero &amp; Kontak Pelatihan
+                <i class="bi bi-card-text text-primary me-2"></i> Sub-Menu 1: Narasi &amp; Kontak Info Pelatihan
             </h5>
-            <small class="text-muted">Kelola judul header, deskripsi banner utama, dan kontak resmi konsultasi kemitraan pelatihan.</small>
+            <small class="text-muted">Kelola judul header, ikhtisar singkat, narasi utama LPM UNIKA, serta narahubung resmi kemitraan pelatihan.</small>
         </div>
-        <span class="badge bg-light text-dark border">Halaman Pelatihan Eksternal</span>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Sub-Menu 1 Publik</span>
+            <a href="<?= SITE_URL ?>/pelatihan.php" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Buka Halaman Publik
+            </a>
+        </div>
     </div>
 
     <form method="post" action="layanan-form-setting.php">
@@ -1602,20 +1607,30 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- TAB 7: FORMULIR KRITIK & SARAN                                            -->
+<!-- ========================================================================= -->
+<!-- SUB-MENU 3: FORMULIR SURVEY KEPUASAN LAYANAN LPM                          -->
 <!-- ========================================================================= -->
 <?php if ($tab === 'feedback'): ?>
 <div class="admin-table-wrap p-4" style="border-top:4px solid var(--navy);">
-    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3 flex-wrap gap-2">
         <div>
             <h5 style="font-weight:700;color:var(--navy);margin:0;">
-                <i class="bi bi-chat-heart text-primary me-2"></i> Pengaturan Formulir Kritik Saran &amp; Feedback Mutu
+                <i class="bi bi-emoji-smile text-primary me-2"></i> Sub-Menu 3: Pengaturan Formulir Survey Kepuasan Layanan
             </h5>
-            <small class="text-muted">Konfigurasi label, deskripsi instruksi, pilihan kategori, serta email penerima notifikasi.</small>
+            <small class="text-muted">Konfigurasi badge, judul formulir, deskripsi instruksi, pilihan kategori, serta email penerima survei mutu.</small>
         </div>
-        <span class="badge bg-light text-dark border">
-            Kanal Aspirasi Publik
-        </span>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-success-subtle text-success border border-success-subtle">Sub-Menu 3 Publik</span>
+            <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-list.php" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-bar-chart-fill me-1"></i> Rekap Respon Survei
+            </a>
+            <a href="<?= SITE_URL ?>/admin/feedback-kunjungan-pertanyaan.php" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-ui-checks me-1"></i> 8 Butir Kuesioner
+            </a>
+            <a href="<?= SITE_URL ?>/survei-kepuasan.php" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Form Publik
+            </a>
+        </div>
     </div>
 
     <form method="post" action="layanan-form-setting.php">
@@ -1688,20 +1703,29 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- TAB 6: FORMULIR KUNJUNGAN                                                -->
+<!-- SUB-MENU 2: FORMULIR KUNJUNGAN STUDI BANDING                              -->
 <!-- ========================================================================= -->
 <?php if ($tab === 'kunjungan'): ?>
 <div class="admin-table-wrap p-4" style="border-top:4px solid var(--navy);">
-    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3 flex-wrap gap-2">
         <div>
             <h5 style="font-weight:700;color:var(--navy);margin:0;">
-                <i class="bi bi-building-check text-primary me-2"></i> Pengaturan Formulir Permohonan Kunjungan
+                <i class="bi bi-building-check text-primary me-2"></i> Sub-Menu 2: Pengaturan Formulir Kunjungan Studi Banding
             </h5>
-            <small class="text-muted">Konfigurasi instruksi pendaftaran audiensi, studi banding, kuota delegasi, dan jam operasional kunjungan.</small>
+            <small class="text-muted">Konfigurasi narasi fasilitas studi banding, SOP pengajuan, kuota delegasi, mode jadwal kalender, dan pesan sukses.</small>
         </div>
-        <span class="badge bg-light text-dark border">
-            Kunjungan Mitra Institusi
-        </span>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">Sub-Menu 2 Publik</span>
+            <a href="<?= SITE_URL ?>/admin/kunjungan-list.php" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-inbox-fill me-1"></i> Permohonan Masuk
+            </a>
+            <a href="<?= SITE_URL ?>/admin/kunjungan-unit.php" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-diagram-2 me-1"></i> Tujuan Unit
+            </a>
+            <a href="<?= SITE_URL ?>/kunjungan.php" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Form Publik
+            </a>
+        </div>
     </div>
 
     <form method="post" action="layanan-form-setting.php">

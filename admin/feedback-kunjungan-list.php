@@ -462,19 +462,26 @@ require_once __DIR__ . '/includes/admin-header.php';
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h2 style="font-size:1.3rem;font-weight:800;color:var(--navy);margin:0;display:flex;align-items:center;gap:10px;">
-            <span>⭐ Feedback Kunjungan Mitra Institusi</span>
+            <i class="bi bi-emoji-smile-fill text-warning"></i>
+            <span>Survey Kepuasan Layanan LPM</span>
         </h2>
         <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">
-            Kelola kuesioner kepuasan, kode token tamu per instansi, serta pantau indeks mutu dan saran masukan pasca kunjungan.
+            Rekapitulasi respon survei kepuasan, analisis penilaian mutu, kritik &amp; saran, serta kelola kode token tamu per instansi.
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="layanan-form-setting.php?tab=feedback" class="btn-outline">
+            <i class="bi bi-gear me-1"></i> Pengaturan Form Survei
+        </a>
         <a href="feedback-kunjungan-pertanyaan.php" class="btn-outline">
-            <i class="bi bi-list-check me-1"></i> Kelola Butir Kuesioner
+            <i class="bi bi-list-check me-1"></i> Kelola 8 Butir Kuesioner
         </a>
         <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#modalGenerateToken">
             <i class="bi bi-plus-circle me-1"></i> Buat Token Kunjungan
         </button>
+        <a href="<?= SITE_URL ?>/survei-kepuasan.php" target="_blank" class="btn-outline text-primary">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Form Publik &nearr;
+        </a>
     </div>
 </div>
 

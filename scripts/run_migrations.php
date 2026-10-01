@@ -248,6 +248,8 @@ $db->exec("
     CREATE TABLE IF NOT EXISTS `glosarium` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `istilah` VARCHAR(100) NOT NULL,
+        `nama` VARCHAR(255) DEFAULT NULL,
+        `kategori` VARCHAR(100) NOT NULL DEFAULT 'Umum',
         `istilah_lengkap` VARCHAR(255) DEFAULT NULL,
         `definisi` TEXT NOT NULL,
         `sumber` VARCHAR(150) DEFAULT 'Kemendikbudristek / SPMI',
@@ -256,6 +258,17 @@ $db->exec("
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
+// Pastikan kolom nama dan kategori ada jika tabel lama sudah terbuat
+$chkGlosNama = $db->query("SHOW COLUMNS FROM glosarium LIKE 'nama'")->fetchAll();
+if (empty($chkGlosNama)) {
+    $db->exec("ALTER TABLE glosarium ADD COLUMN `nama` VARCHAR(255) NULL DEFAULT NULL AFTER `istilah`");
+    $db->exec("UPDATE glosarium SET nama = istilah_lengkap WHERE nama IS NULL");
+}
+$chkGlosKat = $db->query("SHOW COLUMNS FROM glosarium LIKE 'kategori'")->fetchAll();
+if (empty($chkGlosKat)) {
+    $db->exec("ALTER TABLE glosarium ADD COLUMN `kategori` VARCHAR(100) NOT NULL DEFAULT 'Umum' AFTER `nama`");
+    $db->exec("UPDATE glosarium SET kategori = sumber WHERE sumber IS NOT NULL AND sumber != ''");
+}
 $gloCount = (int)$db->query("SELECT COUNT(*) FROM glosarium")->fetchColumn();
 if ($gloCount === 0) {
     $db->exec("

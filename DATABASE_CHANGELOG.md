@@ -129,11 +129,13 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
 - Dikelola melalui CMS Administrator (`admin/faq-setting.php`) dan tampil dinamis di `faq.php`.
 
 ### J. Tabel Glosarium Istilah Mutu (`glosarium`)
-- **Tabel Baru Ditambahkan**:
+- **Tabel Basis Data & Penyelarasan Kolom**:
   ```sql
   CREATE TABLE IF NOT EXISTS `glosarium` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `istilah` VARCHAR(100) NOT NULL,
+    `nama` VARCHAR(255) DEFAULT NULL,
+    `kategori` VARCHAR(100) NOT NULL DEFAULT 'Umum',
     `istilah_lengkap` VARCHAR(255) DEFAULT NULL,
     `definisi` TEXT NOT NULL,
     `sumber` VARCHAR(150) DEFAULT 'Kemendikbudristek / SPMI',
@@ -142,7 +144,7 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   ```
-- Dikelola melalui CMS Administrator (`admin/glosarium-setting.php`) dan tampil dinamis dengan pencarian interaktif di `glosarium.php`.
+- **Pembaruan Bug Fix**: Kolom `nama` dan `kategori` ditambahkan untuk menyelaraskan antara antarmuka publik ([`glosarium.php`](./glosarium.php)) dan form pengelola admin ([`admin/glosarium-setting.php`](./admin/glosarium-setting.php)), menyelesaikan masalah *Undefined array key "nama" / "kategori"* dan *Deprecated passing null to htmlspecialchars*. Kolom `istilah_lengkap` dan `sumber` tetap disinkronkan secara timbal balik untuk kompatibilitas penuh.
 
 ### K. Kunci Pengaturan Tautan Portal SPMI & UI GreenMetric (`pengaturan`)
 - Penambahan kunci pengaturan status portal SPMI (Aktif vs Coming Soon) beserta URL dan narasi:

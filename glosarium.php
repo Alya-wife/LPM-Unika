@@ -13,9 +13,14 @@ $search_term = trim($_GET['q'] ?? '');
 
 try {
     if ($search_term !== '') {
-        $stmt_glos = $db->prepare("SELECT * FROM glosarium WHERE is_active = 1 AND (istilah LIKE ? OR nama LIKE ? OR definisi LIKE ?) ORDER BY urutan ASC, istilah ASC");
+        $stmt_glos = $db->prepare("
+            SELECT * FROM glosarium 
+            WHERE is_active = 1 
+              AND (istilah LIKE ? OR COALESCE(nama, istilah_lengkap, '') LIKE ? OR definisi LIKE ? OR COALESCE(kategori, sumber, '') LIKE ?) 
+            ORDER BY urutan ASC, istilah ASC
+        ");
         $param = '%' . $search_term . '%';
-        $stmt_glos->execute([$param, $param, $param]);
+        $stmt_glos->execute([$param, $param, $param, $param]);
         $all_terms = $stmt_glos->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $all_terms = $db->query("SELECT * FROM glosarium WHERE is_active = 1 ORDER BY urutan ASC, istilah ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -82,23 +87,29 @@ try {
         <?php else: ?>
         <div class="row g-4">
             <?php foreach ($all_terms as $t): ?>
+            <?php 
+            $kategori_label = !empty($t['kategori']) ? $t['kategori'] : (!empty($t['sumber']) ? $t['sumber'] : 'Umum');
+            $istilah_teks   = !empty($t['istilah']) ? $t['istilah'] : '';
+            $nama_teks      = !empty($t['nama']) ? $t['nama'] : (!empty($t['istilah_lengkap']) ? $t['istilah_lengkap'] : $istilah_teks);
+            $definisi_teks  = !empty($t['definisi']) ? $t['definisi'] : '';
+            ?>
             <div class="col-md-6 col-lg-4">
                 <div class="card-lpm p-4 h-100 d-flex flex-column" style="background:#ffffff;border:1px solid var(--border);border-left:4px solid var(--purple);border-radius:var(--radius-md);box-shadow:0 4px 15px rgba(10,25,47,0.04);transition:transform 0.2s, box-shadow 0.2s;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="badge" style="background:rgba(123,31,162,0.1);color:var(--purple);font-size:0.75rem;padding:0.3rem 0.65rem;border-radius:15px;font-weight:700;">
-                            <?= htmlspecialchars($t['kategori']) ?>
+                            <?= htmlspecialchars($kategori_label) ?>
                         </span>
                         <span style="font-family:var(--font-heading);font-weight:900;color:var(--gold);font-size:1.1rem;">
-                            <?= htmlspecialchars($t['istilah']) ?>
+                            <?= htmlspecialchars($istilah_teks) ?>
                         </span>
                     </div>
 
                     <h4 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.05rem;line-height:1.35;margin-bottom:0.6rem;">
-                        <?= htmlspecialchars($t['nama']) ?>
+                        <?= htmlspecialchars($nama_teks) ?>
                     </h4>
 
                     <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.65;margin:0;flex-grow:1;">
-                        <?= htmlspecialchars($t['definisi']) ?>
+                        <?= htmlspecialchars($definisi_teks) ?>
                     </p>
                 </div>
             </div>

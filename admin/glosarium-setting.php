@@ -39,12 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_glosarium'])) {
         $_SESSION['error'] = 'Istilah / singkatan dan definisi wajib diisi.';
     } else {
         if ($id > 0) {
-            $stmt = $db->prepare("UPDATE glosarium SET istilah = ?, nama = ?, kategori = ?, definisi = ?, urutan = ?, is_active = ? WHERE id = ?");
-            $stmt->execute([$istilah, $nama, $kategori, $definisi, $urutan, $is_active, $id]);
+            $stmt = $db->prepare("UPDATE glosarium SET istilah = ?, nama = ?, kategori = ?, istilah_lengkap = ?, sumber = ?, definisi = ?, urutan = ?, is_active = ? WHERE id = ?");
+            $stmt->execute([$istilah, $nama, $kategori, $nama, $kategori, $definisi, $urutan, $is_active, $id]);
             $_SESSION['flash'] = 'Data istilah glosarium berhasil diperbarui.';
         } else {
-            $stmt = $db->prepare("INSERT INTO glosarium (istilah, nama, kategori, definisi, urutan, is_active) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$istilah, $nama, $kategori, $definisi, $urutan, $is_active]);
+            $stmt = $db->prepare("INSERT INTO glosarium (istilah, nama, kategori, istilah_lengkap, sumber, definisi, urutan, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$istilah, $nama, $kategori, $nama, $kategori, $definisi, $urutan, $is_active]);
             $_SESSION['flash'] = 'Istilah glosarium baru berhasil ditambahkan.';
         }
         redirect(SITE_URL . '/admin/glosarium-setting.php');

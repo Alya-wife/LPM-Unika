@@ -665,7 +665,7 @@ function renderProfilSection($type, $block = [], $is_builder = false) {
                         ?>
 
                         <!-- Block Penjelasan Tugas & 9 Fungsi Gugus Penjaminan Mutu (GPM) Fakultas -->
-                        <div class="card p-4 p-md-5 mb-4 border-0 shadow-sm" style="background:#ffffff;border:1px solid #E2E8F0;border-top:4px solid #16A34A;border-radius:18px;box-shadow:0 6px 24px rgba(10,25,47,0.05);">
+                        <div class="card p-4 p-md-5 mb-4 border-0 shadow-sm" style="background:#ffffff;border:1px solid #E2E8F0;border-radius:18px;box-shadow:0 6px 24px rgba(10,25,47,0.05);">
                             
                             <!-- Header & Narasi Pengantar GPM -->
                             <div class="d-flex align-items-start gap-3 mb-4">
@@ -673,33 +673,15 @@ function renderProfilSection($type, $block = [], $is_builder = false) {
                                     <i class="bi bi-shield-check"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                    <div class="mb-2">
                                         <h4 class="fw-bold m-0" style="color:var(--navy);font-family:var(--font-heading);font-size:1.25rem;">
                                             Gugus Penjaminan Mutu (GPM) Fakultas
                                         </h4>
-                                        <?php if ($gpm_dasar_hukum): ?>
-                                        <span class="badge" style="background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;font-size:0.78rem;font-weight:700;padding:6px 12px;border-radius:20px;">
-                                            <i class="bi bi-book-half me-1"></i><?= htmlspecialchars($gpm_dasar_hukum) ?>
-                                        </span>
-                                        <?php endif; ?>
                                     </div>
                                     <p style="color:#475569;font-size:0.94rem;line-height:1.75;margin:0;">
                                         <?= nl2br(htmlspecialchars($gpm_pengantar)) ?>
                                     </p>
                                 </div>
-                            </div>
-
-                            <!-- Tugas Gugus Penjaminan Mutu (Highlight Box) -->
-                            <div class="p-3 px-4 mb-4" style="background:linear-gradient(135deg, #F0FDF4, #DCFCE7);border:1px solid #BBF7D0;border-left:5px solid #16A34A;border-radius:12px;">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <i class="bi bi-check2-circle text-success fs-5"></i>
-                                    <h6 class="m-0 fw-bold" style="color:#14532D;font-family:var(--font-heading);font-size:0.98rem;">
-                                        Tugas Gugus Penjaminan Mutu
-                                    </h6>
-                                </div>
-                                <p class="m-0" style="color:#166534;font-size:0.92rem;line-height:1.7;padding-left:1.75rem;">
-                                    <?= nl2br(htmlspecialchars($gpm_tugas)) ?>
-                                </p>
                             </div>
 
                             <!-- 9 Butir Fungsi Gugus Penjaminan Mutu -->

@@ -122,6 +122,18 @@ $kemenDir = __DIR__ . '/../uploads/spmi_kemendikti';
 if (!is_dir($kemenDir)) {
     @mkdir($kemenDir, 0755, true);
 }
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `spmi_kemendikti` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `judul` VARCHAR(255) NOT NULL,
+      `deskripsi` TEXT NULL,
+      `file_pdf` VARCHAR(255) NOT NULL,
+      `tahun` INT NOT NULL DEFAULT 2025,
+      `urutan` INT NOT NULL DEFAULT 1,
+      `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+      `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
 $kemenCount = $db->query("SELECT COUNT(*) FROM spmi_kemendikti")->fetchColumn();
 if ($kemenCount == 0) {
     $srcPdf = __DIR__ . '/../uploads/dokumen/2606.pdf';

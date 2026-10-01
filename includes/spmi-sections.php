@@ -465,112 +465,94 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                         }
                     </script>
 
-                    <!-- Callout Banner: Integrasi Portal SISTA -->
-                    <div style="background:linear-gradient(135deg, #0A192F, #132D54);border-radius:var(--radius-lg);padding:2rem 2.25rem;color:#ffffff;box-shadow:0 10px 30px rgba(10,25,47,0.15);">
-                        <div class="row align-items-center g-4">
-                            <div class="col-lg-8">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
-                                        SISTEM INFORMASI STANDAR AKADEMIK
-                                    </span>
-                                </div>
-                                <h3 style="font-family:var(--font-heading);font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:0.6rem;">
-                                    Pemantauan &amp; Pelaporan Siklus PPEPP melalui Portal SISTA
-                                </h3>
-                                <p style="color:rgba(255,255,255,0.8);font-size:0.92rem;line-height:1.7;margin:0;">
-                                    Seluruh perumusan capaian, pengisian bukti dukung pelaksanaan, evaluasi berkala, hingga rencana tindak lanjut pengendalian mutu dimonitor secara digital terintegrasi.
-                                </p>
-                            </div>
-                            <div class="col-lg-4 text-lg-end">
-                                <a href="https://sista.unika.ac.id" target="_blank" class="btn-hero-primary d-inline-flex align-items-center gap-2" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;padding:0.85rem 1.75rem;font-size:0.95rem;font-weight:700;box-shadow:0 6px 20px rgba(123,31,162,0.4);text-decoration:none;">
-                                    <span>Buka Portal SISTA</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
             <?php
             break;
 
         case 'spmi_kemendikti':
-            $list_spmi_kemendikti = $data['list_spmi_kemendikti'];
             ?>
             <section class="py-5" style="background:#ffffff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>" id="hasil-kemendikti">
                 <div class="container">
-                    <!-- Banner SPMI Kemendikti Saintek (Persis seperti Banner Portal SISTA di atasnya) -->
-                    <div class="mb-4 mb-lg-5" style="background:linear-gradient(135deg, #0A192F, #132D54);border-radius:var(--radius-lg);padding:2rem 2.25rem;color:#ffffff;box-shadow:0 10px 30px rgba(10,25,47,0.15);">
-                        <div class="row align-items-center g-4">
-                            <div class="col-lg-8">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
-                                        PUBLIKASI &amp; PELAPORAN NASIONAL
-                                    </span>
-                                </div>
-                                <h3 style="font-family:var(--font-heading);font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:0.6rem;">
-                                    Hasil SPMI Kemendikti Saintek
-                                </h3>
-                                <p style="color:rgba(255,255,255,0.8);font-size:0.92rem;line-height:1.7;margin:0;">
-                                    Rekapitulasi dan laporan hasil evaluasi pelaksanaan SPMI yang dilaporkan secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.
-                                </p>
-                            </div>
-                            <div class="col-lg-4 text-lg-end">
-                                <a href="https://spmi.kemdiktisaintek.go.id/auth/login" target="_blank" rel="noopener noreferrer" class="btn-hero-primary d-inline-flex align-items-center gap-2" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;padding:0.85rem 1.75rem;font-size:0.95rem;font-weight:700;box-shadow:0 6px 20px rgba(123,31,162,0.4);border-radius:12px;text-decoration:none;color:#ffffff;white-space:nowrap;">
-                                    <span>Buka Portal SPMI</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php if (empty($list_spmi_kemendikti)): ?>
-                    <div class="card-lpm p-4 text-center bg-white" style="border:1px dashed var(--border);border-radius:var(--radius-md);">
-                        <p class="text-muted mb-0" style="font-size:0.9rem;">Dokumen pelaporan hasil SPMI Kemendikti Saintek sedang dalam proses pembaruan data.</p>
-                    </div>
-                    <?php else: ?>
-                    <div class="row g-4">
-                        <?php foreach ($list_spmi_kemendikti as $item): ?>
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card-lpm p-4 h-100 bg-white d-flex flex-column" style="border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+                    <div class="row g-4 justify-content-center">
+                        <!-- Card 1: Portal SISTA -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <span class="badge" style="background:#E2E8F0;color:#1E293B;font-weight:700;font-size:0.8rem;padding:0.35rem 0.65rem;border-radius:6px;">
-                                        Tahun <?= htmlspecialchars($item['tahun']) ?>
+                                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
+                                        STANDAR AKADEMIK
                                     </span>
+                                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
+                                        <i class="bi bi-mortarboard-fill fs-6"></i>
+                                    </div>
                                 </div>
-                                <h5 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);font-size:1.05rem;line-height:1.45;margin-bottom:0.6rem;">
-                                    <?= htmlspecialchars($item['judul']) ?>
-                                </h5>
-                                <?php 
-                                $desc = !empty($item['deskripsi']) ? $item['deskripsi'] : ($item['keterangan'] ?? '');
-                                if (!empty($desc)): ?>
-                                <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.25rem;flex-grow:1;">
-                                    <?= nl2br(htmlspecialchars($desc)) ?>
+                                <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
+                                    Portal SISTA
+                                </h4>
+                                <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
+                                    Pemantauan &amp; pelaporan siklus PPEPP, perumusan capaian, bukti dukung pelaksanaan, dan rencana tindak lanjut termonitor secara digital terintegrasi.
                                 </p>
-                                <?php endif; ?>
-                                <div class="mt-auto pt-3 border-top d-flex gap-2">
-                                    <?php 
-                                    $kemen_file = !empty($item['file_pdf']) ? $item['file_pdf'] : ($item['file_path'] ?? '');
-                                    if (!empty($kemen_file)): 
-                                        $kemen_url = SITE_URL . '/uploads/spmi_kemendikti/' . htmlspecialchars($kemen_file);
-                                    ?>
-                                    <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 fw-bold rounded-pill px-3 py-1" onclick="if(typeof openPdfViewer==='function'){openPdfViewer('<?= $kemen_url ?>', '<?= addslashes(htmlspecialchars($item['judul'])) ?>');}else{window.open('<?= $kemen_url ?>','_blank');}">
-                                        <i class="bi bi-file-earmark-pdf"></i> Buka Laporan
-                                    </button>
-                                    <a href="<?= $kemen_url ?>" download class="btn btn-sm btn-light border text-muted d-inline-flex align-items-center gap-1 rounded-pill px-3 py-1" title="Unduh File PDF">
-                                        <i class="bi bi-download"></i> Unduh
+                                <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
+                                    <a href="https://sista.unika.ac.id" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                        <span>Buka Portal SISTA</span>
+                                        <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach; ?>
+
+                        <!-- Card 2: Portal SPMI Kemendikti -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
+                                        PELAPORAN NASIONAL
+                                    </span>
+                                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
+                                        <i class="bi bi-shield-check fs-6"></i>
+                                    </div>
+                                </div>
+                                <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
+                                    Portal SPMI Kemendikti
+                                </h4>
+                                <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
+                                    Rekapitulasi dan pelaporan evaluasi pelaksanaan penjaminan mutu perguruan tinggi secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.
+                                </p>
+                                <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
+                                    <a href="https://spmi.kemdiktisaintek.go.id/auth/login" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                        <span>Buka Portal SPMI</span>
+                                        <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Portal E-PPEPP -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
+                                        SIKLUS MUTU PPEPP
+                                    </span>
+                                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
+                                        <i class="bi bi-arrow-repeat fs-6"></i>
+                                    </div>
+                                </div>
+                                <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
+                                    Portal E-PPEPP
+                                </h4>
+                                <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
+                                    Sistem informasi elektronik implementasi, evaluasi pelaksanaan, dan pengendalian tahapan siklus PPEPP secara berkesinambungan.
+                                </p>
+                                <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
+                                    <a href="https://e-ppepp.unika.ac.id" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                        <span>Buka Portal E-PPEPP</span>
+                                        <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <?php endif; ?>
                 </div>
             </section>
             <?php

@@ -176,14 +176,10 @@ require_once __DIR__ . '/includes/navbar.php';
                         Peringkat World's Most Sustainable University &amp; kampus hijau di Kota Semarang dalam pengelolaan keberlanjutan dan lingkungan ramah energi.
                     </p>
 
-                    <div class="pt-3 border-top mt-auto d-flex flex-column gap-2" style="border-color:#F1F5F9 !important;">
+                    <div class="pt-3 border-top mt-auto" style="border-color:#F1F5F9 !important;">
                         <a href="<?= SITE_URL ?>/uploads/akreditasi/sertifikat_ui_greenmetric_2025.webp" target="_blank" class="btn btn-success w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="background:#16A34A;border:none;font-size:0.88rem;">
                             <i class="bi bi-file-earmark-image" style="font-size:0.88rem;"></i>
                             <span>Lihat Sertifikat</span>
-                        </a>
-                        <a href="https://greenmetric.ui.ac.id/" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary w-100 py-2 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2" style="font-size:0.82rem;">
-                            <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
-                            <span>greenmetric.ui.ac.id</span>
                         </a>
                     </div>
                 </div>

@@ -314,6 +314,8 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Halaman publik [`pemeringkatan.php`](./pemeringkatan.php) dirancang terbagi menjadi 3 seksi mandiri tanpa bercampur:
     1. **Seksi Internasional** (Global & Dunia) di bagian paling atas
     2. **Seksi Nasional** (Tingkat Indonesia) di bagian tengah
+    3. **Seksi Lokal** (Semarang & Jawa Tengah) di bagian bawah
+
 ### L. Modul Pengelolaan Konten Kartu Siklus PPEPP SPMI (`spmi_ppepp_stages`)
 - **Tabel Basis Data Baru (`spmi_ppepp_stages`)**:
   - Tabel `spmi_ppepp_stages` dibuat untuk memungkinkan administrator mengedit seluruh bagian detail card pada 5 tahapan siklus SPMI PPEPP (Penetapan, Pelaksanaan, Evaluasi, Pengendalian, Peningkatan):
@@ -355,6 +357,27 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Dilengkapi tombol reset ke pengaturan bawaan standar.
 - **Integrasi Halaman Publik**:
   - Template [`includes/spmi-sections.php`](./includes/spmi-sections.php) membaca data siklus dari tabel `spmi_ppepp_stages` secara dinamis dengan *fallback* aman ke data bawaan.
+
+### M. Perbaikan Urutan Lampiran Dokumen Siklus 4 & 5, Multi-Foto Auto-Sliding Carousel, dan Integrasi Terpadu FAQ Akreditasi
+- **Pembaruan Urutan Dokumen Lampiran Siklus AMI**:
+  - Berkas lampiran pada kartu web publik, formulir admin, dan tabel daftar dokumen telah diselaraskan dengan urutan resmi:
+    - **Siklus 4 (Audit Lapangan)**: 1) **Undangan**, 2) **Daftar Hadir**, 3) **Berita Acara**.
+    - **Siklus 5 (RTM)**: 1) **Undangan**, 2) **Daftar Hadir**, 3) **Notulensi**.
+  - Diterapkan pada [`siklus-ami.php`](./siklus-ami.php), [`admin/ami-siklus4-form.php`](./admin/ami-siklus4-form.php), [`admin/ami-siklus5-form.php`](./admin/ami-siklus5-form.php), dan [`admin/ami-siklus-list.php`](./admin/ami-siklus-list.php).
+- **Fitur Multi-Foto & Auto-Sliding Carousel Slider**:
+  - Seluruh kartu dokumentasi kegiatan Siklus AMI yang memuat lebih dari satu foto kini dilengkapi dengan carousel Bootstrap 5 (`.ami-card-carousel`):
+    - Slide berjalan otomatis (*auto-slide* per 4 detik) dengan *pause-on-hover*.
+    - Dilengkapi kontrol panah geser kiri/kanan (*prev/next navigation buttons*), indikator pill emas aktif, dan dukungan *touch swipe* pada perangkat ponsel/tablet.
+    - Mengklik foto tetap membuka modal pratinjau resolusi tinggi (*lightbox zoom*).
+  - Formulir admin (`admin/ami-siklus4-form.php`, `admin/ami-siklus5-form.php`, dan `admin/ami-siklus1-form.php`) mendukung pengunggahan banyak foto sekaligus (*multiple file upload*) dengan konversi otomatis ke WebP kualitas HD.
+- **Pemindahan & Integrasi Terpadu FAQ Akreditasi ke Menu FAQ**:
+  - Tanya jawab akreditasi yang sebelumnya berstatus statis/hardcoded di halaman akreditasi kini telah dipindahkan dan disatukan seutuhnya ke dalam basis data tabel `faqs` di bawah kategori **`Akreditasi`**:
+    1. *Apa status akreditasi institusi UNIKA Soegijapranata saat ini?*
+    2. *Bagaimana cara memperoleh legalisir sertifikat akreditasi?*
+    3. *Apakah seluruh program studi di UNIKA sudah terakreditasi?*
+  - Seksi accordion FAQ lama pada [`akreditasi.php`](./akreditasi.php) dan [`akreditasi-institusi.php`](./akreditasi-institusi.php) dihapus dan digantikan oleh *Call-to-Action (CTA) Banner* elegan yang menautkan langsung ke menu FAQ (`faq.php?kategori=Akreditasi#faq-section`).
+  - Halaman [`faq.php`](./faq.php) dan template [`includes/knowledge-sections.php`](./includes/knowledge-sections.php) diperbarui dengan tab filter kategori interaktif (*Semua Kategori, SPMI, AMI, Akreditasi, Layanan, Umum*), badge identitas kategori, dan pembukaan otomatis kategori berdasarkan parameter URL.
+
 
 ---
 

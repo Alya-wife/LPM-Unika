@@ -240,19 +240,19 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <input type="text" name="judul" class="form-control" placeholder="Contoh: Audit Lapangan Program Studi Sistem Informasi Semester Gasal 2025/2026" value="<?= e($data['judul'] ?? ($_POST['judul'] ?? '')) ?>" required>
                     </div>
 
-                    <!-- 3. Berkas Dokumen (Berita Acara, Daftar Hadir, Undangan) -->
+                    <!-- 3. Berkas Dokumen (Undangan, Daftar Hadir, Berita Acara) -->
                     <div class="col-md-4">
                         <div class="p-3 border rounded h-100 bg-white">
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
-                                <span><i class="bi bi-file-earmark-check text-primary me-1"></i> Berita Acara</span>
+                                <span><i class="bi bi-envelope-paper text-warning me-1"></i> Undangan</span>
                             </label>
-                            <input type="file" name="file_berita_acara" class="form-control" accept=".pdf,.doc,.docx">
+                            <input type="file" name="file_undangan" class="form-control" accept=".pdf,.doc,.docx">
                             <div class="form-text">PDF / DOC / DOCX</div>
 
-                            <?php if (!empty($data['file_berita_acara'])): ?>
+                            <?php if (!empty($data['file_undangan'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
-                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_berita_acara']) ?></span>
-                                <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_berita_acara']) ?>" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;">
+                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_undangan']) ?></span>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_undangan']) ?>" target="_blank" class="btn btn-xs btn-outline-warning py-0 px-2" style="font-size:0.75rem;">
                                     Lihat File
                                 </a>
                             </div>
@@ -282,15 +282,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <div class="col-md-4">
                         <div class="p-3 border rounded h-100 bg-white">
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
-                                <span><i class="bi bi-envelope-paper text-warning me-1"></i> Undangan</span>
+                                <span><i class="bi bi-file-earmark-check text-primary me-1"></i> Berita Acara</span>
                             </label>
-                            <input type="file" name="file_undangan" class="form-control" accept=".pdf,.doc,.docx">
+                            <input type="file" name="file_berita_acara" class="form-control" accept=".pdf,.doc,.docx">
                             <div class="form-text">PDF / DOC / DOCX</div>
 
-                            <?php if (!empty($data['file_undangan'])): ?>
+                            <?php if (!empty($data['file_berita_acara'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
-                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_undangan']) ?></span>
-                                <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_undangan']) ?>" target="_blank" class="btn btn-xs btn-outline-warning py-0 px-2" style="font-size:0.75rem;">
+                                <span class="small text-truncate" style="max-width:140px;"><?= basename($data['file_berita_acara']) ?></span>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($data['file_berita_acara']) ?>" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;">
                                     Lihat File
                                 </a>
                             </div>

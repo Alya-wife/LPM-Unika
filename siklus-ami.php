@@ -380,6 +380,67 @@ try {
     color: #ffffff;
     pointer-events: none;
 }
+/* AMI Card Carousel Slider */
+.ami-card-carousel {
+    position: relative;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+}
+.ami-card-carousel .carousel-inner {
+    border-radius: 16px 16px 0 0;
+}
+.ami-card-carousel .ami-card-cover {
+    border-radius: 0;
+}
+.ami-card-carousel .carousel-indicators {
+    margin-bottom: 0.65rem;
+    z-index: 4;
+}
+.ami-card-carousel .carousel-indicators [data-bs-target] {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 0 3px;
+    background-color: #ffffff;
+    opacity: 0.65;
+    border: none;
+    transition: all 0.25s ease;
+}
+.ami-card-carousel .carousel-indicators .active {
+    width: 22px;
+    border-radius: 10px;
+    opacity: 1;
+    background-color: #FFD54F;
+}
+.ami-card-carousel .carousel-control-prev,
+.ami-card-carousel .carousel-control-next {
+    width: 38px;
+    height: 38px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(11, 31, 68, 0.65);
+    border-radius: 50%;
+    margin: 0 10px;
+    opacity: 0;
+    transition: all 0.25s ease;
+    z-index: 4;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.ami-card-carousel:hover .carousel-control-prev,
+.ami-card-carousel:hover .carousel-control-next {
+    opacity: 0.95;
+}
+.ami-card-carousel .carousel-control-prev:hover,
+.ami-card-carousel .carousel-control-next:hover {
+    background: rgba(11, 31, 68, 0.95);
+    opacity: 1;
+    transform: translateY(-50%) scale(1.08);
+}
+.ami-card-carousel .carousel-control-prev-icon,
+.ami-card-carousel .carousel-control-next-icon {
+    width: 16px;
+    height: 16px;
+}
 .ami-card-body {
     padding: 1.25rem 1.25rem 0.75rem;
     flex: 1 1 auto;
@@ -671,23 +732,63 @@ try {
                         <i class="bi bi-image fs-1 text-muted opacity-50 mb-2 d-block"></i>
                         Belum ada foto opening meeting untuk periode <?= e($selected_periode) ?>.
                     </div>
-                    <?php else: ?>
-                    <div class="row g-3">
-                        <?php foreach ($s1_opening as $op): ?>
-                        <div class="col-sm-6">
-                            <div class="ami-gallery-item" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?>', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
-                                <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
-                                <div class="ami-gallery-overlay">
-                                    <?php if (!empty($op['tanggal_kegiatan'])): ?>
-                                    <span class="badge bg-warning text-dark align-self-start mb-2" style="font-size:0.7rem;">
-                                        <i class="bi bi-calendar-event me-1"></i><?= formatTanggal($op['tanggal_kegiatan']) ?>
-                                    </span>
-                                    <?php endif; ?>
-                                    <div class="fw-bold text-white small" style="line-height:1.3;"><?= e($op['judul']) ?></div>
+                    <?php elseif (count($s1_opening) > 1): ?>
+                    <!-- Auto-sliding Carousel Opening Meeting -->
+                    <div id="carouselS1Opening" class="carousel slide ami-card-carousel mb-3 shadow-sm" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true" data-bs-pause="hover" style="border-radius:14px;overflow:hidden;">
+                        <div class="carousel-indicators">
+                            <?php foreach ($s1_opening as $idx => $op): ?>
+                            <button type="button" data-bs-target="#carouselS1Opening" data-bs-slide-to="<?= $idx ?>" class="<?= $idx === 0 ? 'active' : '' ?>" aria-current="<?= $idx === 0 ? 'true' : 'false' ?>" aria-label="Foto <?= $idx + 1 ?>"></button>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="carousel-inner">
+                            <?php foreach ($s1_opening as $idx => $op): ?>
+                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                <div class="ami-gallery-item" style="height:250px;border-radius:0;" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?> (<?= $idx + 1 ?>/<?= count($s1_opening) ?>)', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
+                                    <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
+                                    <div class="ami-gallery-overlay">
+                                        <?php if (!empty($op['tanggal_kegiatan'])): ?>
+                                        <span class="badge bg-warning text-dark align-self-start mb-2" style="font-size:0.7rem;">
+                                            <i class="bi bi-calendar-event me-1"></i><?= formatTanggal($op['tanggal_kegiatan']) ?>
+                                        </span>
+                                        <?php endif; ?>
+                                        <div class="fw-bold text-white small" style="line-height:1.3;"><?= e($op['judul']) ?></div>
+                                    </div>
                                 </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselS1Opening" data-bs-slide="prev" onclick="event.stopPropagation();" title="Sebelumnya">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Sebelumnya</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselS1Opening" data-bs-slide="next" onclick="event.stopPropagation();" title="Selanjutnya">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Selanjutnya</span>
+                        </button>
+                    </div>
+
+                    <div class="row g-2">
+                        <?php foreach ($s1_opening as $idx => $op): ?>
+                        <div class="col-4">
+                            <div class="ami-gallery-item" style="height:70px;border-radius:8px;" onclick="bootstrap.Carousel.getOrCreateInstance(document.getElementById('carouselS1Opening')).to(<?= $idx ?>);openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?>', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
+                                <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
                             </div>
                         </div>
                         <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
+                    <!-- Single Opening Photo -->
+                    <?php $op = $s1_opening[0]; ?>
+                    <div class="ami-gallery-item" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?>', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
+                        <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
+                        <div class="ami-gallery-overlay">
+                            <?php if (!empty($op['tanggal_kegiatan'])): ?>
+                            <span class="badge bg-warning text-dark align-self-start mb-2" style="font-size:0.7rem;">
+                                <i class="bi bi-calendar-event me-1"></i><?= formatTanggal($op['tanggal_kegiatan']) ?>
+                            </span>
+                            <?php endif; ?>
+                            <div class="fw-bold text-white small" style="line-height:1.3;"><?= e($op['judul']) ?></div>
+                        </div>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -878,19 +979,49 @@ try {
                     ?>
                     <div class="col-lg-6 s4-item <?= $tingkat_cls ?>" data-tingkat="<?= e($item['tingkat']) ?>">
                         <div class="ami-audit-card" style="border-top: 4px solid <?= $item['tingkat'] === 'prodi' ? 'var(--purple)' : 'var(--primary)' ?> !important;">
-                            <!-- 1. Foto Kegiatan di Bagian Atas -->
-                            <?php if (!empty($main_photo)): ?>
-                            <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($main_photo) ?>', '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['fakultas'])) ?>')">
-                                <img src="<?= SITE_URL ?>/uploads/<?= e($main_photo) ?>" alt="Dokumentasi Audit Lapangan">
-                                <div class="ami-card-cover-overlay">
-                                    <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                            <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
+                            <?php if (!empty($photos)): ?>
+                                <?php if (count($photos) > 1): 
+                                    $cid4 = 'carousel_s4_' . $item['id'];
+                                ?>
+                                <div id="<?= $cid4 ?>" class="carousel slide ami-card-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true" data-bs-pause="hover">
+                                    <div class="carousel-indicators">
+                                        <?php foreach ($photos as $pidx => $p): ?>
+                                        <button type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide-to="<?= $pidx ?>" class="<?= $pidx === 0 ? 'active' : '' ?>" aria-current="<?= $pidx === 0 ? 'true' : 'false' ?>" aria-label="Foto <?= $pidx + 1 ?>"></button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="carousel-inner">
+                                        <?php foreach ($photos as $pidx => $p): ?>
+                                        <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
+                                            <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($item['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($item['fakultas'])) ?>')">
+                                                <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($item['judul']) ?>" class="d-block w-100">
+                                                <div class="ami-card-cover-overlay">
+                                                    <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide="prev" onclick="event.stopPropagation();" title="Foto Sebelumnya">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Sebelumnya</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide="next" onclick="event.stopPropagation();" title="Foto Selanjutnya">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Selanjutnya</span>
+                                    </button>
+                                    <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm" style="z-index:4;pointer-events:none;">
+                                        <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
+                                    </span>
                                 </div>
-                                <?php if (count($photos) > 1): ?>
-                                <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm">
-                                    <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
-                                </span>
+                                <?php else: ?>
+                                <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['fakultas'])) ?>')">
+                                    <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi Audit Lapangan">
+                                    <div class="ami-card-cover-overlay">
+                                        <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                                    </div>
+                                </div>
                                 <?php endif; ?>
-                            </div>
                             <?php else: ?>
                             <div class="ami-card-cover d-flex align-items-center justify-content-center" style="background:linear-gradient(135deg, #0B1F44 0%, #1E3A8A 100%);">
                                 <div class="text-center text-white-50">
@@ -919,53 +1050,11 @@ try {
                                 </div>
                             </div>
 
-                            <!-- 3. Lampiran Dokumen di Bagian Bawah -->
+                            <!-- 3. Lampiran Dokumen di Bagian Bawah: 1. Undangan, 2. Daftar Hadir, 3. Berita Acara -->
                             <div class="ami-card-footer">
                                 <div class="small fw-bold text-muted mb-2"><i class="bi bi-paperclip me-1"></i>Lampiran Dokumen Resmi:</div>
                                 <div class="vstack gap-2">
-                                    <!-- Berita Acara -->
-                                    <?php if (!empty($item['file_berita_acara'])): ?>
-                                    <div class="ami-attach-row">
-                                        <div class="d-flex align-items-center gap-2 min-w-0">
-                                            <i class="bi bi-file-earmark-check-fill text-primary fs-5 flex-shrink-0"></i>
-                                            <div class="min-w-0">
-                                                <div class="fw-bold small text-dark text-truncate">Berita Acara</div>
-                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_berita_acara']) ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>')">
-                                                <i class="bi bi-eye me-1"></i> Pratinjau
-                                            </button>
-                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara">
-                                                <i class="bi bi-download"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- Daftar Hadir -->
-                                    <?php if (!empty($item['file_daftar_hadir'])): ?>
-                                    <div class="ami-attach-row">
-                                        <div class="d-flex align-items-center gap-2 min-w-0">
-                                            <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
-                                            <div class="min-w-0">
-                                                <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
-                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_daftar_hadir']) ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>')">
-                                                <i class="bi bi-eye me-1"></i> Pratinjau
-                                            </button>
-                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
-                                                <i class="bi bi-download"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- Undangan -->
+                                    <!-- 1. Undangan -->
                                     <?php if (!empty($item['file_undangan'])): ?>
                                     <div class="ami-attach-row">
                                         <div class="d-flex align-items-center gap-2 min-w-0">
@@ -986,7 +1075,49 @@ try {
                                     </div>
                                     <?php endif; ?>
 
-                                    <?php if (empty($item['file_berita_acara']) && empty($item['file_daftar_hadir']) && empty($item['file_undangan'])): ?>
+                                    <!-- 2. Daftar Hadir -->
+                                    <?php if (!empty($item['file_daftar_hadir'])): ?>
+                                    <div class="ami-attach-row">
+                                        <div class="d-flex align-items-center gap-2 min-w-0">
+                                            <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
+                                            <div class="min-w-0">
+                                                <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
+                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_daftar_hadir']) ?></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-1 flex-shrink-0">
+                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>')">
+                                                <i class="bi bi-eye me-1"></i> Pratinjau
+                                            </button>
+                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <!-- 3. Berita Acara -->
+                                    <?php if (!empty($item['file_berita_acara'])): ?>
+                                    <div class="ami-attach-row">
+                                        <div class="d-flex align-items-center gap-2 min-w-0">
+                                            <i class="bi bi-file-earmark-check-fill text-primary fs-5 flex-shrink-0"></i>
+                                            <div class="min-w-0">
+                                                <div class="fw-bold small text-dark text-truncate">Berita Acara</div>
+                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_berita_acara']) ?></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-1 flex-shrink-0">
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>')">
+                                                <i class="bi bi-eye me-1"></i> Pratinjau
+                                            </button>
+                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <?php if (empty($item['file_undangan']) && empty($item['file_daftar_hadir']) && empty($item['file_berita_acara'])): ?>
                                     <div class="text-muted small text-center py-2 bg-white rounded-3 border">Belum ada lampiran dokumen</div>
                                     <?php endif; ?>
                                 </div>
@@ -1028,19 +1159,49 @@ try {
                 ?>
                 <div class="col-lg-6 s5-item <?= $t_cls ?>" data-tingkat="<?= e($rtm['tingkat']) ?>">
                     <div class="ami-audit-card" style="border-top: 4px solid <?= $rtm['tingkat'] === 'universitas' ? '#DC2626' : ($rtm['tingkat'] === 'fakultas' ? 'var(--primary)' : 'var(--purple)') ?> !important;">
-                        <!-- 1. Foto Kegiatan di Bagian Atas -->
-                        <?php if (!empty($main_photo)): ?>
-                        <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($main_photo) ?>', '<?= e(addslashes($rtm['judul'])) ?>', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
-                            <img src="<?= SITE_URL ?>/uploads/<?= e($main_photo) ?>" alt="Dokumentasi RTM">
-                            <div class="ami-card-cover-overlay">
-                                <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                        <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
+                        <?php if (!empty($photos)): ?>
+                            <?php if (count($photos) > 1): 
+                                $cid5 = 'carousel_s5_' . $rtm['id'];
+                            ?>
+                            <div id="<?= $cid5 ?>" class="carousel slide ami-card-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true" data-bs-pause="hover">
+                                <div class="carousel-indicators">
+                                    <?php foreach ($photos as $pidx => $p): ?>
+                                    <button type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide-to="<?= $pidx ?>" class="<?= $pidx === 0 ? 'active' : '' ?>" aria-current="<?= $pidx === 0 ? 'true' : 'false' ?>" aria-label="Foto <?= $pidx + 1 ?>"></button>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="carousel-inner">
+                                    <?php foreach ($photos as $pidx => $p): ?>
+                                    <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
+                                        <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($rtm['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
+                                            <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($rtm['judul']) ?>" class="d-block w-100">
+                                            <div class="ami-card-cover-overlay">
+                                                <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide="prev" onclick="event.stopPropagation();" title="Foto Sebelumnya">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Sebelumnya</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide="next" onclick="event.stopPropagation();" title="Foto Selanjutnya">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Selanjutnya</span>
+                                </button>
+                                <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm" style="z-index:4;pointer-events:none;">
+                                    <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
+                                </span>
                             </div>
-                            <?php if (count($photos) > 1): ?>
-                            <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm">
-                                <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
-                            </span>
+                            <?php else: ?>
+                            <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($rtm['judul'])) ?>', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
+                                <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi RTM">
+                                <div class="ami-card-cover-overlay">
+                                    <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
+                                </div>
+                            </div>
                             <?php endif; ?>
-                        </div>
                         <?php else: ?>
                         <div class="ami-card-cover d-flex align-items-center justify-content-center" style="background:linear-gradient(135deg, #0B1F44 0%, #3B0764 100%);">
                             <div class="text-center text-white-50">
@@ -1076,53 +1237,11 @@ try {
                             </div>
                         </div>
 
-                        <!-- 3. Lampiran Dokumen di Bagian Bawah -->
+                        <!-- 3. Lampiran Dokumen di Bagian Bawah: 1. Undangan, 2. Daftar Hadir, 3. Notulensi -->
                         <div class="ami-card-footer">
                             <div class="small fw-bold text-muted mb-2"><i class="bi bi-paperclip me-1"></i>Lampiran Dokumen Resmi:</div>
                             <div class="vstack gap-2">
-                                <!-- Notulensi -->
-                                <?php if (!empty($rtm['file_notulensi'])): ?>
-                                <div class="ami-attach-row">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="bi bi-file-earmark-text-fill text-primary fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold small text-dark text-truncate">Notulensi</div>
-                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_notulensi']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>')">
-                                            <i class="bi bi-eye me-1"></i> Pratinjau
-                                        </button>
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi">
-                                            <i class="bi bi-download"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-
-                                <!-- Daftar Hadir -->
-                                <?php if (!empty($rtm['file_daftar_hadir'])): ?>
-                                <div class="ami-attach-row">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
-                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_daftar_hadir']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>')">
-                                            <i class="bi bi-eye me-1"></i> Pratinjau
-                                        </button>
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
-                                            <i class="bi bi-download"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-
-                                <!-- Undangan -->
+                                <!-- 1. Undangan -->
                                 <?php if (!empty($rtm['file_undangan'])): ?>
                                 <div class="ami-attach-row">
                                     <div class="d-flex align-items-center gap-2 min-w-0">
@@ -1143,7 +1262,49 @@ try {
                                 </div>
                                 <?php endif; ?>
 
-                                <?php if (empty($rtm['file_notulensi']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_undangan'])): ?>
+                                <!-- 2. Daftar Hadir -->
+                                <?php if (!empty($rtm['file_daftar_hadir'])): ?>
+                                <div class="ami-attach-row">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
+                                        <div class="min-w-0">
+                                            <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
+                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_daftar_hadir']) ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>')">
+                                            <i class="bi bi-eye me-1"></i> Pratinjau
+                                        </button>
+                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
+                                <!-- 3. Notulensi -->
+                                <?php if (!empty($rtm['file_notulensi'])): ?>
+                                <div class="ami-attach-row">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <i class="bi bi-file-earmark-text-fill text-primary fs-5 flex-shrink-0"></i>
+                                        <div class="min-w-0">
+                                            <div class="fw-bold small text-dark text-truncate">Notulensi</div>
+                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_notulensi']) ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>')">
+                                            <i class="bi bi-eye me-1"></i> Pratinjau
+                                        </button>
+                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+
+                                <?php if (empty($rtm['file_undangan']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_notulensi'])): ?>
                                 <div class="text-muted small text-center py-2 bg-white rounded-3 border">Belum ada lampiran dokumen</div>
                                 <?php endif; ?>
                             </div>

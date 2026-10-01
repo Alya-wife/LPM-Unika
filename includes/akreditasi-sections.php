@@ -632,42 +632,27 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
             break;
 
         case 'akreditasi_faq':
-            $faqs = [
-                ['q' => 'Apa status akreditasi institusi UNIKA Soegijapranata saat ini?', 'a' => 'Universitas Katolik Soegijapranata terakreditasi UNGGUL oleh Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).'],
-                ['q' => 'Bagaimana cara memperoleh legalisir sertifikat akreditasi?', 'a' => 'Legalisir sertifikat akreditasi dapat diajukan secara online melalui layanan permohonan LPM atau datang langsung ke Sekretariat LPM.'],
-                ['q' => 'Apakah seluruh program studi di UNIKA sudah terakreditasi?', 'a' => 'Ya, seluruh program studi aktif di Universitas Katolik Soegijapranata telah terakreditasi oleh BAN-PT atau LAM yang berwenang.'],
-            ];
             ?>
-            <!-- 6. FAQ AKREDITASI -->
-            <section class="py-5" style="background:var(--bg-main);border-top:1px solid var(--border);<?= $bg ?><?= $tc ?>">
+            <!-- FAQ AKREDITASI (Dialihkan ke Menu FAQ Terpadu) -->
+            <section class="py-5" style="background:#F8FAFC;border-top:1px solid var(--border);<?= $bg ?><?= $tc ?>">
                 <div class="container">
-                    <div class="text-center mb-5">
-                        <span class="section-tag mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                            </svg>
-                            <?= htmlspecialchars($block['badge'] ?? 'Informasi Penting') ?>
-                        </span>
-                        <h2 class="section-title"><?= htmlspecialchars($block['title'] ?? 'Tanya Jawab (FAQ) Akreditasi') ?></h2>
-                        <p class="section-desc mx-auto"><?= htmlspecialchars($block['subtitle'] ?? 'Pertanyaan umum seputar akreditasi institusi dan program studi di UNIKA.') ?></p>
-                    </div>
-
-                    <div class="max-w-800 mx-auto">
-                        <div class="accordion accordion-lpm" id="faqAccordion">
-                            <?php foreach ($faqs as $idx => $f): ?>
-                            <div class="accordion-item mb-3" style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button <?= $idx > 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#faq_<?= $idx ?>">
-                                        <?= htmlspecialchars($f['q']) ?>
-                                    </button>
-                                </h2>
-                                <div id="faq_<?= $idx ?>" class="accordion-collapse collapse <?= $idx === 0 ? 'show' : '' ?>" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body" style="font-size:0.92rem;color:var(--text-muted);line-height:1.7;">
-                                        <?= htmlspecialchars($f['a']) ?>
-                                    </div>
-                                </div>
+                    <div class="card p-4 p-md-5 border-0 rounded-4 text-center position-relative overflow-hidden shadow-sm" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);color:#fff;">
+                        <div style="max-width:680px;margin:0 auto;position:relative;z-index:2;">
+                            <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:50%;color:#FFD54F;font-size:1.5rem;">
+                                <i class="bi bi-question-circle-fill"></i>
                             </div>
-                            <?php endforeach; ?>
+                            <h3 class="fw-bold mb-2 text-white" style="font-family:var(--font-heading);">Punya Pertanyaan Seputar Akreditasi?</h3>
+                            <p class="text-white-50 mb-4" style="line-height:1.7;font-size:0.95rem;">
+                                Seluruh informasi tanya jawab resmi seputar akreditasi institusi, akreditasi program studi LAM &amp; BAN-PT, serta tata cara legalisir dokumen kini telah dipindahkan dan terpusat di menu <strong>Tanya Jawab (FAQ) Mutu</strong>.
+                            </p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <a href="<?= SITE_URL ?>/faq.php?kategori=Akreditasi#faq-section" class="btn btn-warning fw-bold px-4 py-2 rounded-pill text-dark shadow-sm">
+                                    <i class="bi bi-patch-question-fill me-1"></i> Buka FAQ Akreditasi &rarr;
+                                </a>
+                                <a href="<?= SITE_URL ?>/layanan.php" class="btn btn-outline-light px-4 py-2 rounded-pill">
+                                    <i class="bi bi-headset me-1"></i> Hubungi Layanan LPM
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

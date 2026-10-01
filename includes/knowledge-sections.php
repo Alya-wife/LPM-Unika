@@ -316,48 +316,192 @@ function renderKnowledgeSection($type, $block = [], $is_builder = false) {
                 }, $faqs_db);
             } else {
                 $faqs = [
-                    ['Apa perbedaan mendasar antara SPMI dan SPME (Akreditasi)?', 'SPMI (Sistem Penjaminan Mutu Internal) dijalankan secara mandiri oleh internal perguruan tinggi melalui siklus PPEPP. Sedangkan SPME (Sistem Penjaminan Mutu Eksternal) adalah evaluasi dan pengakuan yang dilakukan oleh pihak eksternal independen seperti BAN-PT dan LAM.', 'SPMI & PPEPP'],
+                    ['Apa status akreditasi institusi UNIKA Soegijapranata saat ini?', 'Universitas Katolik Soegijapranata terakreditasi UNGGUL oleh Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).', 'Akreditasi'],
+                    ['Apa perbedaan mendasar antara SPMI dan SPME (Akreditasi)?', 'SPMI (Sistem Penjaminan Mutu Internal) dijalankan secara mandiri oleh internal perguruan tinggi melalui siklus PPEPP. Sedangkan SPME (Sistem Penjaminan Mutu Eksternal) adalah evaluasi dan pengakuan yang dilakukan oleh pihak eksternal independen seperti BAN-PT dan LAM.', 'SPMI'],
                     ['Kapan Audit Mutu Internal (AMI) dilaksanakan?', 'AMI di lingkungan UNIKA dilaksanakan secara berkala 1 (satu) kali setiap tahun akademik untuk seluruh program studi dan unit pendukung, disusul dengan Rapat Tinjauan Manajemen (RTM).', 'AMI'],
-                    ['Apa yang harus dipersiapkan Program Studi menghadapi AMI?', 'Program Studi perlu memperbarui Dokumen Evaluasi Diri (DED), mengunggah bukti fisik ketercapaian standar SPMI, laporan kepuasan mahasiswa/dosen, serta menyiapkan tim prodi untuk wawancara visitasi auditor.', 'AMI'],
-                    ['Apa yang dimaksud dengan Siklus PPEPP?', 'Siklus PPEPP adalah pilar utama dalam Sistem Penjaminan Mutu Internal (SPMI) di Unika Soegijapranata yang terdiri dari lima tahapan kerja terstruktur: Penetapan, Pelaksanaan, Evaluasi, Pengendalian, dan Peningkatan.', 'SPMI & PPEPP'],
+                    ['Bagaimana cara memperoleh legalisir sertifikat akreditasi?', 'Legalisir sertifikat akreditasi dapat diajukan secara online melalui layanan permohonan LPM atau datang langsung ke Sekretariat LPM.', 'Akreditasi'],
+                    ['Apakah seluruh program studi di UNIKA sudah terakreditasi?', 'Ya, seluruh program studi aktif di Universitas Katolik Soegijapranata telah terakreditasi oleh BAN-PT atau LAM yang berwenang.', 'Akreditasi'],
                 ];
             }
+
+            // Hitung kategori dan jumlahnya
+            $cat_counts = [];
+            foreach ($faqs as $f) {
+                $c = $f[2] ?? 'Umum';
+                $cat_counts[$c] = ($cat_counts[$c] ?? 0) + 1;
+            }
+            $initial_cat = strtolower(trim($_GET['kategori'] ?? 'all'));
             ?>
             <section class="py-5" style="background:#ffffff;border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>" id="faq-section">
                 <div class="container">
-                    <div class="text-center mb-5">
+                    <div class="text-center mb-4">
                         <span class="section-tag mb-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
                             </svg>
-                            <?= htmlspecialchars($block['badge'] ?? 'Pertanyaan Populer') ?>
+                            <?= htmlspecialchars($block['badge'] ?? 'Pusat Tanya Jawab') ?>
                         </span>
-                        <h2 class="section-title"><?= htmlspecialchars($block['title'] ?? 'Tanya Jawab (FAQ) Mutu') ?></h2>
-                        <p class="section-desc mx-auto"><?= htmlspecialchars($block['subtitle'] ?? 'Pertanyaan yang sering diajukan terkait SPMI, AMI, dan Akreditasi.') ?></p>
+                        <h2 class="section-title"><?= htmlspecialchars($block['title'] ?? 'Tanya Jawab (FAQ) Mutu & Akreditasi') ?></h2>
+                        <p class="section-desc mx-auto"><?= htmlspecialchars($block['subtitle'] ?? 'Temukan jawaban atas pertanyaan lazim terkait SPMI, AMI, Akreditasi, dan Layanan LPM.') ?></p>
+                    </div>
+
+                    <!-- Category Filter Tabs -->
+                    <div class="d-flex justify-content-center flex-wrap gap-2 mb-4" id="faqCategoryFilter">
+                        <button type="button" class="btn btn-sm btn-filter-faq <?= ($initial_cat === 'all' || !array_key_exists(ucfirst($initial_cat), $cat_counts)) ? 'active' : '' ?>" data-cat="all">
+                            <i class="bi bi-grid-fill me-1"></i> Semua Kategori <span class="badge bg-secondary ms-1"><?= count($faqs) ?></span>
+                        </button>
+                        <?php foreach ($cat_counts as $cat_name => $count): 
+                            $slug = strtolower($cat_name);
+                            $is_active_cat = ($initial_cat === $slug);
+                        ?>
+                        <button type="button" class="btn btn-sm btn-filter-faq <?= $is_active_cat ? 'active' : '' ?>" data-cat="<?= $slug ?>">
+                            <?php if ($cat_name === 'Akreditasi'): ?>
+                            <i class="bi bi-patch-check-fill me-1 text-warning"></i>
+                            <?php elseif ($cat_name === 'SPMI'): ?>
+                            <i class="bi bi-shield-check me-1"></i>
+                            <?php elseif ($cat_name === 'AMI'): ?>
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            <?php elseif ($cat_name === 'Layanan'): ?>
+                            <i class="bi bi-headset me-1"></i>
+                            <?php else: ?>
+                            <i class="bi bi-tag-fill me-1"></i>
+                            <?php endif; ?>
+                            <?= htmlspecialchars($cat_name) ?> <span class="badge bg-secondary ms-1"><?= $count ?></span>
+                        </button>
+                        <?php endforeach; ?>
                     </div>
 
                     <div class="row justify-content-center">
                         <div class="col-lg-9">
                             <div class="accordion" id="accordionFaq">
-                                <?php foreach ($faqs as $i => $faq): ?>
-                                <div class="accordion-item mb-3" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                                <?php foreach ($faqs as $i => $faq): 
+                                    $item_cat_slug = strtolower($faq[2] ?? 'umum');
+                                ?>
+                                <div class="accordion-item faq-item mb-3" data-cat="<?= $item_cat_slug ?>" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:all 0.2s ease;">
                                     <h2 class="accordion-header">
                                         <button class="accordion-button <?= $i > 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#faq-<?= $i ?>" style="font-family:var(--font-heading);font-weight:700;color:var(--navy);font-size:0.95rem;">
-                                            <?= htmlspecialchars($faq[0]) ?>
+                                            <span class="badge bg-light text-primary border me-2 flex-shrink-0" style="font-size:0.72rem;font-weight:700;">
+                                                <?= htmlspecialchars($faq[2]) ?>
+                                            </span>
+                                            <span><?= htmlspecialchars($faq[0]) ?></span>
                                         </button>
                                     </h2>
                                     <div id="faq-<?= $i ?>" class="accordion-collapse collapse <?= $i === 0 ? 'show' : '' ?>" data-bs-parent="#accordionFaq">
-                                        <div class="accordion-body" style="font-size:0.88rem;color:var(--text-muted);line-height:1.75;">
-                                            <?= htmlspecialchars($faq[1]) ?>
+                                        <div class="accordion-body" style="font-size:0.9rem;color:var(--text-muted);line-height:1.75;">
+                                            <?= nl2br(htmlspecialchars($faq[1])) ?>
                                         </div>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
+
+                            <div id="faqEmptyFilter" class="text-center py-5 text-muted" style="display:none;">
+                                <i class="bi bi-question-circle fs-1 text-muted opacity-50 mb-2 d-block"></i>
+                                Tidak ada pertanyaan untuk kategori ini.
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
+
+            <style>
+            .btn-filter-faq {
+                background: #FFFFFF;
+                border: 1.5px solid #CBD5E1;
+                color: #334155;
+                font-weight: 600;
+                font-size: 0.85rem;
+                padding: 0.45rem 1rem;
+                border-radius: 30px;
+                transition: all 0.2s ease;
+            }
+            .btn-filter-faq:hover {
+                background: #F1F5F9;
+                border-color: #94A3B8;
+                color: var(--navy);
+            }
+            .btn-filter-faq.active {
+                background: var(--navy, #0A192F);
+                border-color: var(--navy, #0A192F);
+                color: #FFFFFF;
+                box-shadow: 0 4px 12px rgba(10,25,47,0.15);
+            }
+            .btn-filter-faq.active .badge {
+                background: rgba(255,255,255,0.25) !important;
+                color: #FFFFFF !important;
+            }
+            </style>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var filterBtns = document.querySelectorAll('.btn-filter-faq');
+                var faqItems = document.querySelectorAll('.faq-item');
+                var emptyNotice = document.getElementById('faqEmptyFilter');
+
+                function collapseItem(item) {
+                    var btn = item.querySelector('.accordion-button');
+                    var col = item.querySelector('.accordion-collapse');
+                    if (btn) btn.classList.add('collapsed');
+                    if (col) {
+                        col.classList.remove('show');
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+                            try { bootstrap.Collapse.getInstance(col)?.hide(); } catch(e){}
+                        }
+                    }
+                }
+
+                function expandItem(item) {
+                    var btn = item.querySelector('.accordion-button');
+                    var col = item.querySelector('.accordion-collapse');
+                    if (btn) btn.classList.remove('collapsed');
+                    if (col) {
+                        col.classList.add('show');
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+                            try { bootstrap.Collapse.getOrCreateInstance(col).show(); } catch(e){}
+                        }
+                    }
+                }
+
+                function applyFilter(category) {
+                    var visibleCount = 0;
+                    var firstVisible = null;
+                    faqItems.forEach(function(item) {
+                        var itemCat = item.getAttribute('data-cat');
+                        if (category === 'all' || itemCat === category) {
+                            item.style.display = '';
+                            if (!firstVisible) firstVisible = item;
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                            collapseItem(item);
+                        }
+                    });
+
+                    if (emptyNotice) {
+                        emptyNotice.style.display = (visibleCount === 0) ? 'block' : 'none';
+                    }
+
+                    if (firstVisible) {
+                        expandItem(firstVisible);
+                    }
+                }
+
+                filterBtns.forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        filterBtns.forEach(function(b) { b.classList.remove('active'); });
+                        this.classList.add('active');
+                        var cat = this.getAttribute('data-cat');
+                        applyFilter(cat);
+                    });
+                });
+
+                // Auto-apply initial category if active button is not 'all'
+                var activeBtn = document.querySelector('.btn-filter-faq.active');
+                if (activeBtn && activeBtn.getAttribute('data-cat') !== 'all') {
+                    applyFilter(activeBtn.getAttribute('data-cat'));
+                }
+            });
+            </script>
             <?php
             break;
     }

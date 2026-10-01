@@ -84,33 +84,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
         } else {
-            // Opening Meeting
+            // Opening Meeting (Support Multiple Upload)
             $tanggal_kegiatan = trim($_POST['tanggal_kegiatan'] ?? '') ?: null;
             $foto = $data['foto'] ?? '';
+            $target_dir = __DIR__ . '/../uploads/ami/siklus1/';
 
-            if (!empty($_FILES['foto']['name'])) {
-                $target_dir = __DIR__ . '/../uploads/ami/siklus1/';
-                $saved_webp = convertAndSaveWebP($_FILES['foto']['tmp_name'], $target_dir, 'opening_', 88, 1920);
-                if ($saved_webp) {
-                    $foto = 'ami/siklus1/' . $saved_webp;
-                } else {
-                    $error = 'Gagal memproses gambar foto. Pastikan format JPG, PNG, atau WebP valid.';
+            if ($is_edit) {
+                if (!empty($_FILES['foto']['name']) && !is_array($_FILES['foto']['name'])) {
+                    $saved_webp = convertAndSaveWebP($_FILES['foto']['tmp_name'], $target_dir, 'opening_', 88, 1920);
+                    if ($saved_webp) {
+                        $foto = 'ami/siklus1/' . $saved_webp;
+                    } else {
+                        $error = 'Gagal memproses gambar foto. Pastikan format JPG, PNG, atau WebP valid.';
+                    }
                 }
-            } elseif (!$is_edit) {
-                $error = 'Foto opening meeting wajib diunggah.';
-            }
-
-            if (!$error) {
-                if ($is_edit) {
+                if (!$error) {
                     $stmt = $db->prepare("UPDATE ami_siklus1_opening SET periode = ?, judul = ?, tanggal_kegiatan = ?, foto = ?, keterangan = ?, urutan = ? WHERE id = ?");
                     $stmt->execute([$periode, $judul, $tanggal_kegiatan, $foto, $keterangan, $urutan, $id]);
                     $_SESSION['flash'] = 'Foto opening meeting berhasil diperbarui.';
-                } else {
-                    $stmt = $db->prepare("INSERT INTO ami_siklus1_opening (periode, judul, tanggal_kegiatan, foto, keterangan, urutan) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([$periode, $judul, $tanggal_kegiatan, $foto, $keterangan, $urutan]);
-                    $_SESSION['flash'] = 'Foto opening meeting berhasil ditambahkan.';
+                    redirect(SITE_URL . '/admin/ami-siklus-list.php?tab=siklus1&periode=' . urlencode($periode));
                 }
-                redirect(SITE_URL . '/admin/ami-siklus-list.php?tab=siklus1&periode=' . urlencode($periode));
+            } else {
+                // Tambah baru (bisa unggah 1 atau lebih dari 1 foto sekaligus)
+                $uploaded_photos = [];
+                $file_names = isset($_FILES['foto']['name']) ? (is_array($_FILES['foto']['name']) ? $_FILES['foto']['name'] : [$_FILES['foto']['name']]) : [];
+                $file_tmps  = isset($_FILES['foto']['tmp_name']) ? (is_array($_FILES['foto']['tmp_name']) ? $_FILES['foto']['tmp_name'] : [$_FILES['foto']['tmp_name']]) : [];
+                $file_errors= isset($_FILES['foto']['error']) ? (is_array($_FILES['foto']['error']) ? $_FILES['foto']['error'] : [$_FILES['foto']['error']]) : [];
+
+                if (empty($file_names) || empty($file_names[0])) {
+                    $error = 'Foto opening meeting wajib diunggah.';
+                } else {
+                    for ($i = 0; $i < count($file_names); $i++) {
+                        if (isset($file_errors[$i]) && $file_errors[$i] === UPLOAD_ERR_OK) {
+                            $saved_webp = convertAndSaveWebP($file_tmps[$i], $target_dir, 'opening_', 88, 1920);
+                            if ($saved_webp) {
+                                $uploaded_photos[] = 'ami/siklus1/' . $saved_webp;
+                            }
+                        }
+                    }
+                    if (empty($uploaded_photos)) {
+                        $error = 'Gagal memproses gambar foto. Pastikan format JPG, PNG, atau WebP valid.';
+                    }
+                }
+
+                if (!$error) {
+                    $stmt = $db->prepare("INSERT INTO ami_siklus1_opening (periode, judul, tanggal_kegiatan, foto, keterangan, urutan) VALUES (?, ?, ?, ?, ?, ?)");
+                    foreach ($uploaded_photos as $idx => $u_foto) {
+                        $item_judul = (count($uploaded_photos) > 1 && $idx > 0) ? ($judul . ' (' . ($idx + 1) . ')') : $judul;
+                        $stmt->execute([$periode, $item_judul, $tanggal_kegiatan, $u_foto, $keterangan, $urutan + $idx]);
+                    }
+                    $_SESSION['flash'] = count($uploaded_photos) . ' foto opening meeting berhasil ditambahkan.';
+                    redirect(SITE_URL . '/admin/ami-siklus-list.php?tab=siklus1&periode=' . urlencode($periode));
+                }
             }
         }
     }
@@ -178,9 +203,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label fw-bold small">Unggah Foto Opening Meeting <?= $is_edit ? '<span class="text-muted fw-normal">(Biarkan kosong jika tidak diganti)</span>' : '<span class="text-danger">*</span>' ?></label>
-                        <input type="file" name="foto" class="form-control" accept="image/*" <?= $is_edit ? '' : 'required' ?>>
-                        <div class="form-text">Mendukung format JPG, PNG, WebP. Gambar akan otomatis dioptimalkan ke WebP resolusi HD.</div>
+                        <label class="form-label fw-bold small">Unggah Foto Opening Meeting <?= $is_edit ? '<span class="text-muted fw-normal">(Biarkan kosong jika tidak diganti)</span>' : '<span class="text-danger">*</span> <span class="text-muted fw-normal">(Bisa pilih lebih dari 1 foto sekaligus)</span>' ?></label>
+                        <?php if ($is_edit): ?>
+                        <input type="file" name="foto" class="form-control" accept="image/*">
+                        <?php else: ?>
+                        <input type="file" name="foto[]" class="form-control" accept="image/*" multiple required>
+                        <?php endif; ?>
+                        <div class="form-text">Mendukung format JPG, PNG, WebP (bisa pilih beberapa foto sekaligus). Gambar otomatis dikonversi ke WebP kualitas HD.</div>
 
                         <?php if (!empty($data['foto'])): ?>
                         <div class="mt-3 p-2 border rounded d-inline-block bg-light">

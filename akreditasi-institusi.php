@@ -34,7 +34,31 @@ require_once __DIR__ . '/includes/akreditasi-sections.php';
 <?php
 // Render Seksi Utama Akreditasi Institusi
 renderAkreditasiSection('akreditasi_institusi');
-renderAkreditasiSection('akreditasi_faq');
 ?>
+
+<!-- Banner Rujukan Terpadu ke Menu FAQ -->
+<section class="py-5" style="background:#F8FAFC;border-top:1px solid var(--border);">
+    <div class="container">
+        <div class="card p-4 p-md-5 border-0 rounded-4 text-center position-relative overflow-hidden shadow-sm" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);color:#fff;">
+            <div style="max-width:680px;margin:0 auto;position:relative;z-index:2;">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:50%;color:#FFD54F;font-size:1.5rem;">
+                    <i class="bi bi-question-circle-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-2 text-white" style="font-family:var(--font-heading);">Punya Pertanyaan Seputar Akreditasi?</h3>
+                <p class="text-white-50 mb-4" style="line-height:1.7;font-size:0.95rem;">
+                    Seluruh tanya jawab resmi seputar akreditasi institusi, akreditasi program studi LAM &amp; BAN-PT, serta legalisir dokumen kini telah dipindahkan dan terpusat di menu <strong>Tanya Jawab (FAQ) Mutu</strong>.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="<?= SITE_URL ?>/faq.php?kategori=Akreditasi#faq-section" class="btn btn-warning fw-bold px-4 py-2 rounded-pill text-dark shadow-sm">
+                        <i class="bi bi-patch-question-fill me-1"></i> Buka FAQ Akreditasi &rarr;
+                    </a>
+                    <a href="<?= SITE_URL ?>/layanan.php" class="btn btn-outline-light px-4 py-2 rounded-pill">
+                        <i class="bi bi-headset me-1"></i> Hubungi Layanan LPM
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

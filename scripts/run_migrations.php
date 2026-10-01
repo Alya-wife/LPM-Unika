@@ -617,6 +617,7 @@ if ($pRankCount === 0) {
             $r['file_sertifikat'],
             $r['tahun'],
             $r['urutan'],
+            $r['is_active'] ?? 1,
         ]);
     }
     echo "Seeded initial pemeringkatan table.\n";

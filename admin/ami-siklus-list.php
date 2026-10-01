@@ -757,9 +757,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </td>
                         <td>
                             <div class="vstack gap-1">
-                                <?php if (!empty($item['file_berita_acara'])): ?>
-                                <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
-                                    <i class="bi bi-file-earmark-check-fill text-primary me-1"></i> Berita Acara
+                                <?php if (!empty($item['file_undangan'])): ?>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
+                                    <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
                                 </a>
                                 <?php endif; ?>
 
@@ -769,13 +769,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </a>
                                 <?php endif; ?>
 
-                                <?php if (!empty($item['file_undangan'])): ?>
-                                <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
-                                    <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
+                                <?php if (!empty($item['file_berita_acara'])): ?>
+                                <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
+                                    <i class="bi bi-file-earmark-check-fill text-primary me-1"></i> Berita Acara
                                 </a>
                                 <?php endif; ?>
 
-                                <?php if (empty($item['file_berita_acara']) && empty($item['file_daftar_hadir']) && empty($item['file_undangan'])): ?>
+                                <?php if (empty($item['file_undangan']) && empty($item['file_daftar_hadir']) && empty($item['file_berita_acara'])): ?>
                                 <span class="text-muted small">-</span>
                                 <?php endif; ?>
                             </div>
@@ -863,9 +863,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </td>
                     <td>
                         <div class="vstack gap-1">
-                            <?php if (!empty($rtm['file_notulensi'])): ?>
-                            <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
-                                <i class="bi bi-file-earmark-text-fill text-primary me-1"></i> Notulensi
+                            <?php if (!empty($rtm['file_undangan'])): ?>
+                            <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
+                                <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
                             </a>
                             <?php endif; ?>
 
@@ -875,13 +875,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </a>
                             <?php endif; ?>
 
-                            <?php if (!empty($rtm['file_undangan'])): ?>
-                            <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>" target="_blank" class="small text-decoration-none text-purple d-inline-flex align-items-center">
-                                <i class="bi bi-envelope-paper-fill text-purple me-1"></i> Undangan
+                            <?php if (!empty($rtm['file_notulensi'])): ?>
+                            <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" target="_blank" class="small text-decoration-none text-primary d-inline-flex align-items-center">
+                                <i class="bi bi-file-earmark-text-fill text-primary me-1"></i> Notulensi
                             </a>
                             <?php endif; ?>
 
-                            <?php if (empty($rtm['file_notulensi']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_undangan'])): ?>
+                            <?php if (empty($rtm['file_undangan']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_notulensi'])): ?>
                             <span class="text-muted small">-</span>
                             <?php endif; ?>
                         </div>

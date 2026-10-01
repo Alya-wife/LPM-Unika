@@ -5,8 +5,13 @@ $meta_desc  = 'Pelaksanaan Siklus 1 sampai 5 Audit Mutu Internal (AMI) Universit
 
 $db = getDB();
 
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/navbar.php';
+$is_ajax = (isset($_GET['ajax']) && $_GET['ajax'] == '1') || 
+           (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
+if (!$is_ajax) {
+    require_once __DIR__ . '/includes/header.php';
+    require_once __DIR__ . '/includes/navbar.php';
+}
 
 // 1. Ambil Data Periode Aktif
 $periodes = [];
@@ -89,7 +94,59 @@ try {
 
 ?>
 
+<?php if (!$is_ajax): ?>
 <style>
+/* AJAX Top Loading Bar */
+.ami-top-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 3.5px;
+    background: linear-gradient(90deg, #F59E0B, #2563EB, #7C3AED);
+    z-index: 1000;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+    opacity: 0;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+}
+.ami-top-loader.loading {
+    opacity: 1;
+    width: 65%;
+    transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+.ami-top-loader.finishing {
+    opacity: 1;
+    width: 100%;
+    transition: width 0.15s ease-out;
+}
+.ami-top-loader.done {
+    opacity: 0;
+    transition: opacity 0.25s ease 0.1s;
+}
+
+/* AJAX Container Smooth Transition */
+#amiDynamicContainer {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#amiDynamicContainer.ami-fade-out {
+    opacity: 0.35;
+    pointer-events: none;
+    transform: translateY(4px);
+}
+#amiDynamicContainer.ami-fade-in {
+    animation: amiDynamicFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes amiDynamicFadeIn {
+    0% {
+        opacity: 0.35;
+        transform: translateY(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Styling Premium Khusus Siklus AMI */
 /* Card Siklus AMI 5 Tahapan (Sesuai Desain Foto 2) */
 .ami-stage-card {
@@ -425,8 +482,12 @@ try {
 </div>
 
 <!-- Main Content Area -->
-<section class="py-5" style="background:#F8FAFC;min-height:70vh;">
-    <div class="container">
+<section class="py-5" style="background:#F8FAFC;min-height:70vh;position:relative;">
+    <!-- Top Progress Loader for AJAX -->
+    <div id="amiTopLoader" class="ami-top-loader"></div>
+<?php endif; ?>
+
+    <div class="container position-relative" id="amiDynamicContainer" data-periode="<?= e($selected_periode) ?>" data-siklus="<?= $active_siklus ?>" data-tingkat="<?= e($selected_tingkat) ?>">
 
         <!-- Panel Filter Terpadu: Periode Terlebih Dahulu, Lalu Filter Tingkat -->
         <div class="card p-3 p-md-4 border-0 shadow-sm rounded-4 bg-white mb-4">
@@ -439,7 +500,7 @@ try {
                     </div>
                     <div class="periode-filter-box">
                         <?php foreach ($periodes as $p): ?>
-                        <a href="?siklus=<?= $active_siklus ?>&periode=<?= urlencode($p['nama_periode']) ?><?= $selected_tingkat !== 'all' ? '&tingkat='.urlencode($selected_tingkat) : '' ?>#siklusContent" class="periode-pill <?= $selected_periode === $p['nama_periode'] ? 'active' : '' ?>">
+                        <a href="?siklus=<?= $active_siklus ?>&periode=<?= urlencode($p['nama_periode']) ?><?= ($selected_tingkat !== 'all' && ($active_siklus === 4 || $active_siklus === 5)) ? '&tingkat='.urlencode($selected_tingkat) : '' ?>#siklusContent" class="periode-pill <?= $selected_periode === $p['nama_periode'] ? 'active' : '' ?>" data-periode="<?= e($p['nama_periode']) ?>">
                             <i class="bi bi-calendar2-check me-1"></i><?= e($p['nama_periode']) ?>
                         </a>
                         <?php endforeach; ?>
@@ -520,7 +581,7 @@ try {
                 $is_curr = ($active_siklus === $s_num);
             ?>
             <div class="col">
-                <a href="?siklus=<?= $s_num ?>&periode=<?= urlencode($selected_periode) ?>#siklusContent" class="ami-stage-card <?= $is_curr ? 'active' : '' ?>">
+                <a href="?siklus=<?= $s_num ?>&periode=<?= urlencode($selected_periode) ?><?= ($selected_tingkat !== 'all' && ($s_num === 4 || $s_num === 5)) ? '&tingkat='.urlencode($selected_tingkat) : '' ?>#siklusContent" class="ami-stage-card <?= $is_curr ? 'active' : '' ?>" data-siklus="<?= $s_num ?>">
                     <div class="ami-stage-number"><?= $st['num'] ?></div>
                     <div class="ami-stage-title"><?= e($st['title']) ?></div>
                     <p class="ami-stage-desc"><?= e($st['desc']) ?></p>
@@ -1115,7 +1176,10 @@ try {
 
         <?php endif; ?>
 
-    </div>
+    </div><!-- /#amiDynamicContainer -->
+
+<?php if ($is_ajax) { exit; } ?>
+
 </section>
 
 <!-- Modal Lightbox Pratinjau Foto -->
@@ -1241,6 +1305,8 @@ document.getElementById('docPreviewModal').addEventListener('hidden.bs.modal', f
 
 // Filter Tingkat Satuan Kerja (Terhubung dengan Filter Periode & Button Filter)
 function applyTingkatFilter(tingkat, btn) {
+    if (!tingkat) tingkat = 'all';
+
     // 1. Update status aktif pada tombol filter
     var allFilterBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat, #filterSiklus4BtnGroup .btn, #filterSiklus5BtnGroup .btn');
     allFilterBtns.forEach(function(b) {
@@ -1284,6 +1350,22 @@ function applyTingkatFilter(tingkat, btn) {
     if (s5Empty) {
         s5Empty.style.display = (s5VisibleCount === 0 && s5Items.length > 0) ? 'block' : 'none';
     }
+
+    // 4. Update query string tanpa reload halaman
+    if (window.history && window.history.replaceState) {
+        var u = new URL(window.location.href);
+        if (tingkat === 'all') {
+            u.searchParams.delete('tingkat');
+        } else {
+            u.searchParams.set('tingkat', tingkat);
+        }
+        window.history.replaceState({ path: u.toString() }, '', u.toString());
+    }
+
+    var dynContainer = document.getElementById('amiDynamicContainer');
+    if (dynContainer) {
+        dynContainer.setAttribute('data-tingkat', tingkat);
+    }
 }
 
 // Inisialisasi filter awal jika ada parameter tingkat
@@ -1292,6 +1374,161 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initTingkat && initTingkat !== 'all') {
         applyTingkatFilter(initTingkat);
     }
+});
+
+// =========================================================================
+// AJAX ENGINE: Pergantian Siklus AMI & Periode Tanpa Reload (Smooth & Instant)
+// =========================================================================
+var amiAbortCtrl = null;
+
+function loadAmiAjax(targetUrl, pushState) {
+    if (typeof pushState === 'undefined') pushState = true;
+
+    var dynamicContainer = document.getElementById('amiDynamicContainer');
+    var topLoader = document.getElementById('amiTopLoader');
+
+    if (!dynamicContainer) {
+        window.location.href = targetUrl;
+        return;
+    }
+
+    // Batalkan request AJAX sebelumnya bila pengguna mengklik dengan cepat
+    if (amiAbortCtrl) {
+        amiAbortCtrl.abort();
+    }
+    amiAbortCtrl = new AbortController();
+
+    // Bangun URL dengan parameter ajax=1
+    var urlObj = new URL(targetUrl, window.location.href);
+    urlObj.searchParams.set('ajax', '1');
+
+    // Tampilkan indikator loading dan animasi redup halus
+    if (topLoader) {
+        topLoader.classList.remove('finishing', 'done');
+        topLoader.classList.add('loading');
+    }
+    dynamicContainer.classList.remove('ami-fade-in');
+    dynamicContainer.classList.add('ami-fade-out');
+
+    fetch(urlObj.toString(), {
+        signal: amiAbortCtrl.signal,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+    })
+    .then(function(html) {
+        if (topLoader) {
+            topLoader.classList.remove('loading');
+            topLoader.classList.add('finishing');
+        }
+
+        // Parse HTML response
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        var newContainer = tempDiv.querySelector('#amiDynamicContainer');
+
+        if (newContainer) {
+            dynamicContainer.innerHTML = newContainer.innerHTML;
+            if (newContainer.dataset.periode) dynamicContainer.dataset.periode = newContainer.dataset.periode;
+            if (newContainer.dataset.siklus) dynamicContainer.dataset.siklus = newContainer.dataset.siklus;
+            if (newContainer.dataset.tingkat) dynamicContainer.dataset.tingkat = newContainer.dataset.tingkat;
+        } else {
+            dynamicContainer.innerHTML = html;
+        }
+
+        // Bersihkan parameter ajax=1 untuk URL browser
+        var cleanUrl = new URL(targetUrl, window.location.href);
+        cleanUrl.searchParams.delete('ajax');
+
+        // Update history URL jika pushState aktif
+        if (pushState) {
+            window.history.pushState({ path: cleanUrl.toString() }, '', cleanUrl.toString());
+        }
+
+        // Perbarui document.title agar rapi
+        var siklusVal = dynamicContainer.dataset.siklus || cleanUrl.searchParams.get('siklus') || '1';
+        var periodeVal = dynamicContainer.dataset.periode || cleanUrl.searchParams.get('periode') || '';
+        document.title = 'Siklus ' + siklusVal + (periodeVal ? ' (' + periodeVal + ')' : '') + ' – Siklus AMI | LPM Unika';
+
+        // Terapkan filter tingkat jika ada pada URL baru
+        var targetTingkat = cleanUrl.searchParams.get('tingkat') || 'all';
+        applyTingkatFilter(targetTingkat);
+
+        // Re-inisialisasi Bootstrap tooltip bila digunakan
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            var tooltips = [].slice.call(dynamicContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltips.forEach(function (el) {
+                new bootstrap.Tooltip(el);
+            });
+        }
+
+        // Transisi masuk yang halus
+        dynamicContainer.classList.remove('ami-fade-out');
+        dynamicContainer.classList.add('ami-fade-in');
+        setTimeout(function() {
+            dynamicContainer.classList.remove('ami-fade-in');
+        }, 300);
+
+        // Selesaikan top loader
+        if (topLoader) {
+            setTimeout(function() {
+                topLoader.classList.remove('finishing');
+                topLoader.classList.add('done');
+            }, 180);
+        }
+
+        // Scroll halus jika posisi pengguna berada jauh di bawah
+        var rect = dynamicContainer.getBoundingClientRect();
+        if (rect.top < 60 || rect.top > 320) {
+            var navbarOffset = 90;
+            var elementPosition = rect.top + window.pageYOffset;
+            var offsetPosition = elementPosition - navbarOffset;
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    })
+    .catch(function(err) {
+        if (err.name === 'AbortError') return; // Request lama dibatalkan karena klik baru
+        console.error('AJAX Transition error:', err);
+        // Fallback: muat ulang halaman biasa jika AJAX mengalami gangguan koneksi
+        window.location.href = targetUrl;
+    });
+}
+
+// Delegasi event klik pada Kartu Siklus dan Periode Pill
+document.addEventListener('click', function(e) {
+    // 1. Klik pada Kartu 5 Tahapan Siklus
+    var stageCard = e.target.closest('.ami-stage-card');
+    if (stageCard) {
+        var href = stageCard.getAttribute('href');
+        if (href && !href.startsWith('javascript:')) {
+            e.preventDefault();
+            loadAmiAjax(href, true);
+            return;
+        }
+    }
+
+    // 2. Klik pada Pill Periode
+    var periodePill = e.target.closest('.periode-pill');
+    if (periodePill) {
+        var href = periodePill.getAttribute('href');
+        if (href && !href.startsWith('javascript:')) {
+            e.preventDefault();
+            loadAmiAjax(href, true);
+            return;
+        }
+    }
+});
+
+// Tangani tombol browser Back & Forward (Popstate) agar tetap AJAX & mulus
+window.addEventListener('popstate', function(e) {
+    loadAmiAjax(window.location.href, false);
 });
 </script>
 

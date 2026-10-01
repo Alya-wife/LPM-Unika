@@ -265,6 +265,15 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Submenu ganda "Isian 5 Tahapan Siklus" dan "Dokumen & Data Siklus (1-5)" disatukan menjadi satu modul terpadu "Siklus AMI" dengan navigasi tab lengkap (Isian, Siklus 1, Siklus 2 & 3, Siklus 4, Siklus 5, dan Master Periode).
   - Pengelolaan Master Periode terintegrasi langsung di dalam tab `Master Periode` pada `admin/ami-siklus-list.php`.
 
+### J. Transisi Navigasi AJAX Mulus pada Siklus AMI Publik
+- **Navigasi Siklus & Periode Cepat**:
+  - Halaman [`siklus-ami.php`](./siklus-ami.php) diperbarui dengan transisi AJAX mulus (`loadAmiAjax()`) saat berpindah antar 5 Tahapan Siklus maupun saat memilih Periode Audit.
+  - Dilengkapi *top loader progress bar* dan transisi cross-fade lembut sehingga perpindahan tidak memusingkan dan tidak menyebabkan reload/refresh halaman penuh.
+  - Mendukung riwayat peramban (*History API / pushState*) dan tombol Back/Forward (*popstate*).
+  - **Catatan Database**: Tidak ada perubahan atau penambahan skema tabel pada basis data untuk fitur ini (memanfaatkan query periode dan siklus yang sudah ada).
+
+
+
 ---
 
 ## 3. Cara Menjalankan Migrasi di Lingkungan Lain

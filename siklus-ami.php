@@ -858,16 +858,9 @@ try {
 
             <!-- 4.2 Dokumentasi Audit Lapangan (Tingkat Fakultas & Prodi) -->
             <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 mb-4 border-bottom">
-                    <div>
-                        <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-journal-text text-purple me-2"></i>Dokumentasi Audit Lapangan Fakultas &amp; Program Studi</h4>
-                        <div class="text-muted small">Dokumentasi hasil audit lapangan, berkas berita acara, presensi kehadiran, undangan, dan galeri foto kegiatan.</div>
-                    </div>
-                    <div class="btn-group btn-group-sm" role="group" id="filterSiklus4BtnGroup">
-                        <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'all' ? 'active' : '' ?>" data-tingkat="all" onclick="applyTingkatFilter('all', this)">Semua (<?= count($s4_dokumentasi) ?>)</button>
-                        <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'fakultas' ? 'active' : '' ?>" data-tingkat="fakultas" onclick="applyTingkatFilter('fakultas', this)">Tingkat Fakultas</button>
-                        <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'prodi' ? 'active' : '' ?>" data-tingkat="prodi" onclick="applyTingkatFilter('prodi', this)">Tingkat Program Studi</button>
-                    </div>
+                <div class="pb-3 mb-4 border-bottom">
+                    <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-journal-text text-purple me-2"></i>Dokumentasi Audit Lapangan Fakultas &amp; Program Studi</h4>
+                    <div class="text-muted small">Dokumentasi hasil audit lapangan, berkas berita acara, presensi kehadiran, undangan, dan galeri foto kegiatan.</div>
                 </div>
 
                 <?php if (empty($s4_dokumentasi)): ?>
@@ -1015,17 +1008,9 @@ try {
         <!-- SIKLUS 5: RAPAT TINJAUAN MANAJEMEN (RTM)       -->
         <!-- ============================================== -->
         <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white mb-5">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 mb-4 border-bottom">
-                <div>
-                    <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-people-fill text-purple me-2"></i>Rapat Tinjauan Manajemen (RTM)</h4>
-                    <div class="text-muted small">Penyampaian hasil audit, perumusan kebijakan mutu, dan komitmen tindak lanjut tingkat Universitas, Fakultas, dan Prodi.</div>
-                </div>
-                <div class="btn-group btn-group-sm" role="group" id="filterSiklus5BtnGroup">
-                    <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'all' ? 'active' : '' ?>" data-tingkat="all" onclick="applyTingkatFilter('all', this)">Semua (<?= count($s5_rtm) ?>)</button>
-                    <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'universitas' ? 'active' : '' ?>" data-tingkat="universitas" onclick="applyTingkatFilter('universitas', this)">Universitas</button>
-                    <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'fakultas' ? 'active' : '' ?>" data-tingkat="fakultas" onclick="applyTingkatFilter('fakultas', this)">Fakultas</button>
-                    <button type="button" class="btn btn-outline-primary <?= $selected_tingkat === 'prodi' ? 'active' : '' ?>" data-tingkat="prodi" onclick="applyTingkatFilter('prodi', this)">Program Studi</button>
-                </div>
+            <div class="pb-3 mb-4 border-bottom">
+                <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-people-fill text-purple me-2"></i>Rapat Tinjauan Manajemen (RTM)</h4>
+                <div class="text-muted small">Penyampaian hasil audit, perumusan kebijakan mutu, dan komitmen tindak lanjut tingkat Universitas, Fakultas, dan Prodi.</div>
             </div>
 
             <?php if (empty($s5_rtm)): ?>
@@ -1308,7 +1293,7 @@ function applyTingkatFilter(tingkat, btn) {
     if (!tingkat) tingkat = 'all';
 
     // 1. Update status aktif pada tombol filter
-    var allFilterBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat, #filterSiklus4BtnGroup .btn, #filterSiklus5BtnGroup .btn');
+    var allFilterBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat');
     allFilterBtns.forEach(function(b) {
         if (b.getAttribute('data-tingkat') === tingkat) {
             b.classList.add('active');

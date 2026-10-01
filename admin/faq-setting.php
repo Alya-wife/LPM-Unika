@@ -143,8 +143,8 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th width="18%">Kategori</th>
                     <th width="32%">Pertanyaan</th>
                     <th width="28%">Ringkasan Jawaban</th>
-                    <th class="text-center" width="8%">Status</th>
-                    <th class="text-end pe-4" width="12%">Aksi</th>
+                    <th class="text-center text-nowrap" style="width:100px;">Status</th>
+                    <th class="text-end pe-4 text-nowrap" style="width:110px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -172,7 +172,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <td class="text-muted" style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="<?= htmlspecialchars($fq['jawaban']) ?>">
                             <?= htmlspecialchars(mb_strimwidth($fq['jawaban'], 0, 90, '...')) ?>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center text-nowrap">
                             <a href="<?= SITE_URL ?>/admin/faq-setting.php?toggle=<?= $fq['id'] ?>" class="text-decoration-none" title="Klik untuk ubah status">
                                 <?php if ($fq['is_active']): ?>
                                     <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>
@@ -181,13 +181,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <?php endif; ?>
                             </a>
                         </td>
-                        <td class="text-end pe-4">
-                            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick='editFaq(<?= json_encode($fq, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <a href="<?= SITE_URL ?>/admin/faq-setting.php?delete=<?= $fq['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus pertanyaan FAQ ini?')">
-                                <i class="bi bi-trash"></i>
-                            </a>
+                        <td class="text-end pe-4 text-nowrap">
+                            <div class="d-inline-flex align-items-center justify-content-end gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;padding:0;border-radius:7px;" title="Edit Pertanyaan FAQ" onclick='editFaq(<?= json_encode($fq, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <a href="<?= SITE_URL ?>/admin/faq-setting.php?delete=<?= $fq['id'] ?>" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;padding:0;border-radius:7px;" title="Hapus Pertanyaan FAQ" onclick="return confirm('Hapus pertanyaan FAQ ini?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>

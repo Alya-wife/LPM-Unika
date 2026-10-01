@@ -1,4 +1,6 @@
 # Secrets & Local credentials
+config/oauth.php
+oauth.php
 config/oauth.local.php
 oauth.local.php
 .env

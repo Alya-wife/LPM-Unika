@@ -416,20 +416,20 @@ if ($tab === 'tahunan') {
     $stmt_thn_breakdown->execute([$p_start, $p_end]);
     $thn_instansi_list = $stmt_thn_breakdown->fetchAll();
 
-    // Chart.js data
-    $thn_palette = [
-        'Pelayanan & Fasilitas'   => 'rgba(2, 132, 199, 0.85)',
-        'Materi & Substansi Mutu' => 'rgba(16, 185, 129, 0.85)',
-        'Manajemen Waktu'         => 'rgba(99, 102, 241, 0.85)',
-        'Manfaat & Dampak'        => 'rgba(139, 92, 246, 0.85)',
-    ];
-
+    // Chart.js data: Warna dinamis berdasarkan skala kepuasan
     foreach ($thn_pertanyaan_list as $i => $qp) {
         $val = $qp['avg_skor'] ? round((float)$qp['avg_skor'], 2) : 0;
-        $thn_chart_labels[] = 'P' . ($i + 1) . ': ' . truncate($qp['pertanyaan'], 44);
+        $thn_chart_labels[] = ($i + 1) . '. ' . truncate($qp['pertanyaan'], 48);
         $thn_chart_scores[] = $val;
-        $cat = $qp['kategori'] ?? 'Lainnya';
-        $thn_chart_colors[] = $thn_palette[$cat] ?? 'rgba(2, 132, 199, 0.85)';
+        if ($val >= 4.5) {
+            $thn_chart_colors[] = 'rgba(16, 185, 129, 0.85)'; // Sangat Puas (Emerald)
+        } elseif ($val >= 3.5) {
+            $thn_chart_colors[] = 'rgba(2, 132, 199, 0.85)';  // Puas (Blue)
+        } elseif ($val >= 2.5) {
+            $thn_chart_colors[] = 'rgba(245, 158, 11, 0.85)'; // Kurang Puas (Amber)
+        } else {
+            $thn_chart_colors[] = 'rgba(239, 68, 68, 0.85)';  // Tidak Puas (Red)
+        }
     }
 }
 
@@ -512,9 +512,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </div>
                     <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
                         <?php 
-                        if ($avg_csat >= 4.5) echo '<i class="bi bi-award-fill text-warning me-1"></i> Predikat Sangat Memuaskan';
-                        elseif ($avg_csat >= 3.5) echo '<i class="bi bi-hand-thumbs-up-fill text-primary me-1"></i> Predikat Memuaskan / Baik';
-                        elseif ($avg_csat > 0) echo '<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Perlu Peningkatan Layanan';
+                        if ($avg_csat >= 4.5) echo '<span class="text-success fw-bold"><span style="font-size:1rem;">😄</span> Predikat Sangat Puas</span>';
+                        elseif ($avg_csat >= 3.5) echo '<span class="text-primary fw-bold"><span style="font-size:1rem;">🙂</span> Predikat Puas</span>';
+                        elseif ($avg_csat >= 2.5) echo '<span class="text-warning fw-bold"><span style="font-size:1rem;">😐</span> Predikat Kurang Puas</span>';
+                        elseif ($avg_csat >= 1.5) echo '<span class="text-danger fw-bold"><span style="font-size:1rem;">🙁</span> Predikat Tidak Puas</span>';
+                        elseif ($avg_csat > 0) echo '<span class="text-danger fw-bold"><span style="font-size:1rem;">😢</span> Predikat Sangat Tidak Puas</span>';
                         else echo 'Belum ada penilaian masuk';
                         ?>
                     </div>
@@ -741,10 +743,23 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                         </td>
                         <td style="text-align:center;">
-                            <?php if ($skor > 0): ?>
-                            <span class="badge" style="background:#E0F2FE;color:#0284C7;font-size:0.85rem;padding:0.35rem 0.6rem;font-weight:800;border:1px solid #BAE6FD;">
-                                ⭐ <?= number_format($skor, 2) ?>
+                            <?php if ($skor > 0): 
+                                if ($skor >= 4.5) {
+                                    $e_icon = '😄'; $e_lbl = 'Sangat Puas'; $e_bg = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
+                                } elseif ($skor >= 3.5) {
+                                    $e_icon = '🙂'; $e_lbl = 'Puas'; $e_bg = 'background:#F7FEE7;color:#3F6212;border:1px solid #D9F99D;';
+                                } elseif ($skor >= 2.5) {
+                                    $e_icon = '😐'; $e_lbl = 'Kurang Puas'; $e_bg = 'background:#FFFBEB;color:#92400E;border:1px solid #FDE68A;';
+                                } elseif ($skor >= 1.5) {
+                                    $e_icon = '🙁'; $e_lbl = 'Tidak Puas'; $e_bg = 'background:#FFF7ED;color:#9A3412;border:1px solid #FED7AA;';
+                                } else {
+                                    $e_icon = '😢'; $e_lbl = 'Sangat Tidak Puas'; $e_bg = 'background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;';
+                                }
+                            ?>
+                            <span class="badge" style="<?= $e_bg ?>font-size:0.82rem;padding:0.35rem 0.6rem;font-weight:800;" title="<?= $e_lbl ?>">
+                                <?= $e_icon ?> <?= number_format($skor, 2) ?>
                             </span>
+                            <div style="font-size:0.7rem;color:#475569;margin-top:2px;font-weight:600;"><?= $e_lbl ?></div>
                             <?php else: ?>
                             <span class="text-muted">-</span>
                             <?php endif; ?>
@@ -915,7 +930,14 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <i class="bi bi-star-fill text-warning me-1" style="font-size:1.35rem;"></i><?= $thn_avg_csat > 0 ? number_format($thn_avg_csat, 2) : '-' ?> <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">/ 5.00</span>
             </div>
             <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
-                <?= $thn_avg_csat >= 4.5 ? 'Predikat Sangat Memuaskan' : ($thn_avg_csat >= 3.5 ? 'Predikat Memuaskan' : 'Perlu Peningkatan') ?>
+                <?php
+                if ($thn_avg_csat >= 4.5) echo '<span class="text-success fw-bold"><span style="font-size:1rem;">😄</span> Predikat Sangat Puas</span>';
+                elseif ($thn_avg_csat >= 3.5) echo '<span class="text-primary fw-bold"><span style="font-size:1rem;">🙂</span> Predikat Puas</span>';
+                elseif ($thn_avg_csat >= 2.5) echo '<span class="text-warning fw-bold"><span style="font-size:1rem;">😐</span> Predikat Kurang Puas</span>';
+                elseif ($thn_avg_csat >= 1.5) echo '<span class="text-danger fw-bold"><span style="font-size:1rem;">🙁</span> Predikat Tidak Puas</span>';
+                elseif ($thn_avg_csat > 0) echo '<span class="text-danger fw-bold"><span style="font-size:1rem;">😢</span> Predikat Sangat Tidak Puas</span>';
+                else echo 'Belum Ada Penilaian';
+                ?>
             </div>
         </div>
     </div>
@@ -949,7 +971,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <i class="bi bi-table text-primary me-2"></i> Rekapitulasi Penilaian Rata-Rata per Butir Kuesioner (Periode <?= e($selected_periode) ?>)
             </h6>
             <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
-                <i class="bi bi-cursor-fill me-1 text-primary"></i> Klik pada baris atau tombol <strong>Bintang 1-5</strong> untuk melihat detail jumlah responden tiap bintang.
+                <i class="bi bi-cursor-fill me-1 text-primary"></i> Klik pada baris atau tombol <strong>Rincian Skala</strong> untuk melihat detail sebaran respon Sangat Puas s/d Sangat Tidak Puas.
             </div>
         </div>
         <span style="font-size:0.78rem;color:var(--text-muted);">
@@ -963,10 +985,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th style="width:50px;text-align:center;">No</th>
                     <th>Aspek / Butir Pertanyaan Kuesioner</th>
                     <th style="width:170px;">Kategori Mutu</th>
-                    <th style="width:130px;text-align:center;">Rata-Rata Nilai</th>
+                    <th style="width:130px;text-align:center;">Rata-Rata Skor</th>
                     <th style="width:130px;text-align:center;">Capaian Mutu</th>
-                    <th style="width:150px;text-align:center;">Predikat</th>
-                    <th style="width:130px;text-align:center;">Detail Bintang</th>
+                    <th style="width:160px;text-align:center;">Tingkat Kepuasan</th>
+                    <th style="width:150px;text-align:center;">Distribusi Respon</th>
                 </tr>
             </thead>
             <tbody>
@@ -979,20 +1001,23 @@ require_once __DIR__ . '/includes/admin-header.php';
                     $skor_q = $q['avg_skor'] ? round((float)$q['avg_skor'], 2) : 0;
                     $persen_capaian = round(($skor_q / 5) * 100, 1);
                     if ($skor_q >= 4.5) {
-                        $pred_txt = 'Sangat Memuaskan';
+                        $pred_txt = '😄 Sangat Puas';
                         $pred_badge = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
-                    } elseif ($skor_q >= 4.0) {
-                        $pred_txt = 'Memuaskan';
-                        $pred_badge = 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;';
-                    } elseif ($skor_q >= 3.0) {
-                        $pred_txt = 'Cukup Baik';
-                        $pred_badge = 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;';
+                    } elseif ($skor_q >= 3.5) {
+                        $pred_txt = '🙂 Puas';
+                        $pred_badge = 'background:#F7FEE7;color:#3F6212;border:1px solid #D9F99D;';
+                    } elseif ($skor_q >= 2.5) {
+                        $pred_txt = '😐 Kurang Puas';
+                        $pred_badge = 'background:#FFFBEB;color:#92400E;border:1px solid #FDE68A;';
+                    } elseif ($skor_q >= 1.5) {
+                        $pred_txt = '🙁 Tidak Puas';
+                        $pred_badge = 'background:#FFF7ED;color:#9A3412;border:1px solid #FED7AA;';
                     } else {
-                        $pred_txt = 'Kurang / Perlu Perbaikan';
-                        $pred_badge = 'background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;';
+                        $pred_txt = '😢 Sangat Tidak Puas';
+                        $pred_badge = 'background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;';
                     }
                 ?>
-                <tr style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalThnDistribusi<?= $q['id'] ?>" title="Klik untuk melihat detail jumlah pemberi bintang 1 - 5">
+                <tr style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalThnDistribusi<?= $q['id'] ?>" title="Klik untuk melihat detail jumlah jawaban responden (Sangat Puas s/d Sangat Tidak Puas)">
                     <td style="text-align:center;font-weight:700;color:var(--text-muted);"><?= $i + 1 ?></td>
                     <td>
                         <div style="font-weight:700;color:var(--navy);"><?= e($q['pertanyaan']) ?></div>
@@ -1024,7 +1049,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </td>
                     <td style="text-align:center;" onclick="event.stopPropagation();">
                         <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalThnDistribusi<?= $q['id'] ?>" style="font-size:0.75rem;padding:0.3rem 0.65rem;border-radius:20px;">
-                            <i class="bi bi-bar-chart-fill text-warning me-1"></i> Bintang 1-5
+                            <i class="bi bi-bar-chart-fill me-1"></i> Rincian Skala
                         </button>
                     </td>
                 </tr>
@@ -1038,28 +1063,31 @@ require_once __DIR__ . '/includes/admin-header.php';
 <!-- MODAL POPUPS: Rincian Jumlah Pemberi Bintang (1-5) per Butir Pertanyaan Periode -->
 <?php 
 $thn_star_levels = [
-    5 => ['label' => 'Bintang 5 (Sangat Baik)', 'stars' => '⭐⭐⭐⭐⭐', 'bar' => '#10B981', 'bg' => '#ECFDF5', 'text' => '#047857'],
-    4 => ['label' => 'Bintang 4 (Baik)', 'stars' => '⭐⭐⭐⭐', 'bar' => '#0284C7', 'bg' => '#EFF6FF', 'text' => '#1D4ED8'],
-    3 => ['label' => 'Bintang 3 (Cukup)', 'stars' => '⭐⭐⭐', 'bar' => '#F59E0B', 'bg' => '#FEF3C7', 'text' => '#B45309'],
-    2 => ['label' => 'Bintang 2 (Kurang)', 'stars' => '⭐⭐', 'bar' => '#F97316', 'bg' => '#FFF7ED', 'text' => '#C2410C'],
-    1 => ['label' => 'Bintang 1 (Sangat Kurang)', 'stars' => '⭐', 'bar' => '#EF4444', 'bg' => '#FEF2F2', 'text' => '#B91C1C']
+    5 => ['label' => 'Sangat Puas', 'sub' => 'Skor 5', 'emoji' => '😄', 'bar' => '#10B981', 'bg' => '#ECFDF5', 'text' => '#047857'],
+    4 => ['label' => 'Puas', 'sub' => 'Skor 4', 'emoji' => '🙂', 'bar' => '#84CC16', 'bg' => '#F7FEE7', 'text' => '#3F6212'],
+    3 => ['label' => 'Kurang Puas', 'sub' => 'Skor 3', 'emoji' => '😐', 'bar' => '#F59E0B', 'bg' => '#FFFBEB', 'text' => '#92400E'],
+    2 => ['label' => 'Tidak Puas', 'sub' => 'Skor 2', 'emoji' => '🙁', 'bar' => '#F97316', 'bg' => '#FFF7ED', 'text' => '#9A3412'],
+    1 => ['label' => 'Sangat Tidak Puas', 'sub' => 'Skor 1', 'emoji' => '😢', 'bar' => '#EF4444', 'bg' => '#FEF2F2', 'text' => '#991B1B']
 ];
 
 foreach ($thn_pertanyaan_list as $i => $q): 
     $skor_q = $q['avg_skor'] ? round((float)$q['avg_skor'], 2) : 0;
     $persen_capaian = round(($skor_q / 5) * 100, 1);
     if ($skor_q >= 4.5) {
-        $p_text = 'Sangat Memuaskan';
+        $p_text = '😄 Sangat Puas';
         $p_badge = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
-    } elseif ($skor_q >= 4.0) {
-        $p_text = 'Memuaskan';
-        $p_badge = 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;';
-    } elseif ($skor_q >= 3.0) {
-        $p_text = 'Cukup Baik';
-        $p_badge = 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;';
+    } elseif ($skor_q >= 3.5) {
+        $p_text = '🙂 Puas';
+        $p_badge = 'background:#F7FEE7;color:#3F6212;border:1px solid #D9F99D;';
+    } elseif ($skor_q >= 2.5) {
+        $p_text = '😐 Kurang Puas';
+        $p_badge = 'background:#FFFBEB;color:#92400E;border:1px solid #FDE68A;';
+    } elseif ($skor_q >= 1.5) {
+        $p_text = '🙁 Tidak Puas';
+        $p_badge = 'background:#FFF7ED;color:#9A3412;border:1px solid #FED7AA;';
     } else {
-        $p_text = 'Kurang Baik';
-        $p_badge = 'background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;';
+        $p_text = '😢 Sangat Tidak Puas';
+        $p_badge = 'background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;';
     }
 ?>
 <div class="modal fade" id="modalThnDistribusi<?= $q['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -1083,7 +1111,7 @@ foreach ($thn_pertanyaan_list as $i => $q):
                 <!-- Summary Card -->
                 <div class="p-3 mb-4 rounded-3 d-flex justify-content-between align-items-center flex-wrap gap-3" style="background:#F8FAFC;border:1px solid #E2E8F0;">
                     <div>
-                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Rata-Rata Nilai Butir (Periode <?= e($selected_periode) ?>)</div>
+                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Rata-Rata Skor Butir (Periode <?= e($selected_periode) ?>)</div>
                         <div style="font-size:2.2rem;font-weight:900;color:#0284C7;line-height:1.1;margin-top:2px;">
                             ⭐ <?= number_format($skor_q, 2) ?> <span style="font-size:0.95rem;color:var(--text-muted);font-weight:600;">/ 5.00</span>
                         </div>
@@ -1104,7 +1132,7 @@ foreach ($thn_pertanyaan_list as $i => $q):
 
                 <!-- Star Distribution Progress Bars (1 to 5 Stars) -->
                 <h6 class="fw-bold mb-3" style="color:var(--navy);font-size:0.95rem;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-bar-chart-fill text-primary"></i> Rincian Jumlah Pemberi Bintang (1 s/d 5)
+                    <i class="bi bi-bar-chart-fill text-primary"></i> Rincian Distribusi Jawaban (Sangat Puas s/d Sangat Tidak Puas)
                 </h6>
 
                 <div class="d-flex flex-column gap-2 mb-4">
@@ -1113,9 +1141,14 @@ foreach ($thn_pertanyaan_list as $i => $q):
                         $pct = $thn_total_responden > 0 ? round(($jml / $thn_total_responden) * 100, 1) : 0;
                     ?>
                     <div class="p-2.5 px-3 rounded-2 border d-flex align-items-center gap-3" style="background:#fff;">
-                        <div style="min-width:170px;">
-                            <div class="fw-bold" style="font-size:0.85rem;color:var(--navy);"><?= $cfg['label'] ?></div>
-                            <div style="font-size:0.72rem;letter-spacing:1px;"><?= $cfg['stars'] ?></div>
+                        <div style="min-width:180px;">
+                            <div class="fw-bold d-flex align-items-center gap-2" style="font-size:0.85rem;color:var(--navy);">
+                                <span style="font-size:1.25rem;"><?= $cfg['emoji'] ?></span>
+                                <div>
+                                    <div><?= $cfg['label'] ?></div>
+                                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;"><?= $cfg['sub'] ?></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex-grow-1">
@@ -1136,7 +1169,7 @@ foreach ($thn_pertanyaan_list as $i => $q):
 
                 <!-- Daftar Responden per Bintang (Accordion / Expandable) -->
                 <h6 class="fw-bold mb-2" style="color:var(--navy);font-size:0.9rem;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-people-fill text-primary"></i> Daftar Nama Anggota Berdasarkan Bintang:
+                    <i class="bi bi-people-fill text-primary"></i> Daftar Responden Berdasarkan Tingkat Kepuasan:
                 </h6>
 
                 <div class="accordion" id="accordionThnRespondents<?= $q['id'] ?>">
@@ -1147,8 +1180,10 @@ foreach ($thn_pertanyaan_list as $i => $q):
                     <div class="accordion-item border rounded mb-2 overflow-hidden">
                         <h2 class="accordion-header" id="headingThnStar<?= $q['id'] ?>_<?= $star_num ?>">
                             <button class="accordion-button collapsed py-2.5 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThnStar<?= $q['id'] ?>_<?= $star_num ?>" aria-expanded="false" style="font-size:0.85rem;background:#F8FAFC;font-weight:700;">
-                                <span class="badge me-2" style="background:<?= $cfg['bg'] ?>;color:<?= $cfg['text'] ?>;"><?= $cfg['stars'] ?></span>
-                                <?= $cfg['label'] ?> &mdash; <strong class="ms-1 text-dark"><?= count($resps) ?> Orang</strong>
+                                <span class="badge me-2" style="background:<?= $cfg['bg'] ?>;color:<?= $cfg['text'] ?>;font-size:0.82rem;padding:0.35rem 0.55rem;">
+                                    <?= $cfg['emoji'] ?> <?= $cfg['label'] ?> (<?= $cfg['sub'] ?>)
+                                </span>
+                                &mdash; <strong class="ms-1 text-dark"><?= count($resps) ?> Orang</strong>
                             </button>
                         </h2>
                         <div id="collapseThnStar<?= $q['id'] ?>_<?= $star_num ?>" class="accordion-collapse collapse" data-bs-parent="#accordionThnRespondents<?= $q['id'] ?>">
@@ -1600,14 +1635,14 @@ foreach ($thn_pertanyaan_list as $i => $q):
             </h5>
             <div style="font-size:0.85rem;color:var(--text);line-height:1.6;">
                 <p>
-                    Kuesioner kepuasan ini menggunakan standar <strong>Skala Likert 1 s/d 5</strong> yang merupakan praktik baku penjaminan mutu pendidikan tinggi:
+                    Kuesioner kepuasan ini menggunakan standar <strong>Skala Kepuasan 1 s/d 5 (Sangat Tidak Puas sampai Sangat Puas)</strong> yang selaras dengan formulir kepuasan pelayanan publik LPM:
                 </p>
-                <ul class="mb-3 ps-3">
-                    <li><strong>1:</strong> Sangat Kurang</li>
-                    <li><strong>2:</strong> Kurang</li>
-                    <li><strong>3:</strong> Cukup</li>
-                    <li><strong>4:</strong> Baik / Memuaskan</li>
-                    <li><strong>5:</strong> Sangat Baik / Sangat Memuaskan</li>
+                <ul class="mb-3 ps-2" style="list-style-type:none;">
+                    <li class="mb-1"><span class="badge" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;font-size:0.75rem;">Skor 5</span> <strong>😄 Sangat Puas</strong></li>
+                    <li class="mb-1"><span class="badge" style="background:#F7FEE7;color:#3F6212;border:1px solid #D9F99D;font-size:0.75rem;">Skor 4</span> <strong>🙂 Puas</strong></li>
+                    <li class="mb-1"><span class="badge" style="background:#FFFBEB;color:#92400E;border:1px solid #FDE68A;font-size:0.75rem;">Skor 3</span> <strong>😐 Kurang Puas</strong></li>
+                    <li class="mb-1"><span class="badge" style="background:#FFF7ED;color:#9A3412;border:1px solid #FED7AA;font-size:0.75rem;">Skor 2</span> <strong>🙁 Tidak Puas</strong></li>
+                    <li class="mb-1"><span class="badge" style="background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;font-size:0.75rem;">Skor 1</span> <strong>😢 Sangat Tidak Puas</strong></li>
                 </ul>
                 <p class="mb-0 text-muted" style="font-size:0.8rem;">
                     Butir pertanyaan dapat disesuaikan sewaktu-waktu melalui menu <a href="feedback-kunjungan-pertanyaan.php" class="fw-bold text-primary">Kelola Butir Kuesioner</a>.

@@ -185,33 +185,38 @@ $chart_bg_colors     = [];
 $chart_border_colors = [];
 $radar_labels        = [];
 
-$category_palette = [
-    'Pelayanan & Fasilitas'   => ['bg' => 'rgba(2, 132, 199, 0.85)', 'border' => '#0284C7'],
-    'Materi & Substansi Mutu' => ['bg' => 'rgba(16, 185, 129, 0.85)', 'border' => '#059669'],
-    'Manajemen Waktu'         => ['bg' => 'rgba(99, 102, 241, 0.85)', 'border' => '#4F46E5'],
-    'Manfaat & Dampak'        => ['bg' => 'rgba(139, 92, 246, 0.85)', 'border' => '#7C3AED'],
-];
-
 $radar_names = [
-    1 => 'Keramahan LPM',
-    2 => 'Fasilitas Ruang',
-    3 => 'Materi SPMI',
-    4 => 'Sesi Diskusi',
-    5 => 'Ketepatan Waktu',
-    6 => 'Kemanfaatan'
+    1 => '1. Kesesuaian Syarat',
+    2 => '2. Prosedur Layanan',
+    3 => '3. Kecepatan Waktu',
+    4 => '4. Kesesuaian Produk',
+    5 => '5. Kompetensi Petugas',
+    6 => '6. Sikap & Keramahan',
+    7 => '7. Sarana & Prasarana',
+    8 => '8. Penanganan Aduan'
 ];
 
 foreach ($skala_questions as $idx => $sq) {
     $avg = round((float)$sq['avg_skor'], 2);
-    $chart_labels[] = 'P' . ($idx + 1) . ': ' . truncate($sq['pertanyaan'], 44);
+    $chart_labels[] = ($idx + 1) . '. ' . truncate($sq['pertanyaan'], 44);
     $chart_scores[] = $avg;
     
-    $radar_labels[] = $radar_names[$idx + 1] ?? ('P' . ($idx + 1));
+    $u_num = $sq['urutan'] ?: ($idx + 1);
+    $radar_labels[] = $radar_names[$u_num] ?? (($idx + 1) . '. ' . truncate($sq['pertanyaan'], 20));
     
-    $cat = $sq['kategori'] ?? 'Lainnya';
-    $color = $category_palette[$cat] ?? ['bg' => 'rgba(14, 165, 233, 0.85)', 'border' => '#0284C7'];
-    $chart_bg_colors[]     = $color['bg'];
-    $chart_border_colors[] = $color['border'];
+    if ($avg >= 4.5) {
+        $chart_bg_colors[]     = 'rgba(16, 185, 129, 0.85)'; // Sangat Puas
+        $chart_border_colors[] = '#059669';
+    } elseif ($avg >= 3.5) {
+        $chart_bg_colors[]     = 'rgba(2, 132, 199, 0.85)';  // Puas
+        $chart_border_colors[] = '#0284C7';
+    } elseif ($avg >= 2.5) {
+        $chart_bg_colors[]     = 'rgba(245, 158, 11, 0.85)'; // Kurang Puas
+        $chart_border_colors[] = '#D97706';
+    } else {
+        $chart_bg_colors[]     = 'rgba(239, 68, 68, 0.85)';  // Tidak Puas
+        $chart_border_colors[] = '#DC2626';
+    }
 }
 
 require_once __DIR__ . '/includes/admin-header.php';
@@ -278,8 +283,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <div style="font-size:2.4rem;font-weight:900;color:#0284C7;line-height:1.1;margin:4px 0;">
                     <i class="bi bi-star-fill text-warning me-1" style="font-size:1.8rem;"></i><?= number_format($avg_instansi, 2) ?>
                 </div>
-                <div style="font-size:0.78rem;font-weight:700;color:#0369A1;">
-                    <?= $avg_instansi >= 4.5 ? '<i class="bi bi-award-fill text-warning me-1"></i> Predikat Sangat Memuaskan' : ($avg_instansi >= 3.5 ? '<i class="bi bi-hand-thumbs-up-fill text-primary me-1"></i> Predikat Memuaskan' : 'Perlu Evaluasi') ?>
+                <div style="font-size:0.78rem;font-weight:700;">
+                    <?php
+                    if ($avg_instansi >= 4.5) echo '<span class="text-success"><span style="font-size:1rem;">😄</span> Predikat Sangat Puas</span>';
+                    elseif ($avg_instansi >= 3.5) echo '<span class="text-primary"><span style="font-size:1rem;">🙂</span> Predikat Puas</span>';
+                    elseif ($avg_instansi >= 2.5) echo '<span class="text-warning"><span style="font-size:1rem;">😐</span> Predikat Kurang Puas</span>';
+                    elseif ($avg_instansi >= 1.5) echo '<span class="text-danger"><span style="font-size:1rem;">🙁</span> Predikat Tidak Puas</span>';
+                    elseif ($avg_instansi > 0) echo '<span class="text-danger"><span style="font-size:1rem;">😢</span> Predikat Sangat Tidak Puas</span>';
+                    else echo 'Belum Ada Penilaian';
+                    ?>
                 </div>
                 <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">
                     Rata-rata dari <?= $total_anggota ?> anggota delegasi
@@ -364,10 +376,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <canvas id="instansiFeedbackChart"></canvas>
                 </div>
                 <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:0.75rem;color:var(--text-muted);">
-                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#0284C7;margin-right:4px;"></span>Pelayanan</div>
-                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#059669;margin-right:4px;"></span>Materi SPMI</div>
-                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4F46E5;margin-right:4px;"></span>Manajemen Waktu</div>
-                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7C3AED;margin-right:4px;"></span>Manfaat &amp; Dampak</div>
+                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10B981;margin-right:4px;"></span>😄 Sangat Puas (&ge; 4.5)</div>
+                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#0284C7;margin-right:4px;"></span>🙂 Puas (3.5 &ndash; 4.49)</div>
+                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#F59E0B;margin-right:4px;"></span>😐 Kurang Puas (2.5 &ndash; 3.49)</div>
+                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#EF4444;margin-right:4px;"></span>🙁/😢 Tidak Puas (&lt; 2.5)</div>
                 </div>
             </div>
         </div>
@@ -380,7 +392,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <span style="font-size:0.82rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;">
                             <i class="bi bi-radar me-1 text-success"></i> Radar Keseimbangan Mutu
                         </span>
-                        <span class="badge bg-success-subtle text-success fw-bold" style="font-size:0.7rem;">6 Dimensi</span>
+                        <span class="badge bg-success-subtle text-success fw-bold" style="font-size:0.7rem;"><?= count($radar_labels) ?> Indikator Mutu</span>
                     </div>
                     <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">
                         Pemetaan persepsi mutu antar seluruh dimensi pelayanan.
@@ -402,10 +414,10 @@ require_once __DIR__ . '/includes/admin-header.php';
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:#F8FAFC;">
         <div>
             <h5 style="font-weight:700;color:var(--navy);font-size:1rem;margin:0;">
-                📊 Rekapitulasi Penilaian Rata-Rata per Butir Kuesioner (Skala 1 – 5)
+                📊 Rekapitulasi Penilaian Rata-Rata per Butir Indikator (Skala 1 – 5)
             </h5>
             <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
-                <i class="bi bi-cursor-fill me-1 text-primary"></i> Klik pada baris atau tombol <strong>Bintang 1-5</strong> untuk melihat detail jumlah responden tiap bintang.
+                <i class="bi bi-cursor-fill me-1 text-primary"></i> Klik pada baris atau tombol <strong>Rincian Skala</strong> untuk melihat distribusi respon (Sangat Puas s/d Sangat Tidak Puas).
             </div>
         </div>
         <span class="badge bg-light text-dark border px-3 py-2" style="font-size:0.8rem;font-weight:700;">
@@ -421,8 +433,8 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th style="width:170px;">Kategori Mutu</th>
                     <th style="width:130px;text-align:center;">Rata-Rata Nilai</th>
                     <th style="width:110px;text-align:center;">Rentang</th>
-                    <th style="width:130px;text-align:center;">Predikat</th>
-                    <th style="width:130px;text-align:center;">Detail Bintang</th>
+                    <th style="width:140px;text-align:center;">Predikat</th>
+                    <th style="width:130px;text-align:center;">Distribusi Respon</th>
                 </tr>
             </thead>
             <tbody>
@@ -431,20 +443,23 @@ require_once __DIR__ . '/includes/admin-header.php';
                     $score_avg = round((float)$sq['avg_skor'], 2);
                     $persen_sq = round(($score_avg / 5) * 100, 1);
                     if ($score_avg >= 4.5) {
-                        $p_text = 'Sangat Memuaskan';
+                        $p_text = '😄 Sangat Puas';
                         $p_badge = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
-                    } elseif ($score_avg >= 4.0) {
-                        $p_text = 'Memuaskan';
+                    } elseif ($score_avg >= 3.5) {
+                        $p_text = '🙂 Puas';
                         $p_badge = 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;';
-                    } elseif ($score_avg >= 3.0) {
-                        $p_text = 'Cukup Baik';
+                    } elseif ($score_avg >= 2.5) {
+                        $p_text = '😐 Kurang Puas';
                         $p_badge = 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;';
+                    } elseif ($score_avg >= 1.5) {
+                        $p_text = '🙁 Tidak Puas';
+                        $p_badge = 'background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;';
                     } else {
-                        $p_text = 'Kurang Baik';
-                        $p_badge = 'background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;';
+                        $p_text = '😢 Sangat Tdk Puas';
+                        $p_badge = 'background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;';
                     }
                 ?>
-                <tr style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalDistribusi<?= $sq['id'] ?>" title="Klik untuk melihat detail jumlah pemberi bintang 1 - 5">
+                <tr style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalDistribusi<?= $sq['id'] ?>" title="Klik untuk melihat distribusi respon pilihan responden">
                     <td style="text-align:center;font-weight:700;color:var(--text-muted);"><?= $idx + 1 ?></td>
                     <td>
                         <div style="font-weight:700;color:var(--navy);"><?= e($sq['pertanyaan']) ?></div>
@@ -473,7 +488,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </td>
                     <td style="text-align:center;" onclick="event.stopPropagation();">
                         <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalDistribusi<?= $sq['id'] ?>" style="font-size:0.75rem;padding:0.3rem 0.65rem;border-radius:20px;">
-                            <i class="bi bi-bar-chart-fill text-warning me-1"></i> Bintang 1-5
+                            <i class="bi bi-bar-chart-fill text-primary me-1"></i> Rincian Skala
                         </button>
                     </td>
                 </tr>
@@ -483,31 +498,34 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
-<!-- MODAL POPUPS: Rincian Jumlah Pemberi Bintang 1 s/d 5 per Butir Pertanyaan -->
+<!-- MODAL POPUPS: Rincian Distribusi Pilihan Responden (Skala 1 s/d 5) per Butir Pertanyaan -->
 <?php 
 $star_levels = [
-    5 => ['label' => 'Bintang 5 (Sangat Baik)', 'stars' => '⭐⭐⭐⭐⭐', 'bar' => '#10B981', 'bg' => '#ECFDF5', 'text' => '#047857'],
-    4 => ['label' => 'Bintang 4 (Baik)', 'stars' => '⭐⭐⭐⭐', 'bar' => '#0284C7', 'bg' => '#EFF6FF', 'text' => '#1D4ED8'],
-    3 => ['label' => 'Bintang 3 (Cukup)', 'stars' => '⭐⭐⭐', 'bar' => '#F59E0B', 'bg' => '#FEF3C7', 'text' => '#B45309'],
-    2 => ['label' => 'Bintang 2 (Kurang)', 'stars' => '⭐⭐', 'bar' => '#F97316', 'bg' => '#FFF7ED', 'text' => '#C2410C'],
-    1 => ['label' => 'Bintang 1 (Sangat Kurang)', 'stars' => '⭐', 'bar' => '#EF4444', 'bg' => '#FEF2F2', 'text' => '#B91C1C']
+    5 => ['label' => 'Sangat Puas', 'sub' => 'Skor 5', 'emoji' => '😄', 'bar' => '#10B981', 'bg' => '#ECFDF5', 'text' => '#047857'],
+    4 => ['label' => 'Puas', 'sub' => 'Skor 4', 'emoji' => '🙂', 'bar' => '#0284C7', 'bg' => '#EFF6FF', 'text' => '#1D4ED8'],
+    3 => ['label' => 'Kurang Puas', 'sub' => 'Skor 3', 'emoji' => '😐', 'bar' => '#F59E0B', 'bg' => '#FEF3C7', 'text' => '#B45309'],
+    2 => ['label' => 'Tidak Puas', 'sub' => 'Skor 2', 'emoji' => '🙁', 'bar' => '#F97316', 'bg' => '#FFF7ED', 'text' => '#C2410C'],
+    1 => ['label' => 'Sangat Tidak Puas', 'sub' => 'Skor 1', 'emoji' => '😢', 'bar' => '#EF4444', 'bg' => '#FEF2F2', 'text' => '#B91C1C']
 ];
 
 foreach ($skala_questions as $idx => $sq): 
     $score_avg = round((float)$sq['avg_skor'], 2);
     $persen_sq = round(($score_avg / 5) * 100, 1);
     if ($score_avg >= 4.5) {
-        $p_text = 'Sangat Memuaskan';
+        $p_text = '😄 Sangat Puas';
         $p_badge = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
-    } elseif ($score_avg >= 4.0) {
-        $p_text = 'Memuaskan';
+    } elseif ($score_avg >= 3.5) {
+        $p_text = '🙂 Puas';
         $p_badge = 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;';
-    } elseif ($score_avg >= 3.0) {
-        $p_text = 'Cukup Baik';
+    } elseif ($score_avg >= 2.5) {
+        $p_text = '😐 Kurang Puas';
         $p_badge = 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;';
+    } elseif ($score_avg >= 1.5) {
+        $p_text = '🙁 Tidak Puas';
+        $p_badge = 'background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;';
     } else {
-        $p_text = 'Kurang Baik';
-        $p_badge = 'background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;';
+        $p_text = '😢 Sangat Tdk Puas';
+        $p_badge = 'background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;';
     }
 ?>
 <div class="modal fade" id="modalDistribusi<?= $sq['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -552,7 +570,7 @@ foreach ($skala_questions as $idx => $sq):
 
                 <!-- Star Distribution Progress Bars (1 to 5 Stars) -->
                 <h6 class="fw-bold mb-3" style="color:var(--navy);font-size:0.95rem;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-bar-chart-fill text-primary"></i> Rincian Jumlah Pemberi Bintang (1 s/d 5)
+                    <i class="bi bi-bar-chart-fill text-primary"></i> Rincian Distribusi Pilihan Responden (Skala 1 s/d 5)
                 </h6>
 
                 <div class="d-flex flex-column gap-2 mb-4">
@@ -561,9 +579,9 @@ foreach ($skala_questions as $idx => $sq):
                         $pct = $total_anggota > 0 ? round(($jml / $total_anggota) * 100, 1) : 0;
                     ?>
                     <div class="p-2.5 px-3 rounded-2 border d-flex align-items-center gap-3" style="background:#fff;">
-                        <div style="min-width:170px;">
-                            <div class="fw-bold" style="font-size:0.85rem;color:var(--navy);"><?= $cfg['label'] ?></div>
-                            <div style="font-size:0.72rem;letter-spacing:1px;"><?= $cfg['stars'] ?></div>
+                        <div style="min-width:180px;">
+                            <div class="fw-bold" style="font-size:0.85rem;color:var(--navy);"><?= $cfg['emoji'] ?> <?= $cfg['label'] ?></div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;"><?= $cfg['sub'] ?></div>
                         </div>
 
                         <div class="flex-grow-1">
@@ -584,7 +602,7 @@ foreach ($skala_questions as $idx => $sq):
 
                 <!-- Daftar Responden per Bintang (Accordion / Expandable) -->
                 <h6 class="fw-bold mb-2" style="color:var(--navy);font-size:0.9rem;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-people-fill text-primary"></i> Daftar Nama Anggota Berdasarkan Bintang:
+                    <i class="bi bi-people-fill text-primary"></i> Daftar Nama Anggota Berdasarkan Respon Pilihan:
                 </h6>
 
                 <div class="accordion" id="accordionRespondents<?= $sq['id'] ?>">
@@ -595,7 +613,7 @@ foreach ($skala_questions as $idx => $sq):
                     <div class="accordion-item border rounded mb-2 overflow-hidden">
                         <h2 class="accordion-header" id="headingStar<?= $sq['id'] ?>_<?= $star_num ?>">
                             <button class="accordion-button collapsed py-2.5 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStar<?= $sq['id'] ?>_<?= $star_num ?>" aria-expanded="false" style="font-size:0.85rem;background:#F8FAFC;font-weight:700;">
-                                <span class="badge me-2" style="background:<?= $cfg['bg'] ?>;color:<?= $cfg['text'] ?>;"><?= $cfg['stars'] ?></span>
+                                <span class="badge me-2" style="background:<?= $cfg['bg'] ?>;color:<?= $cfg['text'] ?>;"><?= $cfg['emoji'] ?> <?= $cfg['sub'] ?></span>
                                 <?= $cfg['label'] ?> &mdash; <strong class="ms-1 text-dark"><?= count($resps) ?> Orang</strong>
                             </button>
                         </h2>
@@ -751,9 +769,32 @@ foreach ($skala_questions as $idx => $sq):
                         </span>
                     </td>
                     <td style="text-align:center;">
-                        <?php if ($r['rata_rata_skor']): ?>
-                        <span class="badge" style="background:#E0F2FE;color:#0284C7;font-size:0.85rem;padding:0.35rem 0.65rem;font-weight:800;border:1px solid #BAE6FD;">
-                            ⭐ <?= number_format((float)$r['rata_rata_skor'], 2) ?>
+                        <?php if ($r['rata_rata_skor']): 
+                            $r_avg = round((float)$r['rata_rata_skor'], 2);
+                            if ($r_avg >= 4.5) {
+                                $r_badge = 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;';
+                                $r_emoji = '😄';
+                                $r_text  = 'Sangat Puas';
+                            } elseif ($r_avg >= 3.5) {
+                                $r_badge = 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;';
+                                $r_emoji = '🙂';
+                                $r_text  = 'Puas';
+                            } elseif ($r_avg >= 2.5) {
+                                $r_badge = 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;';
+                                $r_emoji = '😐';
+                                $r_text  = 'Kurang Puas';
+                            } elseif ($r_avg >= 1.5) {
+                                $r_badge = 'background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;';
+                                $r_emoji = '🙁';
+                                $r_text  = 'Tidak Puas';
+                            } else {
+                                $r_badge = 'background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;';
+                                $r_emoji = '😢';
+                                $r_text  = 'Sangat Tdk Puas';
+                            }
+                        ?>
+                        <span class="badge" style="<?= $r_badge ?>font-size:0.8rem;padding:0.35rem 0.65rem;font-weight:700;">
+                            <?= $r_emoji ?> <?= number_format($r_avg, 2) ?> &bull; <?= $r_text ?>
                         </span>
                         <?php else: ?>
                         <span class="text-muted">-</span>
@@ -855,7 +896,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: function(context) {
                                 var val = Number(context.raw).toFixed(2);
                                 var persen = ((val / 5) * 100).toFixed(1);
-                                return ' Skor Rata-Rata: ' + val + ' / 5.00 (' + persen + '% Capaian) - Klik untuk detail bintang';
+                                return ' Skor Rata-Rata: ' + val + ' / 5.00 (' + persen + '% Capaian) - Klik untuk rincian skala';
                             }
                         }
                     }
@@ -906,7 +947,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     {
                         label: 'Standar Mutu Minimum (4.00)',
-                        data: [4, 4, 4, 4, 4, 4],
+                        data: <?= json_encode(array_fill(0, count($chart_scores), 4.0)) ?>,
                         borderColor: '#10B981',
                         borderDash: [4, 4],
                         borderWidth: 1.5,

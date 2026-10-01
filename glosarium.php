@@ -11,87 +11,17 @@ require_once __DIR__ . '/includes/knowledge-sections.php';
 
 $search_term = trim($_GET['q'] ?? '');
 
-$all_terms = [
-    [
-        'istilah' => 'SPMI',
-        'nama'    => 'Sistem Penjaminan Mutu Internal',
-        'kategori'=> 'Sistem & Regulasi',
-        'definisi'=> 'Instrumen otonom terencana dan berkelanjutan yang dijalankan oleh internal perguruan tinggi untuk mengendalikan serta meningkatkan mutu penyelenggaraan pendidikan tinggi.'
-    ],
-    [
-        'istilah' => 'PPEPP',
-        'nama'    => 'Penetapan, Pelaksanaan, Evaluasi, Pengendalian, Peningkatan',
-        'kategori'=> 'Alur Kerja',
-        'definisi'=> 'Siklus lima tahapan kerja baku yang wajib dijalankan dalam tata kelola penjaminan mutu internal secara konsisten dan berkesinambungan.'
-    ],
-    [
-        'istilah' => 'AMI',
-        'nama'    => 'Audit Mutu Internal',
-        'kategori'=> 'Evaluasi',
-        'definisi'=> 'Proses pengujian yang independen, sistematis, dan terdokumentasi untuk memastikan pelaksanaan kegiatan di perguruan tinggi sesuai dengan standar SPMI.'
-    ],
-    [
-        'istilah' => 'GPM',
-        'nama'    => 'Gugus Penjaminan Mutu',
-        'kategori'=> 'Organisasi',
-        'definisi'=> 'Unit fungsional pelaksana penjaminan mutu di tingkat Fakultas yang bertugas mengoordinasikan pemantauan dan evaluasi mutu akademik di lingkungan fakultas.'
-    ],
-    [
-        'istilah' => 'UPPS',
-        'nama'    => 'Unit Pengelola Program Studi',
-        'kategori'=> 'Organisasi',
-        'definisi'=> 'Entitas akademik (biasanya Fakultas atau Sekolah Pascasarjana) yang menaungi dan bertanggung jawab langsung atas operasional serta akreditasi program studi.'
-    ],
-    [
-        'istilah' => 'KTS',
-        'nama'    => 'Ketidaksesuaian',
-        'kategori'=> 'Audit & Temuan',
-        'definisi'=> 'Kondisi di mana pelaksanaan atau bukti hasil di lapangan tidak memenuhi kriteria tolok ukur standar mutu SPMI yang telah ditetapkan.'
-    ],
-    [
-        'istilah' => 'RTL',
-        'nama'    => 'Rencana Tindak Lanjut',
-        'kategori'=> 'Pengendalian',
-        'definisi'=> 'Dokumen komitmen resmi yang dirumuskan oleh pimpinan unit/auditee untuk memperbaiki atau memenuhi rekomendasi temuan audit mutu dalam batas waktu tertentu.'
-    ],
-    [
-        'istilah' => 'RTM',
-        'nama'    => 'Rapat Tinjauan Manajemen',
-        'kategori'=> 'Pengendalian',
-        'definisi'=> 'Rapat formal pimpinan universitas bersama dekan dan kepala unit untuk meninjau efektivitas SPMI dan mengambil keputusan strategis tindak lanjut mutu.'
-    ],
-    [
-        'istilah' => 'IKU & IKT',
-        'nama'    => 'Indikator Kinerja Utama & Indikator Kinerja Tambahan',
-        'kategori'=> 'Standar Mutu',
-        'definisi'=> 'Tolok ukur keberhasilan universitas yang mengacu pada capaian standar nasional kementerian (IKU) serta standar keunggulan spesifik ciri khas UNIKA (IKT).'
-    ],
-    [
-        'istilah' => 'DED',
-        'nama'    => 'Dokumen Evaluasi Diri',
-        'kategori'=> 'Akreditasi & AMI',
-        'definisi'=> 'Laporan komprehensif yang disusun mandiri oleh Program Studi berisi potret capaian tridharma, analisis SWOT, dan kesiapan sebelum diaudit atau diakreditasi.'
-    ],
-    [
-        'istilah' => 'SN Dikti',
-        'nama'    => 'Standar Nasional Pendidikan Tinggi',
-        'kategori'=> 'Regulasi Nasional',
-        'definisi'=> 'Satuan standar minimal tentang sistem pendidikan tinggi di seluruh wilayah hukum NKRI yang mencakup standar pendidikan, penelitian, dan pengabdian masyarakat.'
-    ],
-    [
-        'istilah' => 'LAM',
-        'nama'    => 'Lembaga Akreditasi Mandiri',
-        'kategori'=> 'Akreditasi',
-        'definisi'=> 'Lembaga independen yang dibentuk oleh masyarakat/organisasi profesi yang bertugas melakukan penilaian akreditasi program studi sesuai rumpun keilmuan.'
-    ],
-];
-
-if ($search_term !== '') {
-    $all_terms = array_filter($all_terms, function($t) use ($search_term) {
-        return stripos($t['istilah'], $search_term) !== false ||
-               stripos($t['nama'], $search_term) !== false ||
-               stripos($t['definisi'], $search_term) !== false;
-    });
+try {
+    if ($search_term !== '') {
+        $stmt_glos = $db->prepare("SELECT * FROM glosarium WHERE is_active = 1 AND (istilah LIKE ? OR nama LIKE ? OR definisi LIKE ?) ORDER BY urutan ASC, istilah ASC");
+        $param = '%' . $search_term . '%';
+        $stmt_glos->execute([$param, $param, $param]);
+        $all_terms = $stmt_glos->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $all_terms = $db->query("SELECT * FROM glosarium WHERE is_active = 1 ORDER BY urutan ASC, istilah ASC")->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) {
+    $all_terms = [];
 }
 ?>
 

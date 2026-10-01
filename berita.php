@@ -26,7 +26,7 @@ $search = trim($_GET['q'] ?? '');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 9; // 3x3 grid per page
 
-$where_clauses = [];
+$where_clauses = ["b.status = 'published'"];
 $params = [];
 
 if ($tipe_filter) {

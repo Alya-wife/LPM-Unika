@@ -170,7 +170,7 @@ require_once __DIR__ . '/includes/navbar.php';
             SELECT b.*,
             (SELECT COUNT(*) FROM berita_gambar bg WHERE bg.berita_id = b.id) AS total_extra_gambar
             FROM berita b
-            WHERE b.tampil_di_ami = 1
+            WHERE b.status = 'published' AND b.tampil_di_ami = 1
             ORDER BY COALESCE(b.tanggal_publikasi, b.created_at) DESC, b.id DESC
         ");
         $kegiatan_ami_items = $stmt_ami_berita ? $stmt_ami_berita->fetchAll(PDO::FETCH_ASSOC) : [];

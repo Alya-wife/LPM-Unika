@@ -14,13 +14,26 @@ $current_page = 'pemeringkatan';
 
 $edurank_data = getEduRankRankings();
 
-$indonesia_rank = $edurank_data['indonesia']['rank'] ?? 65;
-$indonesia_of   = $edurank_data['indonesia']['total'] ?? 562;
-$semarang_rank  = $edurank_data['semarang']['rank'] ?? 3;
-$semarang_of    = $edurank_data['semarang']['total'] ?? 14;
-$topics         = $edurank_data['topics'] ?? [];
-$last_sync      = $edurank_data['updated_at'] ?? date('Y-m-d H:i:s');
-$edurank_url    = $edurank_data['url'] ?? 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/';
+$indonesia_rank  = getPengaturan('edurank_indonesia_rank', (string)($edurank_data['indonesia']['rank'] ?? '65'));
+$indonesia_of    = getPengaturan('edurank_indonesia_of', (string)($edurank_data['indonesia']['total'] ?? '562'));
+$indonesia_badge = getPengaturan('edurank_indonesia_badge', 'EduRank Official ' . date('Y'));
+$indonesia_desc  = getPengaturan('edurank_desc_indonesia', 'Akreditasi Unggul dari Badan Akreditasi Nasional Perguruan Tinggi');
+
+$semarang_rank   = getPengaturan('edurank_semarang_rank', (string)($edurank_data['semarang']['rank'] ?? '3'));
+$semarang_of     = getPengaturan('edurank_semarang_of', (string)($edurank_data['semarang']['total'] ?? '14'));
+$semarang_badge  = getPengaturan('edurank_semarang_badge', 'EduRank Official ' . date('Y'));
+$semarang_desc   = getPengaturan('edurank_desc_semarang', 'Peringkat perguruan tinggi terkemuka di Kota Semarang berdasarkan luaran riset akademik dan reputasi institusi.');
+
+$edurank_url     = getPengaturan('edurank_url', $edurank_data['url'] ?? 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/');
+$last_sync       = $edurank_data['updated_at'] ?? date('Y-m-d H:i:s');
+
+// UI GreenMetric Settings
+$gm_rank         = getPengaturan('greenmetric_rank', '1398');
+$gm_scope        = getPengaturan('greenmetric_scope', 'World');
+$gm_title        = getPengaturan('greenmetric_title', 'UI GreenMetric');
+$gm_badge        = getPengaturan('greenmetric_badge', 'UI GreenMetric Official 2025');
+$gm_desc         = getPengaturan('greenmetric_desc', 'Peringkat World\'s Most Sustainable University & kampus hijau di Kota Semarang dalam pengelolaan keberlanjutan dan lingkungan ramah energi.');
+$gm_cert         = getPengaturan('greenmetric_certificate', 'sertifikat_ui_greenmetric_2025.webp');
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
@@ -98,12 +111,12 @@ require_once __DIR__ . '/includes/navbar.php';
 
                     <div class="mb-3">
                         <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:#FEF3C7;color:#92400E;font-size:0.78rem;font-weight:800;">
-                            <i class="bi bi-patch-check-fill" style="color:#D97706;"></i> EduRank Official <?= date('Y') ?>
+                            <i class="bi bi-patch-check-fill" style="color:#D97706;"></i> <?= htmlspecialchars($indonesia_badge) ?>
                         </span>
                     </div>
 
                     <p style="font-size:0.875rem;color:#475569;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                        Akreditasi Unggul dari Badan Akreditasi Nasional Perguruan Tinggi
+                        <?= nl2br(htmlspecialchars($indonesia_desc)) ?>
                     </p>
 
                     <div class="pt-3 border-top mt-auto" style="border-color:#F1F5F9 !important;">
@@ -133,12 +146,12 @@ require_once __DIR__ . '/includes/navbar.php';
 
                     <div class="mb-3">
                         <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:#FEF3C7;color:#92400E;font-size:0.78rem;font-weight:800;">
-                            <i class="bi bi-patch-check-fill" style="color:#D97706;"></i> EduRank Official <?= date('Y') ?>
+                            <i class="bi bi-patch-check-fill" style="color:#D97706;"></i> <?= htmlspecialchars($semarang_badge) ?>
                         </span>
                     </div>
 
                     <p style="font-size:0.875rem;color:#475569;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                        Peringkat perguruan tinggi terkemuka di Kota Semarang berdasarkan luaran riset akademik dan reputasi institusi.
+                        <?= nl2br(htmlspecialchars($semarang_desc)) ?>
                     </p>
 
                     <div class="pt-3 border-top mt-auto" style="border-color:#F1F5F9 !important;">
@@ -155,32 +168,38 @@ require_once __DIR__ . '/includes/navbar.php';
                 <div class="card h-100 border-0 p-4 text-center rounded-4 shadow-sm d-flex flex-column" style="background:#ffffff;border:1px solid #E2E8F0;transition:transform 0.2s ease, box-shadow 0.2s ease;">
                     <div class="mb-2">
                         <span style="font-size:2.6rem;font-weight:900;color:#16A34A;font-family:var(--font-heading);letter-spacing:-1px;">
-                            #1398
+                            #<?= htmlspecialchars(ltrim($gm_rank, '#')) ?>
                         </span>
                         <span style="font-size:1.15rem;font-weight:700;color:#64748B;">
-                            World
+                            <?= htmlspecialchars($gm_scope) ?>
                         </span>
                     </div>
 
                     <h3 style="font-family:var(--font-heading);font-weight:800;color:#0F172A;font-size:1.35rem;margin-bottom:0.75rem;">
-                        UI GreenMetric
+                        <?= htmlspecialchars($gm_title) ?>
                     </h3>
 
                     <div class="mb-3">
                         <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:#DCFCE7;color:#15803D;font-size:0.78rem;font-weight:800;">
-                            <i class="bi bi-patch-check-fill" style="color:#16A34A;"></i> UI GreenMetric Official 2025
+                            <i class="bi bi-patch-check-fill" style="color:#16A34A;"></i> <?= htmlspecialchars($gm_badge) ?>
                         </span>
                     </div>
 
                     <p style="font-size:0.875rem;color:#475569;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                        Peringkat World's Most Sustainable University &amp; kampus hijau di Kota Semarang dalam pengelolaan keberlanjutan dan lingkungan ramah energi.
+                        <?= nl2br(htmlspecialchars($gm_desc)) ?>
                     </p>
 
                     <div class="pt-3 border-top mt-auto" style="border-color:#F1F5F9 !important;">
-                        <a href="<?= SITE_URL ?>/uploads/akreditasi/sertifikat_ui_greenmetric_2025.webp" target="_blank" class="btn btn-success w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="background:#16A34A;border:none;font-size:0.88rem;">
+                        <?php if ($gm_cert): ?>
+                        <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= htmlspecialchars($gm_cert) ?>" target="_blank" class="btn btn-success w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="background:#16A34A;border:none;font-size:0.88rem;">
                             <i class="bi bi-file-earmark-image" style="font-size:0.88rem;"></i>
                             <span>Lihat Sertifikat</span>
                         </a>
+                        <?php else: ?>
+                        <button class="btn btn-secondary w-100 py-2 fw-semibold rounded-3" disabled style="font-size:0.88rem;">
+                            Sertifikat Belum Tersedia
+                        </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

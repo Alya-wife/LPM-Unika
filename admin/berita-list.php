@@ -31,19 +31,46 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     redirect(SITE_URL . '/admin/berita-list.php');
 }
 
-// Filter Tahun Akademik, Tipe, & Search
-$ta_filter   = trim($_GET['ta'] ?? '');
-$tipe_filter = trim($_GET['tipe'] ?? '');
-$search      = trim($_GET['q'] ?? '');
+// Handle Publish
+if (isset($_GET['publish']) && is_numeric($_GET['publish'])) {
+    $p_id = (int)$_GET['publish'];
+    $db->prepare("UPDATE berita SET status = 'published' WHERE id = ?")->execute([$p_id]);
+    $_SESSION['flash'] = 'Berita berhasil diterbitkan ke publik!';
+    redirect(SITE_URL . '/admin/berita-list.php' . (!empty($_GET['status']) ? '?status=' . urlencode($_GET['status']) : ''));
+}
+
+// Handle Draft
+if (isset($_GET['draft']) && is_numeric($_GET['draft'])) {
+    $d_id = (int)$_GET['draft'];
+    $db->prepare("UPDATE berita SET status = 'draft' WHERE id = ?")->execute([$d_id]);
+    $_SESSION['flash'] = 'Berita berhasil dialihkan ke status Draft.';
+    redirect(SITE_URL . '/admin/berita-list.php' . (!empty($_GET['status']) ? '?status=' . urlencode($_GET['status']) : ''));
+}
+
+// Filter Status, Tahun Akademik, Tipe, & Search
+$status_filter = trim($_GET['status'] ?? '');
+$ta_filter     = trim($_GET['ta'] ?? '');
+$tipe_filter   = trim($_GET['tipe'] ?? '');
+$search        = trim($_GET['q'] ?? '');
 
 $page        = max(1, (int)($_GET['page'] ?? 1));
 $per_page    = 15;
 
 $daftar_ta = getDaftarTahunAkademikBerita();
 
+// Total count per status untuk tab
+$count_all       = (int)$db->query("SELECT COUNT(*) FROM berita")->fetchColumn();
+$count_draft     = (int)$db->query("SELECT COUNT(*) FROM berita WHERE status = 'draft'")->fetchColumn();
+$count_published = (int)$db->query("SELECT COUNT(*) FROM berita WHERE status = 'published'")->fetchColumn();
+
 // Build query
 $where_clauses = [];
 $params = [];
+
+if (in_array($status_filter, ['draft', 'published'])) {
+    $where_clauses[] = "b.status = ?";
+    $params[] = $status_filter;
+}
 
 if ($ta_filter) {
     $range = getTahunAkademikDateRange($ta_filter);
@@ -90,6 +117,7 @@ $berita_list = $stmt->fetchAll();
 // URL Helper
 function buildAdminBeritaUrl($new_params = []) {
     $current = [
+        'status'=> $_GET['status'] ?? '',
         'ta'   => $_GET['ta'] ?? '',
         'tipe' => $_GET['tipe'] ?? '',
         'q'    => $_GET['q'] ?? '',
@@ -106,13 +134,14 @@ function buildAdminBeritaUrl($new_params = []) {
 }
 
 // Render Table Rows HTML
-function renderAdminBeritaRowsHtml($list, $offset) {
+function renderAdminBeritaRowsHtml($list, $offset, $cur_status_filter = '') {
     if (empty($list)) return '';
     ob_start();
     foreach ($list as $i => $b): 
         $tgl_item = $b['tanggal_publikasi'] ?: $b['created_at'];
         $item_ta  = getTahunAkademik($tgl_item);
         $total_imgs = ($b['gambar'] ? 1 : 0) + (int)$b['total_slider_extra'];
+        $item_status = $b['status'] ?? 'published';
     ?>
     <tr>
         <td style="color:var(--text-muted);font-size:0.8rem;"><?= $offset + $i + 1 ?></td>
@@ -140,6 +169,17 @@ function renderAdminBeritaRowsHtml($list, $offset) {
             <?php endif; ?>
         </td>
         <td>
+            <?php if ($item_status === 'draft'): ?>
+                <span class="badge" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-weight:700;font-size:0.75rem;padding:0.28rem 0.55rem;border-radius:6px;display:inline-flex;align-items:center;gap:4px;">
+                    <i class="bi bi-clock-history"></i> Draft
+                </span>
+            <?php else: ?>
+                <span class="badge" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;font-weight:700;font-size:0.75rem;padding:0.28rem 0.55rem;border-radius:6px;display:inline-flex;align-items:center;gap:4px;">
+                    <i class="bi bi-check-circle-fill"></i> Terbit
+                </span>
+            <?php endif; ?>
+        </td>
+        <td>
             <div style="position:relative;display:inline-block;">
                 <?php if ($b['gambar'] && file_exists(__DIR__ . '/../uploads/berita/' . $b['gambar'])): ?>
                 <img src="<?= SITE_URL ?>/uploads/berita/<?= e($b['gambar']) ?>" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
@@ -159,25 +199,24 @@ function renderAdminBeritaRowsHtml($list, $offset) {
         </td>
         <td style="font-size:0.8rem;color:var(--text-muted);"><?= formatTanggal($tgl_item) ?></td>
         <td>
-            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
-                <a href="berita-form.php?id=<?= $b['id'] ?>" class="btn-action btn-edit" style="text-decoration:none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                    </svg>
-                    Edit
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">
+                <?php if ($item_status === 'draft'): ?>
+                <a href="berita-list.php?publish=<?= $b['id'] ?>&status=<?= e($cur_status_filter) ?>" class="btn-action" style="background:#DCFCE7;color:#15803D;text-decoration:none;font-weight:700;" onclick="return confirm('Terbitkan berita ini ke publik sekarang?')" title="Terbitkan ke Publik">
+                    <i class="bi bi-cloud-arrow-up-fill"></i> Terbitkan
                 </a>
-                <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($b['slug']) ?>" target="_blank" class="btn-action" style="background:#E3F2FD;color:#1565C0;text-decoration:none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                    Lihat
+                <?php else: ?>
+                <a href="berita-list.php?draft=<?= $b['id'] ?>&status=<?= e($cur_status_filter) ?>" class="btn-action" style="background:#F1F5F9;color:#64748B;text-decoration:none;" onclick="return confirm('Tarik kembali berita ini ke status Draft?')" title="Jadikan Draft">
+                    <i class="bi bi-pause-circle"></i> Draft
                 </a>
-                <a href="berita-list.php?delete=<?= $b['id'] ?>" class="btn-action btn-delete" style="text-decoration:none;" onclick="return confirm('Yakin hapus berita/kegiatan ini beserta seluruh fotonya?')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                    Hapus
+                <?php endif; ?>
+                <a href="berita-form.php?id=<?= $b['id'] ?>" class="btn-action btn-edit" style="text-decoration:none;" title="Edit Berita">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </a>
+                <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($b['slug']) ?>" target="_blank" class="btn-action" style="background:#E3F2FD;color:#1565C0;text-decoration:none;" title="Lihat Tampilan">
+                    <i class="bi bi-eye"></i> Lihat
+                </a>
+                <a href="berita-list.php?delete=<?= $b['id'] ?>" class="btn-action btn-delete" style="text-decoration:none;" onclick="return confirm('Yakin hapus berita/kegiatan ini beserta seluruh fotonya?')" title="Hapus">
+                    <i class="bi bi-trash"></i>
                 </a>
             </div>
         </td>
@@ -230,7 +269,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         'page'            => $page,
         'offset'          => $offset,
         'per_page'        => $per_page,
-        'rows_html'       => renderAdminBeritaRowsHtml($berita_list, $offset),
+        'rows_html'       => renderAdminBeritaRowsHtml($berita_list, $offset, $status_filter),
         'pagination_html' => renderAdminBeritaPaginationHtml($page, $total_pages)
     ]);
     exit;
@@ -264,6 +303,23 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             Tambah Berita / Kegiatan
+        </a>
+    </div>
+
+    <!-- Status Tabs: Semua, Draft (Perlu Ditinjau), Terbit -->
+    <div class="px-4 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center" style="background:#FAF5FF;">
+        <span class="small fw-bold text-muted me-1">Status:</span>
+        <a href="berita-list.php" class="btn btn-sm <?= empty($status_filter) ? 'btn-dark fw-bold' : 'btn-light border' ?>" style="border-radius:20px;padding:0.25rem 0.85rem;font-size:0.78rem;">
+            Semua (<?= $count_all ?>)
+        </a>
+        <a href="berita-list.php?status=draft" class="btn btn-sm <?= $status_filter === 'draft' ? 'btn-warning fw-bold text-dark' : 'btn-light border' ?>" style="border-radius:20px;padding:0.25rem 0.85rem;font-size:0.78rem;">
+            <i class="bi bi-clock-history me-1"></i> Draft (<?= $count_draft ?>)
+            <?php if ($count_draft > 0): ?>
+            <span class="badge bg-danger ms-1" style="font-size:0.65rem;">Perlu Review</span>
+            <?php endif; ?>
+        </a>
+        <a href="berita-list.php?status=published" class="btn btn-sm <?= $status_filter === 'published' ? 'btn-success fw-bold' : 'btn-light border' ?>" style="border-radius:20px;padding:0.25rem 0.85rem;font-size:0.78rem;">
+            <i class="bi bi-check-circle-fill me-1"></i> Terbit ke Publik (<?= $count_published ?>)
         </a>
     </div>
 
@@ -305,10 +361,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </select>
             </div>
 
-            <div class="col-auto" id="adminResetWrap" style="display:<?= ($ta_filter || $tipe_filter || $search) ? 'block' : 'none' ?>;">
-                <button type="button" id="adminResetBtn" class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;">
+            <div class="col-auto" id="adminResetWrap" style="display:<?= ($ta_filter || $tipe_filter || $search || $status_filter) ? 'block' : 'none' ?>;">
+                <a href="berita-list.php" id="adminResetBtn" class="btn btn-sm btn-outline-danger" style="font-size:0.78rem;">
                     Reset Filter
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -319,7 +375,7 @@ require_once __DIR__ . '/includes/admin-header.php';
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
         </svg>
         <span id="adminEmptyText">
-            <?= ($ta_filter || $tipe_filter || $search) ? 'Tidak ada data berita/kegiatan yang sesuai filter.' : 'Belum ada berita atau kegiatan.' ?>
+            <?= ($ta_filter || $tipe_filter || $search || $status_filter) ? 'Tidak ada data berita/kegiatan yang sesuai filter.' : 'Belum ada berita atau kegiatan.' ?>
         </span>
     </div>
 
@@ -331,14 +387,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th width="40">#</th>
                     <th>Judul Berita / Kegiatan</th>
                     <th width="130">Tipe</th>
-                    <th width="120">Tahun Akademik</th>
-                    <th width="100">Foto / Slider</th>
-                    <th width="130">Tanggal</th>
-                    <th width="150">Aksi</th>
+                    <th width="110">Tahun Akademik</th>
+                    <th width="90">Status</th>
+                    <th width="90">Foto</th>
+                    <th width="120">Tanggal</th>
+                    <th width="180">Aksi</th>
                 </tr>
             </thead>
             <tbody id="adminTableBody">
-                <?= renderAdminBeritaRowsHtml($berita_list, $offset) ?>
+                <?= renderAdminBeritaRowsHtml($berita_list, $offset, $status_filter) ?>
             </tbody>
         </table>
     </div>
@@ -357,6 +414,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 <!-- Seamless Live-Updating Admin Engine -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    let currentStatus = "<?= e($status_filter) ?>";
     let currentTA     = "<?= e($ta_filter) ?>";
     let currentTipe   = "<?= e($tipe_filter) ?>";
     let currentSearch = "<?= e($search) ?>";
@@ -383,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPage = page;
 
         const url = new URL(window.location.origin + window.location.pathname);
+        if (currentStatus) url.searchParams.set('status', currentStatus);
         if (currentTA) url.searchParams.set('ta', currentTA);
         if (currentTipe) url.searchParams.set('tipe', currentTipe);
         if (currentSearch) url.searchParams.set('q', currentSearch);

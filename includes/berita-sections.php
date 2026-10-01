@@ -13,7 +13,7 @@ function renderBeritaSection($type, $block = [], $is_builder = false, $params = 
     switch ($type) {
         case 'berita_highlight':
             // Ambil 3 berita teratas / headline
-            $highlight_list = $db->query("SELECT * FROM berita ORDER BY COALESCE(tanggal_publikasi, created_at) DESC, id DESC LIMIT 3")->fetchAll();
+            $highlight_list = $db->query("SELECT * FROM berita WHERE status = 'published' ORDER BY COALESCE(tanggal_publikasi, created_at) DESC, id DESC LIMIT 3")->fetchAll();
             if (empty($highlight_list)) return;
             ?>
             <section class="py-5" style="background:#ffffff;border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>">

@@ -1196,7 +1196,7 @@ function getEduRankRankings(bool $forceRefresh = false): array {
     $cacheDir  = __DIR__ . '/../uploads/';
     $cacheFile = $cacheDir . 'cache_edurank.json';
     $cacheTime = 21600; // 6 jam cache
-    $url       = 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/';
+    $url       = getPengaturan('edurank_url', 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/');
 
     $default = [
         'indonesia' => ['rank' => 65, 'total' => '562', 'formatted' => '#65 of 562'],

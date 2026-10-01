@@ -139,16 +139,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!$error) {
+            $status = 'draft';
+            if (isset($_POST['save_publish'])) {
+                $status = 'published';
+            } elseif (isset($_POST['save_draft'])) {
+                $status = 'draft';
+            } elseif (isset($_POST['status']) && in_array($_POST['status'], ['draft', 'published'])) {
+                $status = $_POST['status'];
+            } elseif ($is_edit) {
+                $status = $berita['status'] ?? 'draft';
+            }
+
             if ($is_edit && $id) {
-                $stmt = $db->prepare("UPDATE berita SET judul=?, tipe=?, slug=?, konten=?, gambar=?, tanggal_publikasi=?, tampil_di_ami=? WHERE id=?");
-                $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami, $id]);
+                $stmt = $db->prepare("UPDATE berita SET judul=?, tipe=?, slug=?, konten=?, gambar=?, tanggal_publikasi=?, tampil_di_ami=?, status=? WHERE id=?");
+                $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami, $status, $id]);
                 $berita_id = $id;
-                $_SESSION['flash'] = 'Berita/kegiatan berhasil diperbarui.';
+                if ($status === 'published') {
+                    $_SESSION['flash'] = 'Berita/kegiatan berhasil diperbarui dan DITERBITKAN ke publik.';
+                } else {
+                    $_SESSION['flash'] = 'Perubahan berita berhasil disimpan sebagai DRAFT (Belum Terbit).';
+                }
             } else {
-                $stmt = $db->prepare("INSERT INTO berita (judul, tipe, slug, konten, gambar, tanggal_publikasi, tampil_di_ami) VALUES (?,?,?,?,?,?,?)");
-                $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami]);
+                $stmt = $db->prepare("INSERT INTO berita (judul, tipe, slug, konten, gambar, tanggal_publikasi, tampil_di_ami, status) VALUES (?,?,?,?,?,?,?,?)");
+                $stmt->execute([$judul, $tipe, $slug, $konten, $gambar_filename, $tanggal ?: null, $tampil_di_ami, $status]);
                 $berita_id = (int)$db->lastInsertId();
-                $_SESSION['flash'] = 'Berita/kegiatan berhasil ditambahkan.';
+                if ($status === 'draft') {
+                    $_SESSION['flash'] = 'Berita baru berhasil disimpan sebagai DRAFT. Berita tidak langsung dipublikasikan ke website publik — silakan tinjau ulang terlebih dahulu sebelum menerbitkannya.';
+                } else {
+                    $_SESSION['flash'] = 'Berita/kegiatan berhasil ditambahkan dan langsung diterbitkan ke publik.';
+                }
             }
 
             // Simpan gambar tambahan ke berita_gambar
@@ -198,6 +217,28 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
         <?php endif; ?>
 
+        <?php 
+        $current_status = $is_edit ? ($berita['status'] ?? 'draft') : 'draft';
+        if ($is_edit && $current_status === 'draft'): 
+        ?>
+        <div class="card mb-4 border-0 shadow-sm" style="background:#FFFBEB;border:1px solid #FCD34D;border-left:5px solid #F59E0B !important;border-radius:12px;">
+            <div class="card-body p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#FDE68A;display:flex;align-items:center;justify-content:center;color:#D97706;font-size:1.25rem;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <strong class="text-warning-emphasis" style="font-size:0.92rem;">Status Artikel: DRAFT (Belum Diterbitkan)</strong>
+                        <div class="small text-muted">Berita ini masih tersimpan sebagai draft dan belum tampil di website publik. Tinjau ulang konten sebelum menerbitkannya.</div>
+                    </div>
+                </div>
+                <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($berita['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-warning fw-bold text-dark px-3 py-1">
+                    <i class="bi bi-eye me-1"></i> Pratinjau Tampilan Publik
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="admin-table-wrap">
             <div class="admin-table-topbar">
                 <div class="admin-table-title"><?= $admin_page_title ?></div>
@@ -213,7 +254,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                     <div class="row g-3">
                         <!-- Judul -->
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="judul">
                                 Judul Berita / Kegiatan <span style="color:#C62828;">*</span>
                             </label>
@@ -224,7 +265,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
 
                         <!-- Tipe -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="tipe">
                                 Tipe Publikasi
                             </label>
@@ -236,6 +277,17 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 ?>
                                 <option value="<?= $t ?>" <?= $cur_tipe === $t ? 'selected' : '' ?>><?= $t ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Status Publikasi -->
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="status">
+                                Status Publikasi
+                            </label>
+                            <select id="status" name="status" class="form-select fw-semibold" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem 1rem;">
+                                <option value="draft" <?= $current_status === 'draft' ? 'selected' : '' ?>>Draft (Perlu Ditinjau)</option>
+                                <option value="published" <?= $current_status === 'published' ? 'selected' : '' ?>>Terbitkan ke Publik</option>
                             </select>
                         </div>
 
@@ -410,15 +462,26 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
 
                         <!-- Tombol Aksi -->
-                        <div class="col-12" style="padding-top:0.5rem;border-top:1px solid var(--border);margin-top:0.5rem;">
-                            <div style="display:flex;gap:1rem;align-items:center;justify-content:flex-end;">
-                                <a href="berita-list.php" style="color:var(--text-muted);font-size:0.875rem;font-weight:500;">Batal</a>
-                                <button type="submit" class="btn-submit" id="btn-save">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3" />
-                                    </svg>
-                                    <?= $is_edit ? 'Simpan Perubahan' : 'Publish Berita / Kegiatan' ?>
-                                </button>
+                        <div class="col-12" style="padding-top:1rem;border-top:1px solid var(--border);margin-top:0.75rem;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <?php if ($is_edit): ?>
+                                    <a href="<?= SITE_URL ?>/berita-detail.php?slug=<?= e($berita['slug']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary fw-semibold" style="border-radius:8px;">
+                                        <i class="bi bi-eye me-1"></i> Pratinjau Tampilan
+                                    </a>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="berita-list.php" class="btn btn-sm btn-outline-secondary px-3 fw-semibold" style="border-radius:8px;">
+                                        Batal
+                                    </a>
+                                    <button type="submit" name="save_draft" value="1" class="btn btn-sm btn-secondary fw-bold px-3 py-2" style="border-radius:8px;background:#475569;border:none;">
+                                        <i class="bi bi-file-earmark-text me-1"></i> Simpan sebagai Draft
+                                    </button>
+                                    <button type="submit" name="save_publish" value="1" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-sm" style="border-radius:8px;background:#16A34A;border:none;">
+                                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> <?= $is_edit ? 'Simpan &amp; Terbitkan' : 'Terbitkan Sekarang' ?>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

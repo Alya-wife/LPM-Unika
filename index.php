@@ -6,7 +6,7 @@ $meta_desc = 'LPM UNIKA – Lembaga Penjaminan Mutu Universitas Katolik Soegijap
 $db = getDB();
 
 // Ambil berita terbaru
-$berita_terbaru = $db->query("SELECT * FROM berita ORDER BY tanggal_publikasi DESC LIMIT 3")->fetchAll();
+$berita_terbaru = $db->query("SELECT * FROM berita WHERE status = 'published' ORDER BY tanggal_publikasi DESC LIMIT 3")->fetchAll();
 
 // Ambil slide aktif dari database
 $hero_slides = $db->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();

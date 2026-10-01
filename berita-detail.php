@@ -14,6 +14,12 @@ if (!$berita) {
     redirect(SITE_URL . '/berita.php');
 }
 
+$is_admin = !empty($_SESSION['admin_id']);
+if (($berita['status'] ?? 'published') === 'draft' && !$is_admin) {
+    http_response_code(404);
+    redirect(SITE_URL . '/berita.php');
+}
+
 // Ambil semua foto (Cover + Galeri Slider)
 $all_images = [];
 if (!empty($berita['gambar']) && file_exists(__DIR__ . '/uploads/berita/' . $berita['gambar'])) {
@@ -29,8 +35,8 @@ while ($extra = $stmt_extras->fetch()) {
     }
 }
 
-// Berita lainnya
-$related = $db->prepare("SELECT * FROM berita WHERE slug != ? ORDER BY tanggal_publikasi DESC LIMIT 3");
+// Berita lainnya (khusus yang sudah terbit)
+$related = $db->prepare("SELECT * FROM berita WHERE status = 'published' AND slug != ? ORDER BY tanggal_publikasi DESC LIMIT 3");
 $related->execute([$slug]);
 $related_list = $related->fetchAll();
 
@@ -42,6 +48,18 @@ $meta_desc  = truncate($berita['konten'], 160);
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
+
+if (($berita['status'] ?? 'published') === 'draft' && $is_admin): ?>
+<div style="background:#FEF3C7;color:#92400E;border-bottom:2px solid #FCD34D;padding:0.75rem 1rem;text-align:center;font-size:0.9rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+    <span><i class="bi bi-shield-exclamation me-1"></i> Mode Pratinjau Draft: Berita ini belum diterbitkan ke publik.</span>
+    <a href="<?= SITE_URL ?>/admin/berita-list.php?action=publish&id=<?= $berita['id'] ?>" class="btn btn-sm btn-success fw-bold px-3 py-1 shadow-sm" onclick="return confirm('Terbitkan berita ini ke publik?')">
+        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Terbitkan Sekarang
+    </a>
+    <a href="<?= SITE_URL ?>/admin/berita-form.php?id=<?= $berita['id'] ?>" class="btn btn-sm btn-outline-dark fw-semibold px-2 py-1">
+        <i class="bi bi-pencil-square me-1"></i> Edit Berita
+    </a>
+</div>
+<?php endif;
 ?>
 
 <!-- Page Banner -->

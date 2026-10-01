@@ -31,7 +31,7 @@ function getAmiData($selected_tahun_ami = '') {
         $data['kegiatan_ami_items'] = $db->query("
             SELECT b.*, (SELECT COUNT(*) FROM berita_gambar bg WHERE bg.berita_id = b.id) AS total_extra_gambar 
             FROM berita b 
-            WHERE (b.tipe = 'Kegiatan' OR b.kategori LIKE '%AMI%' OR b.judul LIKE '%AMI%' OR b.konten LIKE '%Audit Mutu Internal%') 
+            WHERE b.status = 'published' AND (b.tipe = 'Kegiatan' OR b.kategori LIKE '%AMI%' OR b.judul LIKE '%AMI%' OR b.konten LIKE '%Audit Mutu Internal%') 
             ORDER BY b.tanggal_publikasi DESC, b.created_at DESC 
             LIMIT 10
         ")->fetchAll(PDO::FETCH_ASSOC);

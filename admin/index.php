@@ -91,14 +91,7 @@ if (isset($_SESSION['admin_id'])) {
         <div class="login-title">Autentikasi Administrator</div>
         <div class="login-sub">Masuk ke panel kontrol Lembaga Penjaminan Mutu menggunakan akun Google resmi.</div>
 
-        <!-- Info box akun Google admin -->
-        <div class="p-3 mb-4 rounded-3 text-start" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.6;">
-            <div class="d-flex align-items-center gap-2 mb-1 text-warning fw-bold">
-                <i class="bi bi-shield-lock-fill"></i>
-                <span>Akses Khusus Pengelola</span>
-            </div>
-            Silakan masuk dengan akun Google Administrator resmi UNIKA (<code>tu.lpm@unika.ac.id</code> atau akun resmi terdaftar).
-        </div>
+
 
         <!-- Loading State Google -->
         <div id="adminLoginLoading" style="display:none;padding:0.85rem;background:rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:0.88rem;align-items:center;justify-content:center;gap:10px;margin-bottom:1.25rem;">

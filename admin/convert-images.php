@@ -1,112 +1,143 @@
 <?php
-/**
- * Utility Konversi Gambar Lama ke Format WebP HD di Hosting
- * Dapat diakses via Admin Panel atau via Browser dengan kunci otorisasi: ?key=unika2026
- */
-
-// Autentikasi: Login admin ATAU menggunakan secret key di URL
-$secret_key = 'unika2026';
-$is_authenticated = false;
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-$input_key = $_GET['key'] ?? ($_POST['key'] ?? '');
-
-if (!empty($_SESSION['admin_id']) || !empty($_SESSION['admin_email']) || !empty($_SESSION['user_id']) || !empty($_SESSION['admin_logged_in'])) {
-    $is_authenticated = true;
-} elseif ($input_key === $secret_key) {
-    $is_authenticated = true;
-}
-
-if (!$is_authenticated) {
-    http_response_code(403);
-    die('<div style="font-family:sans-serif;text-align:center;padding:50px;"><h2>Akses Ditolak</h2><p>Silakan login sebagai admin terlebih dahulu, atau akses dengan parameter key: <code>?key=' . htmlspecialchars($secret_key) . '</code></p></div>');
-}
-
+require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
-$db = getDB();
 
 $admin_page_title = 'Konversi Gambar WebP HD';
+$db = getDB();
+
 $run_conversion = isset($_POST['start_conversion']) || (isset($_GET['run']) && $_GET['run'] === '1');
+
+require_once __DIR__ . '/includes/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konversi Gambar WebP HD - LPM UNIKA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; padding: 30px 15px; }
-        .converter-card { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; }
-        .converter-header { background: linear-gradient(135deg, #1e3a8a, #0f172a); color: white; padding: 25px 30px; }
-        .log-terminal { background: #0f172a; color: #38bdf8; font-family: 'Courier New', Courier, monospace; font-size: 0.88rem; padding: 20px; border-radius: 10px; max-height: 450px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap; }
-        .log-ok { color: #4ade80; }
-        .log-warn { color: #facc15; }
-        .log-err { color: #f87171; }
-        .stat-badge { background: #f1f5f9; border-radius: 8px; padding: 15px; text-align: center; border: 1px solid #e2e8f0; }
-    </style>
-</head>
-<body>
 
-<div class="converter-card">
-    <div class="converter-header d-flex align-items-center justify-content-between">
-        <div>
-            <h4 class="mb-1 fw-bold">Konverter Gambar WebP HD Massal</h4>
-            <p class="mb-0 text-white-50" style="font-size: 0.9rem;">Optimasi gambar di server hosting agar loading website super cepat dan hemat bandwidth.</p>
-        </div>
-        <a href="dashboard.php" class="btn btn-outline-light btn-sm px-3">Kembali ke Admin</a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">
+            Konversi Gambar WebP HD
+        </h2>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">
+            Optimalisasi kompresi gambar server ke format modern WebP HD untuk mempercepat loading website dan efisiensi ruang hosting.
+        </p>
     </div>
+    <a href="dashboard.php" class="btn btn-sm btn-outline-secondary fw-semibold" style="border-radius:8px;">
+        <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+    </a>
+</div>
 
-    <div class="p-4 p-md-5">
-        <?php if (!$run_conversion): ?>
-            <div class="alert alert-info border-0 shadow-sm mb-4">
-                <h6 class="fw-bold mb-2">📌 Apa yang dilakukan oleh program ini?</h6>
-                <ul class="mb-0 ps-3" style="font-size: 0.92rem;">
-                    <li>Memeriksa seluruh folder di <code>uploads/</code> (berita, slides, tim, penghargaan, akreditasi, buletin, dll).</li>
-                    <li>Mencari semua gambar format lama (<code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>).</li>
-                    <li>Mengonversi ke <strong>WebP Full HD</strong> (maks. lebar 1920px proporsional, kualitas 85% tajam & jernih).</li>
-                    <li>Otomatis memperbaiki rotasi foto kamera HP yang terbalik/miring berdasarkan metadata EXIF.</li>
-                    <li>Memperbarui nama file di Database hosting secara otomatis.</li>
-                    <li>Menghapus file lama yang berukuran besar untuk menghemat ruang penyimpanan hosting.</li>
-                </ul>
+<?php if (!$run_conversion): ?>
+<div class="card border-0 rounded-4 shadow-sm bg-white mb-4 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+        <h5 class="m-0 fw-bold" style="font-size:0.98rem;color:var(--navy);">
+            Tentang Proses Optimasi WebP HD
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <p class="text-muted" style="font-size:0.9rem;line-height:1.7;">
+            Program ini memindai berkas gambar lama di direktori server dan mengonversinya ke format WebP berkualitas tinggi secara otomatis.
+        </p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;height:100%;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                        <div>
+                            <strong style="font-size:0.88rem;color:var(--navy);">Pemindaian Folder Menyeluruh</strong>
+                            <div class="text-muted small mt-1">
+                                Memeriksa seluruh subdirektori <code>uploads/</code> (berita, banner slides, data tim, piagam penghargaan, cover buletin, dan berkas akreditasi).
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="text-center py-4">
-                <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
-                    <input type="hidden" name="start_conversion" value="1">
-                    <?php if (!empty($input_key)): ?>
-                        <input type="hidden" name="key" value="<?= htmlspecialchars($input_key) ?>">
-                    <?php endif; ?>
-                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-semibold shadow">
-                        ⚡ Mulai Konversi Semua Gambar Sekarang
-                    </button>
-                </form>
-                <p class="text-muted mt-3" style="font-size: 0.85rem;">Aman dijalankan kapan saja. Gambar yang sudah berformat .webp tidak akan diproses ulang.</p>
-            </div>
-        <?php else: ?>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold mb-0">Log Proses Konversi Realtime:</h6>
-                <span class="badge bg-success px-3 py-2">Sedang Berjalan...</span>
+            <div class="col-md-6">
+                <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;height:100%;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                        <div>
+                            <strong style="font-size:0.88rem;color:var(--navy);">Kompresi HD &amp; Koreksi EXIF</strong>
+                            <div class="text-muted small mt-1">
+                                Mengonversi JPG dan PNG ke WebP HD (maksimal lebar 1920px proporsional) serta mengoreksi orientasi foto smartphone yang miring/terbalik.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="log-terminal" id="logTerminal">
+            <div class="col-md-6">
+                <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;height:100%;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                        <div>
+                            <strong style="font-size:0.88rem;color:var(--navy);">Pembaruan Basis Data Otomatis</strong>
+                            <div class="text-muted small mt-1">
+                                Nama file pada tabel database diperbarui secara otomatis sehingga gambar di website tetap terhubung tanpa kendala.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;height:100%;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                        <div>
+                            <strong style="font-size:0.88rem;color:var(--navy);">Pembersihan Berkas Lama</strong>
+                            <div class="text-muted small mt-1">
+                                Berkas lama yang berukuran besar dihapus setelah konversi berhasil untuk menghemat penggunaan kuota penyimpanan server hosting.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 rounded-3 text-center" style="background:#FAF5FF;border:1.5px dashed #D8B4FE;">
+            <h6 class="fw-bold mb-2" style="color:var(--navy);">Siap Menjalankan Konversi?</h6>
+            <p class="text-muted small mb-3">
+                Aman dijalankan kapan saja. Berkas yang sudah berformat .webp tidak akan diproses ulang.
+            </p>
+            <form method="POST">
+                <input type="hidden" name="start_conversion" value="1">
+                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" style="background:var(--navy);border:none;border-radius:10px;">
+                    <i class="bi bi-arrow-repeat me-1"></i> Mulai Konversi Gambar Sekarang
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php else: ?>
+<div class="card border-0 rounded-4 shadow-sm bg-white mb-4 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-terminal-fill text-primary fs-5"></i>
+            <h5 class="m-0 fw-bold" style="font-size:0.98rem;color:var(--navy);">
+                Log Eksekusi Konversi
+            </h5>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+            Proses Selesai
+        </span>
+    </div>
+    <div class="card-body p-4">
+        <div style="background:#0F172A;color:#38BDF8;font-family:'Courier New',Courier,monospace;font-size:0.85rem;padding:20px;border-radius:10px;max-height:420px;overflow-y:auto;line-height:1.6;white-space:pre-wrap;" id="logTerminal">
 <?php
-// Disable output buffering for real-time log output
+// Disable output buffering for log output
 @ini_set('output_buffering', 'off');
 @ini_set('zlib.output_compression', false);
 @ini_set('implicit_flush', true);
 ob_implicit_flush(true);
 while (ob_get_level()) { ob_end_flush(); }
 
-@set_time_limit(600); // 10 menit
+@set_time_limit(600);
 @ini_set('memory_limit', '512M');
 
 echo "=== MEMULAI KONVERSI GAMBAR KE WEBP HD ===\n";
-echo "Waktu Mulai: " . date('Y-m-d H:i:s') . "\n\n";
+echo "Waktu Eksekusi: " . date('Y-m-d H:i:s') . "\n\n";
 
 $target_folders = [
     'uploads/berita'            => ['table' => 'berita', 'col' => 'gambar', 'multi_table' => 'berita_gambar', 'multi_col' => 'gambar'],
@@ -130,7 +161,7 @@ foreach ($target_folders as $rel_folder => $db_target) {
         continue;
     }
 
-    echo "Memeriksa folder: {$rel_folder}...\n";
+    echo "Memeriksa direktori: {$rel_folder}...\n";
     $files = scandir($folder_path);
 
     foreach ($files as $file) {
@@ -169,7 +200,7 @@ foreach ($target_folders as $rel_folder => $db_target) {
 
         if (!$srcImg) continue;
 
-        // EXIF auto rotation
+        // Koreksi orientasi EXIF
         if (function_exists('exif_read_data') && ($mime === 'image/jpeg' || $mime === 'image/jpg')) {
             $exif = @exif_read_data($full_file_path);
             if (!empty($exif['Orientation'])) {
@@ -189,7 +220,7 @@ foreach ($target_folders as $rel_folder => $db_target) {
             }
         }
 
-        // Resizing HD maks lebar 1920px
+        // Resizing HD batas 1920px
         $maxWidth = 1920;
         if ($srcWidth > $maxWidth) {
             $targetW = $maxWidth;
@@ -220,7 +251,7 @@ foreach ($target_folders as $rel_folder => $db_target) {
 
             $saved_kb = round(($size_before - $size_after) / 1024, 1);
             $percent = $size_before > 0 ? round((($size_before - $size_after) / $size_before) * 100, 1) : 0;
-            echo "  ✓ {$file} -> {$webp_filename} (Hemat {$saved_kb} KB / -{$percent}%)\n";
+            echo "  [OK] {$file} -> {$webp_filename} (Hemat {$saved_kb} KB / -{$percent}%)\n";
 
             // Update Database
             $tables_to_update = [];
@@ -240,7 +271,7 @@ foreach ($target_folders as $rel_folder => $db_target) {
                 } catch (Exception $e) {}
             }
 
-            // Hapus file lama yang berat
+            // Hapus file lama yang berukuran besar
             @unlink($full_file_path);
         }
     }
@@ -252,48 +283,53 @@ $mb_saved  = round($mb_before - $mb_after, 2);
 $overall_percent = $total_bytes_before > 0 ? round(($mb_saved / $mb_before) * 100, 1) : 0;
 
 echo "\n=== PROSES KONVERSI SELESAI ===\n";
-echo "Total gambar dikonversi : {$total_converted} file\n";
+echo "Total berkas dikonversi : {$total_converted} file\n";
 echo "Ukuran sebelum konversi : {$mb_before} MB\n";
 echo "Ukuran sesudah konversi : {$mb_after} MB\n";
-echo "Total kuota dihemat     : {$mb_saved} MB (-{$overall_percent}%)\n";
+echo "Total ruang dihemat     : {$mb_saved} MB (-{$overall_percent}%)\n";
 ?>
-            </div>
+        </div>
 
-            <div class="row g-3 mt-4">
-                <div class="col-md-4">
-                    <div class="stat-badge">
-                        <div class="text-muted small">Total Gambar Dikonversi</div>
-                        <h3 class="fw-bold text-primary mb-0 mt-1"><?= $total_converted ?> File</h3>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-badge">
-                        <div class="text-muted small">Ukuran Sebelumnya</div>
-                        <h3 class="fw-bold text-secondary mb-0 mt-1"><?= $mb_before ?> MB</h3>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-badge">
-                        <div class="text-muted small">Ukuran Sekarang (WebP HD)</div>
-                        <h3 class="fw-bold text-success mb-0 mt-1"><?= $mb_after ?> MB <small class="text-success fs-6">(-<?= $overall_percent ?>%)</small></h3>
-                    </div>
+        <div class="row g-3 mt-4">
+            <div class="col-md-4">
+                <div class="p-3 rounded-3 text-center bg-light border">
+                    <div class="text-muted small">Total Berkas Dikonversi</div>
+                    <h3 class="fw-bold text-primary mb-0 mt-1"><?= $total_converted ?> File</h3>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded-3 text-center bg-light border">
+                    <div class="text-muted small">Ukuran Sebelumnya</div>
+                    <h3 class="fw-bold text-secondary mb-0 mt-1"><?= $mb_before ?> MB</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded-3 text-center bg-light border">
+                    <div class="text-muted small">Ukuran Sesudah (WebP HD)</div>
+                    <h3 class="fw-bold text-success mb-0 mt-1">
+                        <?= $mb_after ?> MB <small class="fs-6">(-<?= $overall_percent ?>%)</small>
+                    </h3>
+                </div>
+            </div>
+        </div>
 
-            <div class="text-center mt-4">
-                <a href="convert-images.php" class="btn btn-outline-secondary me-2">Jalankan Lagi</a>
-                <a href="dashboard.php" class="btn btn-primary px-4">Kembali ke Dashboard Admin</a>
-            </div>
-        <?php endif; ?>
+        <div class="d-flex justify-content-center gap-2 mt-4">
+            <a href="convert-images.php" class="btn btn-outline-secondary px-4 fw-semibold" style="border-radius:8px;">
+                <i class="bi bi-arrow-repeat me-1"></i> Jalankan Lagi
+            </a>
+            <a href="dashboard.php" class="btn btn-primary px-4 fw-bold" style="border-radius:8px;background:var(--navy);border:none;">
+                <i class="bi bi-house me-1"></i> Kembali ke Dashboard
+            </a>
+        </div>
     </div>
 </div>
 
 <script>
-    // Auto scroll log terminal to bottom
-    const terminal = document.getElementById('logTerminal');
-    if (terminal) {
-        terminal.scrollTop = terminal.scrollHeight;
-    }
+const terminal = document.getElementById('logTerminal');
+if (terminal) {
+    terminal.scrollTop = terminal.scrollHeight;
+}
 </script>
-</body>
-</html>
+<?php endif; ?>
+
+<?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

@@ -16,7 +16,7 @@ function getBerandaData() {
     $data['hero_slides'] = $db->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
 
     // 2. Berita terbaru
-    $data['berita_terbaru'] = $db->query("SELECT * FROM berita ORDER BY tanggal_publikasi DESC LIMIT 3")->fetchAll();
+    $data['berita_terbaru'] = $db->query("SELECT * FROM berita WHERE status = 'published' ORDER BY tanggal_publikasi DESC LIMIT 3")->fetchAll();
 
     // 3. Penghargaan
     $data['penghargaan_list'] = [];

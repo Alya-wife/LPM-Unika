@@ -192,7 +192,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 4. Halaman Akreditasi (Dropdown) -->
-        <?php $grp_akred = in_array($current_admin, ['akreditasi-institusi','akreditasi-status-nasional','lembaga-akreditasi-list','lembaga-akreditasi-form','akreditasi-prodi-list','akreditasi-prodi-form','akreditasi-list','akreditasi-form','pemeringkatan-setting']); ?>
+        <?php $grp_akred = in_array($current_admin, ['akreditasi-institusi','akreditasi-status-nasional','lembaga-akreditasi-list','lembaga-akreditasi-form','akreditasi-prodi-list','akreditasi-prodi-form','pemeringkatan-setting']); ?>
         <div class="admin-nav-dropdown <?= $grp_akred ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_akred ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -223,7 +223,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <?php endif; ?>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/pemeringkatan-setting.php" class="admin-subnav-link <?= $current_admin === 'pemeringkatan-setting' ? 'active' : '' ?>">
-                    <span>• Pemeringkatan EduRank</span>
+                    <span>• Pemeringkatan Kampus</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/lembaga-akreditasi-list.php" class="admin-subnav-link <?= in_array($current_admin, ['lembaga-akreditasi-list','lembaga-akreditasi-form']) ? 'active' : '' ?>">
                     <span>• Lembaga Akreditasi (LAM)</span>
@@ -231,14 +231,11 @@ $accred_nav_alerts = checkAccreditationExpirations();
                         <span class="admin-red-dot" title="Ada sertifikat LAM segera habis!"></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/akreditasi-list.php" class="admin-subnav-link <?= in_array($current_admin, ['akreditasi-list','akreditasi-form']) ? 'active' : '' ?>">
-                    <span>• Sertifikat Label &amp; Rekognisi</span>
-                </a>
             </div>
         </div>
 
         <!-- 5. Halaman SPMI (Dropdown) -->
-        <?php $grp_spmi = in_array($current_admin, ['dokumen-list','dokumen-form','kategori-dokumen','spmi-kemendikti-list','spmi-kemendikti-form','buletin-list','buletin-form','kalender-list','kalender-form']); ?>
+        <?php $grp_spmi = in_array($current_admin, ['dokumen-list','dokumen-form','kategori-dokumen','spmi-kemendikti-list','spmi-kemendikti-form']); ?>
         <div class="admin-nav-dropdown <?= $grp_spmi ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_spmi ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -259,11 +256,33 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <a href="<?= SITE_URL ?>/admin/spmi-kemendikti-list.php" class="admin-subnav-link <?= in_array($current_admin, ['spmi-kemendikti-list','spmi-kemendikti-form']) ? 'active' : '' ?>">
                     <span>• Hasil SPMI Kemendikti</span>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/buletin-list.php" class="admin-subnav-link <?= in_array($current_admin, ['buletin-list','buletin-form']) ? 'active' : '' ?>">
-                    <span>• Buletin JAMUS</span>
+            </div>
+        </div>
+
+        <!-- 6. Halaman FAQ & Edukasi (Dropdown) -->
+        <?php $grp_faq = in_array($current_admin, ['faq-setting','glosarium-setting','kalender-list','kalender-form','buletin-list','buletin-form']); ?>
+        <div class="admin-nav-dropdown <?= $grp_faq ? 'open' : '' ?>">
+            <button type="button" class="admin-dropdown-toggle <?= $grp_faq ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
+                <span class="d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+                    </svg>
+                    <span>Halaman FAQ</span>
+                </span>
+                <i class="bi bi-chevron-down nav-chevron"></i>
+            </button>
+            <div class="admin-dropdown-menu">
+                <a href="<?= SITE_URL ?>/admin/faq-setting.php" class="admin-subnav-link <?= $current_admin === 'faq-setting' ? 'active' : '' ?>">
+                    <span>• Tanya Jawab (FAQ)</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/glosarium-setting.php" class="admin-subnav-link <?= $current_admin === 'glosarium-setting' ? 'active' : '' ?>">
+                    <span>• Glosarium Mutu</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/kalender-list.php" class="admin-subnav-link <?= in_array($current_admin, ['kalender-list','kalender-form']) ? 'active' : '' ?>">
                     <span>• Kalender Mutu</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/buletin-list.php" class="admin-subnav-link <?= in_array($current_admin, ['buletin-list','buletin-form']) ? 'active' : '' ?>">
+                    <span>• Buletin JAMUS</span>
                 </a>
             </div>
         </div>
@@ -398,11 +417,11 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <a href="<?= SITE_URL ?>/admin/pengaturan.php" class="admin-subnav-link <?= $current_admin === 'pengaturan' ? 'active' : '' ?>">
                     <span>• Identitas &amp; Kontak</span>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/convert-images.php" class="admin-subnav-link <?= $current_admin === 'convert-images' ? 'active' : '' ?>" style="color:#38BDF8 !important;">
-                    <span>• Konversi WebP HD ⚡</span>
+                <a href="<?= SITE_URL ?>/admin/convert-images.php" class="admin-subnav-link <?= $current_admin === 'convert-images' ? 'active' : '' ?>">
+                    <span>• Konversi WebP HD</span>
                 </a>
                 <a href="<?= SITE_URL ?>/" target="_blank" class="admin-subnav-link">
-                    <span>• Buka Website Live ↗</span>
+                    <span>• Buka Website Live</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/logout.php" class="admin-subnav-link" style="color:#FCA5A5 !important;" onclick="return confirm('Yakin ingin keluar?')">
                     <span>• Keluar Akun</span>

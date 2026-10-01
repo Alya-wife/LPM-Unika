@@ -304,12 +304,24 @@ function renderKnowledgeSection($type, $block = [], $is_builder = false) {
             break;
 
         case 'knowledge_faq':
-            $faqs = [
-                ['Apa perbedaan mendasar antara SPMI dan SPME (Akreditasi)?', 'SPMI (Sistem Penjaminan Mutu Internal) dijalankan secara mandiri oleh internal perguruan tinggi melalui siklus PPEPP. Sedangkan SPME (Sistem Penjaminan Mutu Eksternal) adalah evaluasi dan pengakuan yang dilakukan oleh pihak eksternal independen seperti BAN-PT dan LAM.'],
-                ['Kapan Audit Mutu Internal (AMI) dilaksanakan?', 'AMI di lingkungan UNIKA dilaksanakan secara berkala 1 (satu) kali setiap tahun akademik untuk seluruh program studi dan unit pendukung, disusul dengan Rapat Tinjauan Manajemen (RTM).'],
-                ['Apa yang harus dipersiapkan Program Studi menghadapi AMI?', 'Program Studi perlu memperbarui Dokumen Evaluasi Diri (DED), mengunggah bukti fisik ketercapaian standar SPMI, laporan kepuasan mahasiswa/dosen, serta menyiapkan tim prodi untuk wawancara visitasi auditor.'],
-                ['Apa yang dimaksud dengan Siklus PPEPP?', 'Siklus PPEPP adalah pilar utama dalam Sistem Penjaminan Mutu Internal (SPMI) di Unika Soegijapranata yang terdiri dari lima tahapan kerja terstruktur: Penetapan, Pelaksanaan, Evaluasi, Pengendalian, dan Peningkatan.'],
-            ];
+            try {
+                $db_faq = getDB();
+                $faqs_db = $db_faq->query("SELECT pertanyaan, jawaban, kategori FROM faqs WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                $faqs_db = [];
+            }
+            if (!empty($faqs_db)) {
+                $faqs = array_map(function($f) {
+                    return [$f['pertanyaan'], $f['jawaban'], $f['kategori'] ?? 'Umum'];
+                }, $faqs_db);
+            } else {
+                $faqs = [
+                    ['Apa perbedaan mendasar antara SPMI dan SPME (Akreditasi)?', 'SPMI (Sistem Penjaminan Mutu Internal) dijalankan secara mandiri oleh internal perguruan tinggi melalui siklus PPEPP. Sedangkan SPME (Sistem Penjaminan Mutu Eksternal) adalah evaluasi dan pengakuan yang dilakukan oleh pihak eksternal independen seperti BAN-PT dan LAM.', 'SPMI & PPEPP'],
+                    ['Kapan Audit Mutu Internal (AMI) dilaksanakan?', 'AMI di lingkungan UNIKA dilaksanakan secara berkala 1 (satu) kali setiap tahun akademik untuk seluruh program studi dan unit pendukung, disusul dengan Rapat Tinjauan Manajemen (RTM).', 'AMI'],
+                    ['Apa yang harus dipersiapkan Program Studi menghadapi AMI?', 'Program Studi perlu memperbarui Dokumen Evaluasi Diri (DED), mengunggah bukti fisik ketercapaian standar SPMI, laporan kepuasan mahasiswa/dosen, serta menyiapkan tim prodi untuk wawancara visitasi auditor.', 'AMI'],
+                    ['Apa yang dimaksud dengan Siklus PPEPP?', 'Siklus PPEPP adalah pilar utama dalam Sistem Penjaminan Mutu Internal (SPMI) di Unika Soegijapranata yang terdiri dari lima tahapan kerja terstruktur: Penetapan, Pelaksanaan, Evaluasi, Pengendalian, dan Peningkatan.', 'SPMI & PPEPP'],
+                ];
+            }
             ?>
             <section class="py-5" style="background:#ffffff;border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>" id="faq-section">
                 <div class="container">

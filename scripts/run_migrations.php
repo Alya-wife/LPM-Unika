@@ -395,6 +395,201 @@ foreach ($heroSettings as $k => $v) {
         setPengaturan($k, $v);
     }
 }
-echo "Synced hero persistent banner settings.\n";
+// 14. Pemeringkatan Table (Lokal, Nasional, Internasional)
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `pemeringkatan` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `judul` VARCHAR(255) NOT NULL,
+      `lembaga` VARCHAR(150) NOT NULL,
+      `kategori` ENUM('lokal', 'nasional', 'internasional') NOT NULL DEFAULT 'nasional',
+      `peringkat` VARCHAR(100) NULL,
+      `peringkat_dari` VARCHAR(100) NULL,
+      `badge_teks` VARCHAR(100) NULL,
+      `deskripsi` TEXT NULL,
+      `link_url` VARCHAR(500) NULL,
+      `file_sertifikat` VARCHAR(255) NULL,
+      `tahun` VARCHAR(20) NOT NULL DEFAULT '2026',
+      `urutan` INT NOT NULL DEFAULT 1,
+      `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+      `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX `idx_kategori` (`kategori`),
+      INDEX `idx_urutan` (`urutan`),
+      INDEX `idx_is_active` (`is_active`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+
+$pRankCount = (int)$db->query("SELECT COUNT(*) FROM pemeringkatan")->fetchColumn();
+if ($pRankCount === 0) {
+    $initialRankings = [
+        // 1. Lokal (Semarang & Jateng)
+        [
+            'judul' => 'EduRank: PTS Nomor 1 di Kota Semarang',
+            'lembaga' => 'EduRank.org & Espos.id',
+            'kategori' => 'lokal',
+            'peringkat' => '#1',
+            'peringkat_dari' => 'PTS di Kota Semarang',
+            'badge_teks' => 'PTS Terbaik di Semarang 2026',
+            'deskripsi' => 'Berdasarkan rilis pemeringkatan EduRank 2026 yang diwartakan Espos.id, Soegijapranata Catholic University (SCU) kembali mengukuhkan dominasinya sebagai Perguruan Tinggi Swasta (PTS) nomor satu di Kota Semarang dengan keunggulan kinerja riset 45%, keunggulan non-akademik/reputasi web 45%, dan dampak alumni 10%.',
+            'link_url' => 'https://news.espos.id/masih-nomor-satu-di-semarang-scu-juga-masuk-100-besar-pts-terbaik-di-indonesia-2208781',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 1,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'Suara Merdeka: Kampus Swasta Terbaik di Semarang',
+            'lembaga' => 'Suara Merdeka',
+            'kategori' => 'lokal',
+            'peringkat' => 'Top Tier',
+            'peringkat_dari' => 'Kota Semarang',
+            'badge_teks' => 'Rujukan Utama Camaba 2026',
+            'deskripsi' => 'Ulasan komprehensif Suara Merdeka menempatkan SCU dalam daftar jajaran kampus swasta terbaik dan terfavorit di Kota Semarang tahun 2026 sebagai referensi utama calon mahasiswa baru dengan reputasi mutu akademik unggul dan fasilitas berstandar tinggi.',
+            'link_url' => 'https://www.suaramerdeka.com/pendidikan/0417103643/daftar-6-kampus-swasta-terbaik-di-semarang-tahun-2026-referensi-mantap-buat-camaba',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 2,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'uniRank: Daftar Universitas Terkemuka di Jawa Tengah',
+            'lembaga' => 'uniRank (University Ranking)',
+            'kategori' => 'lokal',
+            'peringkat' => 'Top Ranked',
+            'peringkat_dari' => '55 Kampus Jawa Tengah',
+            'badge_teks' => 'uniRank Official 2026',
+            'deskripsi' => 'Pemeringkatan resmi uniRank 2026 yang mengevaluasi 55 perguruan tinggi terakreditasi di Jawa Tengah, menilai keterkenalan institusi, validitas perizinan, dan mutu penyelenggaraan pendidikan tinggi.',
+            'link_url' => 'https://www.unirank.org/id/central-java/a-z/',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 3,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'EduRank: Peringkat Universitas di Kota Semarang',
+            'lembaga' => 'EduRank.org',
+            'kategori' => 'lokal',
+            'peringkat' => '#3',
+            'peringkat_dari' => 'of 14 Kampus Semarang',
+            'badge_teks' => 'EduRank Official 2026',
+            'deskripsi' => 'Peringkat perguruan tinggi terkemuka di Kota Semarang berdasarkan luaran riset akademik dan reputasi institusi.',
+            'link_url' => 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 4,
+            'is_active' => 1
+        ],
+
+        // 2. Nasional (Indonesia)
+        [
+            'judul' => 'EduRank: 100 Besar Kampus Terbaik di Indonesia',
+            'lembaga' => 'EduRank.org',
+            'kategori' => 'nasional',
+            'peringkat' => 'Top 100',
+            'peringkat_dari' => 'Nasional (Negeri & Swasta)',
+            'badge_teks' => '100 Besar Kampus Terbaik Indonesia',
+            'deskripsi' => 'SCU berhasil menembus jajaran 100 besar perguruan tinggi terbaik di Indonesia (kategori universitas negeri maupun swasta) versi EduRank 2026, ditopang oleh produktivitas publikasi ilmiah, sitasi riset, dan prestasi non-akademik.',
+            'link_url' => 'https://news.espos.id/masih-nomor-satu-di-semarang-scu-juga-masuk-100-besar-pts-terbaik-di-indonesia-2208781',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 1,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'Entrepreneurial Marketing Campus for Impact',
+            'lembaga' => 'Marketeers & MCorp (Indonesia Marketing Festival 2026)',
+            'kategori' => 'nasional',
+            'peringkat' => 'Awardee 2026',
+            'peringkat_dari' => 'Indonesia Marketing Festival ke-14',
+            'badge_teks' => 'Marketeers Official 2026',
+            'deskripsi' => 'Penghargaan bergengsi dari Marketeers dan MCorp pada ajang The 14th Annual Indonesia Marketing Festival 2026 atas peran aktif SCU dalam mengimplementasikan nilai Entrepreneurial Marketing: Creativity, Innovation, Entrepreneurship, and Leadership di lingkungan kampus.',
+            'link_url' => 'https://www.marketeers.com',
+            'file_sertifikat' => 'sertifikat_marketing_campus_for_impact_2026.pdf',
+            'tahun' => '2026',
+            'urutan' => 2,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'EduRank: Peringkat Universitas di Indonesia',
+            'lembaga' => 'EduRank.org',
+            'kategori' => 'nasional',
+            'peringkat' => '#65',
+            'peringkat_dari' => 'of 562 Kampus Indonesia',
+            'badge_teks' => 'EduRank Official 2026',
+            'deskripsi' => 'Akreditasi Unggul dari Badan Akreditasi Nasional Perguruan Tinggi dan menempati peringkat ke-65 dari 562 perguruan tinggi se-Indonesia berdasarkan data EduRank.org.',
+            'link_url' => 'https://edurank.org/uni/soegijapranata-catholic-university/rankings/',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 3,
+            'is_active' => 1
+        ],
+
+        // 3. Internasional (Global / World)
+        [
+            'judul' => 'AD Scientific Index: World Scientist & University Rankings',
+            'lembaga' => 'AD Scientific Index',
+            'kategori' => 'internasional',
+            'peringkat' => 'World Ranked',
+            'peringkat_dari' => '24.200 Institusi Global',
+            'badge_teks' => 'AD Scientific Index 2026',
+            'deskripsi' => 'Pemeringkatan internasional berbasis kinerja ilmuwan dan peneliti institusi (metrik Total H-Index, i10-Index, dan Sitasi publikasi ilmiah) yang memetakan kontribusi riset para akademisi SCU di kancah global dan Asia.',
+            'link_url' => 'https://adscientificindex.com/university/universitas-katolik-soegijapranata/10171/',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 1,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'uniRank: Global & National University Ranking Profile',
+            'lembaga' => 'uniRank World Universities',
+            'kategori' => 'internasional',
+            'peringkat' => 'Certified',
+            'peringkat_dari' => 'World Directory',
+            'badge_teks' => 'uniRank Certified 2026',
+            'deskripsi' => 'Profil pemeringkatan internasional uniRank yang memuat evaluasi reputasi web independen, akreditasi program studi institusi, serta keterbukaan informasi akademik bagi komunitas internasional.',
+            'link_url' => 'https://www.unirank.org/id/uni/soegijapranata-catholic-university/',
+            'file_sertifikat' => '',
+            'tahun' => '2026',
+            'urutan' => 2,
+            'is_active' => 1
+        ],
+        [
+            'judul' => 'UI GreenMetric: World\'s Most Sustainable University',
+            'lembaga' => 'UI GreenMetric',
+            'kategori' => 'internasional',
+            'peringkat' => '#1398',
+            'peringkat_dari' => 'World',
+            'badge_teks' => 'UI GreenMetric Official 2025',
+            'deskripsi' => 'Peringkat World\'s Most Sustainable University & kampus hijau di Kota Semarang dalam pengelolaan keberlanjutan dan lingkungan ramah energi.',
+            'link_url' => 'https://greenmetric.ui.ac.id',
+            'file_sertifikat' => 'sertifikat_ui_greenmetric_2025.webp',
+            'tahun' => '2025',
+            'urutan' => 3,
+            'is_active' => 1
+        ],
+    ];
+
+    $ins_rank = $db->prepare("
+        INSERT INTO pemeringkatan (judul, lembaga, kategori, peringkat, peringkat_dari, badge_teks, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    foreach ($initialRankings as $r) {
+        $ins_rank->execute([
+            $r['judul'],
+            $r['lembaga'],
+            $r['kategori'],
+            $r['peringkat'],
+            $r['peringkat_dari'],
+            $r['badge_teks'],
+            $r['deskripsi'],
+            $r['link_url'],
+            $r['file_sertifikat'],
+            $r['tahun'],
+            $r['urutan'],
+            $r['is_active']
+        ]);
+    }
+    echo "Seeded initial pemeringkatan table with Lokal, Nasional, and Internasional records.\n";
+}
 
 echo "All migrations finished successfully!\n";

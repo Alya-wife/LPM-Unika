@@ -192,7 +192,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 4. Halaman Akreditasi (Dropdown) -->
-        <?php $grp_akred = in_array($current_admin, ['akreditasi-institusi','akreditasi-status-nasional','lembaga-akreditasi-list','lembaga-akreditasi-form','akreditasi-prodi-list','akreditasi-prodi-form','pemeringkatan-setting']); ?>
+        <?php $grp_akred = in_array($current_admin, ['akreditasi-institusi','akreditasi-status-nasional','lembaga-akreditasi-list','lembaga-akreditasi-form','akreditasi-prodi-list','akreditasi-prodi-form','pemeringkatan-list','pemeringkatan-form','pemeringkatan-setting']); ?>
         <div class="admin-nav-dropdown <?= $grp_akred ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_akred ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -222,7 +222,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                         <span class="admin-red-dot" title="<?= $accred_nav_alerts['prodi_count'] ?> prodi segera habis!"></span>
                     <?php endif; ?>
                 </a>
-                <a href="<?= SITE_URL ?>/admin/pemeringkatan-setting.php" class="admin-subnav-link <?= $current_admin === 'pemeringkatan-setting' ? 'active' : '' ?>">
+                <a href="<?= SITE_URL ?>/admin/pemeringkatan-list.php" class="admin-subnav-link <?= in_array($current_admin, ['pemeringkatan-list','pemeringkatan-form','pemeringkatan-setting']) ? 'active' : '' ?>">
                     <span>• Pemeringkatan Kampus</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/lembaga-akreditasi-list.php" class="admin-subnav-link <?= in_array($current_admin, ['lembaga-akreditasi-list','lembaga-akreditasi-form']) ? 'active' : '' ?>">

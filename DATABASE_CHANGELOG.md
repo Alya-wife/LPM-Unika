@@ -272,6 +272,42 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - Mendukung riwayat peramban (*History API / pushState*) dan tombol Back/Forward (*popstate*).
   - **Catatan Database**: Tidak ada perubahan atau penambahan skema tabel pada basis data untuk fitur ini (memanfaatkan query periode dan siklus yang sudah ada).
 
+### K. Modul CRUD Pemeringkatan & Segmentasi Wilayah (Lokal, Nasional, Internasional)
+- **Tabel Basis Data Baru (`pemeringkatan`)**:
+  - Tabel `pemeringkatan` dibuat untuk mengelola seluruh rekognisi dan pemeringkatan kampus secara dinamis:
+    ```sql
+    CREATE TABLE IF NOT EXISTS `pemeringkatan` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `judul` VARCHAR(255) NOT NULL,
+      `lembaga` VARCHAR(150) NOT NULL,
+      `kategori` ENUM('lokal', 'nasional', 'internasional') NOT NULL DEFAULT 'nasional',
+      `peringkat` VARCHAR(100) NULL,
+      `peringkat_dari` VARCHAR(100) NULL,
+      `badge_teks` VARCHAR(100) NULL,
+      `deskripsi` TEXT NULL,
+      `link_url` VARCHAR(500) NULL,
+      `file_sertifikat` VARCHAR(255) NULL,
+      `tahun` VARCHAR(20) NOT NULL DEFAULT '2026',
+      `urutan` INT NOT NULL DEFAULT 1,
+      `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+      `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX `idx_kategori` (`kategori`),
+      INDEX `idx_urutan` (`urutan`),
+      INDEX `idx_is_active` (`is_active`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ```
+- **Segmentasi Tiga Tingkat (Lokal, Nasional, Internasional)**:
+  - **Lokal (Semarang & Jateng)**: Rekognisi PTS #1 di Kota Semarang (Espos.id / EduRank 2026), 6 Kampus Swasta Terbaik Semarang (Suara Merdeka 2026), 55 Kampus Unggulan Jawa Tengah (uniRank 2026), dan Peringkat EduRank Semarang (#3 of 14).
+  - **Nasional (Indonesia)**: Top 100 PTS Terbaik di Indonesia (EduRank 2026), Penghargaan Entrepreneurial Marketing Campus for Impact 2026 (Marketeers & MCorp), dan Peringkat EduRank Indonesia (#65 of 562).
+  - **Internasional (Global / World)**: AD Scientific Index 2026 (World Scientist & University Rankings), uniRank Global & National Profile 2026, dan UI GreenMetric World University Rankings (#1398 World).
+- **CMS Admin CRUD Lengkap**:
+  - Halaman [`admin/pemeringkatan-list.php`](./admin/pemeringkatan-list.php): Tab filter segmentasi (Semua, Lokal, Nasional, Internasional), pencarian real-time, toggle status publikasi, dan aksi hapus data aman.
+  - Halaman [`admin/pemeringkatan-form.php`](./admin/pemeringkatan-form.php): Form tambah & sunting data dengan segmentasi radio buttons, pengunggahan berkas sertifikat (PDF/gambar), dan tautan sumber rilis resmi.
+- **Halaman Publik Interaktif**:
+  - Halaman [`pemeringkatan.php`](./pemeringkatan.php) diperbarui dengan counter statistik, segmentasi filter pills instan, kartu capaian modern beraksen warna segmen, tombol link berita luar, dan modal lightbox penampil sertifikat PDF (`#certPreviewModal`).
+
+
 
 
 ---

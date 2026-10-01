@@ -2,8 +2,7 @@
 require_once __DIR__ . '/config/database.php';
 
 // Dialihkan ke Survei Kepuasan Layanan LPM baru (menggabungkan feedback kunjungan dan kritik & saran)
-$token_param = isset($_GET['token']) ? '?token=' . urlencode($_GET['token']) : '';
-redirect(SITE_URL . '/survei-kepuasan.php' . $token_param);
+redirect(SITE_URL . '/survei-kepuasan.php');
 exit;
 
 $token_data   = null;

@@ -8,32 +8,19 @@ $meta_desc  = 'Formulir Survei Kepuasan Pelayanan Lembaga Penjaminan Mutu (LPM) 
 // Handle State
 $submitted     = isset($_GET['submitted']) && $_GET['submitted'] === '1';
 $error_message = '';
-$token_code    = strtoupper(trim($_GET['token'] ?? ($_POST['token'] ?? '')));
-$token_data    = null;
-
-// Auto-fill token if provided in query string
-if (!empty($token_code)) {
-    try {
-        $stmt_tok = $db->prepare("SELECT * FROM kunjungan_feedback_token WHERE token = ?");
-        $stmt_tok->execute([$token_code]);
-        $token_data = $stmt_tok->fetch();
-    } catch (Exception $e) {}
-}
 
 // 1. Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_survei') {
     $nama_pengisi        = trim($_POST['nama_pengisi'] ?? '');
     $email_pengisi       = trim($_POST['email_pengisi'] ?? '');
     $jenis_kelamin       = trim($_POST['jenis_kelamin'] ?? '');
-    $umur                = trim($_POST['umur'] ?? '');
     $pendidikan_terakhir = trim($_POST['pendidikan_terakhir'] ?? '');
     $nama_institusi      = trim($_POST['nama_institusi'] ?? '');
     $kategori_layanan    = trim($_POST['kategori_layanan'] ?? 'Pelayanan LPM');
     $status_responden    = trim($_POST['status_responden'] ?? '');
     $saran_masukan       = trim($_POST['saran_masukan'] ?? '');
-    $input_token         = strtoupper(trim($_POST['token'] ?? ''));
 
-    // Validation
+    // Validation (umur dan token tidak digunakan)
     if (empty($nama_pengisi) || empty($email_pengisi) || empty($nama_institusi)) {
         $error_message = 'Mohon melengkapi Nama, Alamat Email, dan Instansi/Lembaga Anda.';
     } elseif (!filter_var($email_pengisi, FILTER_VALIDATE_EMAIL)) {
@@ -71,44 +58,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if ($missing_question) {
             $error_message = 'Mohon memberikan penilaian untuk seluruh 8 butir pertanyaan survei kepuasan yang tersedia.';
         } else {
-            // Check optional token if provided
-            $token_id = null;
-            $kunjungan_id = null;
-            $tanggal_kunjungan = null;
-
-            if (!empty($input_token)) {
-                $stmt_vtok = $db->prepare("SELECT * FROM kunjungan_feedback_token WHERE token = ?");
-                $stmt_vtok->execute([$input_token]);
-                $vtok = $stmt_vtok->fetch();
-                if ($vtok) {
-                    $token_id = $vtok['id'];
-                    $kunjungan_id = $vtok['kunjungan_id'];
-                    $tanggal_kunjungan = $vtok['tanggal_kunjungan'];
-                    // Mark token as used if visit token
-                    $db->prepare("UPDATE kunjungan_feedback_token SET status = 'Digunakan', used_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$vtok['id']]);
-                }
-            }
-
-            if (!$tanggal_kunjungan) {
-                $tanggal_kunjungan = date('Y-m-d');
-            }
-
+            $tanggal_kunjungan = date('Y-m-d');
             $avg_score = count($skala_scores) > 0 ? (array_sum($skala_scores) / count($skala_scores)) : null;
 
             try {
-                // Insert main response
+                // Insert main response (umur null, token_id null)
                 $ins_stmt = $db->prepare("INSERT INTO kunjungan_feedback_respon 
                     (token_id, kunjungan_id, nama_institusi, tanggal_kunjungan, nama_pengisi, email_pengisi, jenis_kelamin, umur, pendidikan_terakhir, kategori_layanan, status_responden, saran_masukan, rata_rata_skor) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $ins_stmt->execute([
-                    $token_id,
-                    $kunjungan_id,
+                    null,
+                    null,
                     $nama_institusi,
                     $tanggal_kunjungan,
                     $nama_pengisi,
                     $email_pengisi,
                     $jenis_kelamin,
-                    $umur,
+                    null,
                     $pendidikan_terakhir,
                     $kategori_layanan,
                     $status_responden,
@@ -591,7 +557,7 @@ require_once __DIR__ . '/includes/navbar.php';
                             <label class="survei-form-label" for="email_pengisi">
                                 Alamat Email <span class="req">*</span>
                             </label>
-                            <input type="email" class="form-control survei-form-control" id="email_pengisi" name="email_pengisi" value="<?= e($_POST['email_pengisi'] ?? ($token_data['email'] ?? '')) ?>" placeholder="nama@instansi.ac.id" required>
+                            <input type="email" class="form-control survei-form-control" id="email_pengisi" name="email_pengisi" value="<?= e($_POST['email_pengisi'] ?? '') ?>" placeholder="nama@instansi.ac.id" required>
                         </div>
 
                         <!-- 3. Jenis Kelamin -->
@@ -615,24 +581,7 @@ require_once __DIR__ . '/includes/navbar.php';
                             </div>
                         </div>
 
-                        <!-- 4. Umur -->
-                        <div class="col-md-6">
-                            <label class="survei-form-label" for="umur">
-                                Umur <span class="req">*</span>
-                                <small class="text-muted fw-normal" style="font-size:0.78rem;">(mengisi manual atau pilih angka umur)</small>
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control survei-form-control" id="umur" name="umur" min="15" max="95" value="<?= e($_POST['umur'] ?? '') ?>" placeholder="Contoh: 35" required style="border-top-right-radius:0;border-bottom-right-radius:0;">
-                                <select class="form-select survei-form-control" style="max-width:140px;border-top-left-radius:0;border-bottom-left-radius:0;" onchange="if(this.value){ document.getElementById('umur').value = this.value; }">
-                                    <option value="">Pilih cepat...</option>
-                                    <?php for($age = 18; $age <= 70; $age += ($age < 30 ? 2 : 5)): ?>
-                                        <option value="<?= $age ?>"><?= $age ?> Tahun</option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- 5. Pendidikan Terakhir -->
+                        <!-- 4. Pendidikan Terakhir -->
                         <div class="col-md-6">
                             <label class="survei-form-label" for="pendidikan_terakhir">
                                 Pendidikan Terakhir <span class="req">*</span>
@@ -654,28 +603,28 @@ require_once __DIR__ . '/includes/navbar.php';
                             </select>
                         </div>
 
-                        <!-- 6. Perguruan Tinggi / Instansi / Sekolah / Lembaga -->
+                        <!-- 5. Perguruan Tinggi / Instansi / Sekolah / Lembaga -->
                         <div class="col-md-6">
                             <label class="survei-form-label" for="nama_institusi">
                                 Perguruan Tinggi / Instansi / Sekolah / Lembaga <span class="req">*</span>
                             </label>
-                            <input type="text" class="form-control survei-form-control" id="nama_institusi" name="nama_institusi" value="<?= e($_POST['nama_institusi'] ?? ($token_data['nama_institusi'] ?? '')) ?>" placeholder="Nama asal instansi atau lembaga Anda" required>
+                            <input type="text" class="form-control survei-form-control" id="nama_institusi" name="nama_institusi" value="<?= e($_POST['nama_institusi'] ?? '') ?>" placeholder="Nama asal instansi atau lembaga Anda" required>
                         </div>
 
-                        <!-- 7. Kategori Layanan -->
+                        <!-- 6. Kategori Layanan -->
                         <div class="col-md-6">
                             <label class="survei-form-label">
                                 Kategori <span class="req">*</span>
                             </label>
                             <div class="radio-custom-pill">
                                 <label>
-                                    <input type="radio" name="kategori_layanan" value="Kunjungan Studi Banding" <?= (($_POST['kategori_layanan'] ?? '') === 'Kunjungan Studi Banding' || !empty($token_data)) ? 'checked' : '' ?> required>
+                                    <input type="radio" name="kategori_layanan" value="Kunjungan Studi Banding" <?= (($_POST['kategori_layanan'] ?? '') === 'Kunjungan Studi Banding') ? 'checked' : '' ?> required>
                                     <div class="pill-box">
                                         <i class="bi bi-building-check me-1"></i> Kunjungan Studi Banding
                                     </div>
                                 </label>
                                 <label>
-                                    <input type="radio" name="kategori_layanan" value="Pelayanan LPM" <?= (($_POST['kategori_layanan'] ?? 'Pelayanan LPM') === 'Pelayanan LPM' && empty($token_data)) ? 'checked' : '' ?> required>
+                                    <input type="radio" name="kategori_layanan" value="Pelayanan LPM" <?= (($_POST['kategori_layanan'] ?? 'Pelayanan LPM') === 'Pelayanan LPM') ? 'checked' : '' ?> required>
                                     <div class="pill-box">
                                         <i class="bi bi-award me-1"></i> Pelayanan LPM
                                     </div>
@@ -683,8 +632,8 @@ require_once __DIR__ . '/includes/navbar.php';
                             </div>
                         </div>
 
-                        <!-- 8. Status Responden -->
-                        <div class="col-md-6">
+                        <!-- 7. Status Responden -->
+                        <div class="col-12">
                             <label class="survei-form-label" for="status_responden">
                                 Status Responden <span class="req">*</span>
                             </label>
@@ -699,31 +648,12 @@ require_once __DIR__ . '/includes/navbar.php';
                                     'Mitra Universitas Katolik Soegijapranata',
                                     'Masyarakat Umum'
                                 ];
-                                $cur_status = $_POST['status_responden'] ?? (!empty($token_data) ? 'Mitra Universitas Katolik Soegijapranata' : '');
+                                $cur_status = $_POST['status_responden'] ?? '';
                                 foreach ($status_opts as $s_item):
                                 ?>
                                     <option value="<?= $s_item ?>" <?= $cur_status === $s_item ? 'selected' : '' ?>><?= $s_item ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <!-- Kode Token Kunjungan (Opsional) -->
-                        <div class="col-12 mt-2">
-                            <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px dashed #CBD5E1;">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                    <label class="form-label mb-0 fw-semibold text-muted" for="token" style="font-size:0.85rem;">
-                                        <i class="bi bi-ticket-perforated me-1 text-primary"></i> Memiliki Kode Token Kunjungan Studi Banding? <span class="fw-normal">(Opsional)</span>
-                                    </label>
-                                    <div style="max-width:240px;width:100%;">
-                                        <input type="text" class="form-control survei-form-control form-control-sm font-monospace text-uppercase" id="token" name="token" value="<?= e($token_code) ?>" placeholder="Contoh: UNK-ABC123" maxlength="20">
-                                    </div>
-                                </div>
-                                <?php if ($token_data): ?>
-                                <div class="mt-2 text-success" style="font-size:0.8rem;font-weight:600;">
-                                    <i class="bi bi-check-circle-fill me-1"></i> Terhubung dengan data kunjungan resmi: <strong><?= e($token_data['nama_institusi']) ?></strong>
-                                </div>
-                                <?php endif; ?>
-                            </div>
                         </div>
 
                     </div>

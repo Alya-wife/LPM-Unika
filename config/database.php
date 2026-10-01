@@ -6,10 +6,10 @@ date_default_timezone_set('Asia/Jakarta');
  */
 /**
  * ============================================================================
- * KONFIGURASI DATABASE & WEBSITE
+ * KONFIGURASI DATABASE & WEBSITE - LPM UNIKA
  * ============================================================================
- * Saat memindahkan website ke server/hosting lain, pemilik cukup menyesuaikan
- * parameter di bawah ini:
+ * Saat memindahkan website ke server/hosting baru, pemilik cukup menyesuaikan
+ * parameter koneksi database dan URL di bawah ini:
  */
 
 // 1. Database MySQL
@@ -26,17 +26,8 @@ define('SITE_URL', 'http://localhost/LPM'); // Sesuaikan dengan domain saat onli
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
-// 3. Google OAuth 2.0 (Login Akun Google Administrator & Civitas)
-// Masukkan Client ID dan Client Secret resmi dari Google Cloud Console di bawah ini:
-if (file_exists(__DIR__ . '/oauth.local.php')) {
-    require_once __DIR__ . '/oauth.local.php';
-}
-if (!defined('GOOGLE_CLIENT_ID')) {
-    define('GOOGLE_CLIENT_ID', 'MASUKKAN_GOOGLE_CLIENT_ID_DISINI.apps.googleusercontent.com');
-}
-if (!defined('GOOGLE_CLIENT_SECRET')) {
-    define('GOOGLE_CLIENT_SECRET', 'MASUKKAN_GOOGLE_CLIENT_SECRET_DISINI');
-}
+// 3. Konfigurasi Google OAuth (Terpisah di config/oauth.php)
+require_once __DIR__ . '/oauth.php';
 
 // Inisialisasi Sesi jika belum aktif
 if (session_status() === PHP_SESSION_NONE) {

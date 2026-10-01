@@ -75,6 +75,36 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
   7. *Kualitas sarana dan prasarana*
   8. *Penanganan pengaduan, saran dan masukan*
 
+### F. Tabel Brosur Info Pelatihan (`layanan_brosur`)
+- **Tabel Baru Ditambahkan**:
+  ```sql
+  CREATE TABLE IF NOT EXISTS `layanan_brosur` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `judul_brosur` VARCHAR(255) NOT NULL,
+    `tahun` INT NOT NULL DEFAULT 2026,
+    `deskripsi` TEXT NULL,
+    `file_brosur` VARCHAR(255) NOT NULL,
+    `tipe_file` VARCHAR(20) NOT NULL DEFAULT 'pdf',
+    `ukuran_file` VARCHAR(50) NULL,
+    `link_pendaftaran` VARCHAR(255) NULL,
+    `urutan` INT NOT NULL DEFAULT 1,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  ```
+- **Fitur & Format File yang Didukung**:
+  - Format Berkas: **PDF, Word (DOCX/DOC), serta Foto / Gambar (PNG, JPG, JPEG, WEBP)**.
+  - Nilai kolom `tipe_file`: `'pdf'`, `'docx'`, atau `'image'`.
+  - Terintegrasi dengan form unggah multi-format di Admin CMS (`admin/layanan-form-setting.php?tab=brosur`).
+  - Halaman publik (`pelatihan.php` / `pelatihan-eksternal.php`) menampilkan brosur secara langsung (embedded viewer PDF, foto poster, atau kartu dokumen Word) dengan tombol aksi unduh langsung.
+
+### G. Kunci Pengaturan Narasi Pelatihan (`pengaturan`)
+- Penambahan / standarisasi kunci pada tabel `pengaturan`:
+  - `pelatihan_hero_title`: Judul Banner Hero pada halaman info pelatihan.
+  - `pelatihan_hero_desc`: Ikhtisar singkat pada banner hero.
+  - `pelatihan_narasi_lengkap`: Teks narasi komprehensif profil pelatihan, kompetensi narasumber asesor BAN-PT/LAM, ruang lingkup materi (Auditor AMI, Bimtek SPMI PPEPP, Klinik Borang Akreditasi, RTM), serta kemitraan yang dapat disunting langsung oleh Administrator.
+
 ---
 
 ## 2. Pemulihan & Sinkronisasi Data Konten

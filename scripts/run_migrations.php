@@ -173,6 +173,30 @@ $stmtLam = $db->prepare("UPDATE lembaga_akreditasi SET logo = ?, link_website = 
 foreach ($lamData as $id => $d) {
     $stmtLam->execute([$d['logo'], $d['link'], $d['warna'], $id]);
 }
-echo "Updated lembaga_akreditasi logos and links.\n";
+// 5. Layanan Brosur & Pengaturan Pelatihan
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `layanan_brosur` (
+      `id` INT AUTO_INCREMENT PRIMARY KEY,
+      `judul_brosur` VARCHAR(255) NOT NULL,
+      `tahun` INT NOT NULL DEFAULT 2026,
+      `deskripsi` TEXT NULL,
+      `file_brosur` VARCHAR(255) NOT NULL,
+      `tipe_file` VARCHAR(20) NOT NULL DEFAULT 'pdf',
+      `ukuran_file` VARCHAR(50) NULL,
+      `link_pendaftaran` VARCHAR(255) NULL,
+      `urutan` INT NOT NULL DEFAULT 1,
+      `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+      `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$brosurCount = $db->query("SELECT COUNT(*) FROM layanan_brosur")->fetchColumn();
+if ($brosurCount == 0) {
+    $db->exec("
+        INSERT INTO `layanan_brosur` (`id`, `judul_brosur`, `tahun`, `deskripsi`, `file_brosur`, `tipe_file`, `ukuran_file`, `link_pendaftaran`, `urutan`, `is_active`) VALUES
+        (1, 'Brosur Program Pelatihan & Kemitraan Mutu LPM SCU', 2026, 'Panduan silabus materi pelatihan penjaminan mutu, bimtek SPMI PPEPP, sertifikasi auditor mutu internal (AMI), dan klinik borang akreditasi prodi/institusi.', 'Brosur_Layanan_Pelatihan_LPM_UNIKA_2026.pdf', 'pdf', '458 KB', 'https://bit.ly/DaftarPelatihanLPM-SCU', 1, 1);
+    ");
+    echo "Seeded initial layanan_brosur record.\n";
+}
 
 echo "All migrations finished successfully!\n";

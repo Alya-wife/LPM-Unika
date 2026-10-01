@@ -1,62 +1,125 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 $page_title = 'Info Pelatihan';
-$meta_desc  = 'Program Info Pelatihan, Sertifikasi Auditor Mutu Internal (AMI), Bimtek SPMI PPEPP, Klinik Akreditasi LED/LKPS, dan Brosur Resmi LPM Universitas Katolik Soegijapranata.';
+$meta_desc  = 'Informasi Program Pelatihan Penjaminan Mutu, Sertifikasi Auditor Mutu Internal (AMI), Bimtek SPMI PPEPP, Klinik Akreditasi Perguruan Tinggi, dan Brosur Resmi LPM Universitas Katolik Soegijapranata.';
 
 $db = getDB();
 
-// 1. Pengaturan Teks & Kontak dari Admin
-$pelatihan_hero_title = getPengaturan('pelatihan_hero_title', 'Info Pelatihan & Pengembangan Mutu');
-$pelatihan_hero_desc  = getPengaturan('pelatihan_hero_desc', 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata menyelenggarakan bimbingan teknis, workshop klinik akreditasi, dan pelatihan sertifikasi auditor penjaminan mutu internal bagi perguruan tinggi mitra.');
-$pelatihan_email      = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
-$pelatihan_telepon    = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');
-$pelatihan_jam        = getPengaturan('pelatihan_jam_layanan', 'Senin – Jumat (08:00 – 15:30 WIB)');
-$pelatihan_alamat     = getPengaturan('pelatihan_alamat', 'Kampus UNIKA Bendan Dhuwur, Semarang');
+// 1. Pengaturan Narasi, Banner & Kontak dari Admin
+$pelatihan_hero_title     = getPengaturan('pelatihan_hero_title', 'Info Pelatihan Lembaga Penjaminan Mutu');
+$pelatihan_hero_desc      = getPengaturan('pelatihan_hero_desc', 'Program Pelatihan, Bimbingan Teknis, Sertifikasi Auditor Mutu Internal (AMI), dan Klinik Akreditasi Perguruan Tinggi Mitra');
+$pelatihan_narasi_lengkap = getPengaturan('pelatihan_narasi_lengkap', "Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata berkomitmen mengawal dan menumbuhkan budaya mutu pendidikan tinggi yang unggul, berkelanjutan, dan berdaya saing global.\n\nBerbekal pengalaman mengawal akreditasi institusi UNGGUL serta amanah Kementerian sebagai pelaksana Program Asuh Perguruan Tinggi Unggul selama bertahun-tahun yang telah sukses mendampingi puluhan perguruan tinggi dan program studi di Indonesia, LPM UNIKA secara konsisten menyelenggarakan berbagai program pelatihan, bimbingan teknis, dan sertifikasi penjaminan mutu terstruktur bagi perguruan tinggi mitra, fakultas, serta lembaga pendidikan.\n\nProgram pelatihan difasilitasi langsung oleh para pakar penjaminan mutu, asesor BAN-PT/LAM bersertifikasi nasional, serta auditor mutu internal berpengalaman. Seluruh kurikulum dan materi dirancang aplikatif, berbasis studi kasus riil tata kelola kampus, dan selaras dengan regulasi Permendikbudristek No. 53 Tahun 2023 tentang Penjaminan Mutu Pendidikan Tinggi serta standar instrumen akreditasi terkini.");
+$pelatihan_email          = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
+$pelatihan_telepon        = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');
+$pelatihan_jam            = getPengaturan('pelatihan_jam_layanan', 'Senin – Jumat (08:00 – 15:30 WIB)');
+$pelatihan_alamat         = getPengaturan('pelatihan_alamat', 'Kampus UNIKA Bendan Dhuwur, Semarang');
 
-// 2. Fetch Data Dinamis (Dikelola oleh Admin)
-$brosur_list     = [];
-$alur_list       = [];
-$keunggulan_list = [];
-$jadwal_list     = [];
-$faq_list        = [];
-
+// 2. Fetch Berkas Brosur Aktif dari Admin
+$brosur_list = [];
 try {
-    $brosur_list     = $db->query("SELECT * FROM layanan_brosur WHERE is_active = 1 ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-    $alur_list       = $db->query("SELECT * FROM layanan_alur WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-    $keunggulan_list = $db->query("SELECT * FROM layanan_keunggulan WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-    $jadwal_list     = $db->query("SELECT * FROM layanan_jadwal ORDER BY tanggal_mulai DESC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
-    $faq_list        = $db->query("SELECT * FROM layanan_faq WHERE is_active = 1 ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $brosur_list = $db->query("SELECT * FROM layanan_brosur WHERE is_active = 1 ORDER BY urutan ASC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {}
 
 $extra_css = '
 <style>
 .pelatihan-hero {
-    background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 60%, #0284C7 100%);
+    background: linear-gradient(135deg, #0A192F 0%, #1E3A8A 55%, #0284C7 100%);
     color: #ffffff;
-    padding: 4.25rem 1rem 3.75rem;
+    padding: 4.5rem 1rem 3.75rem;
     position: relative;
     overflow: hidden;
+}
+.pelatihan-hero::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
 }
 .pelatihan-hero h1 {
     color: #ffffff !important;
     font-family: var(--font-heading);
     font-weight: 800;
-    font-size: clamp(1.85rem, 3.5vw, 2.6rem);
+    font-size: clamp(1.9rem, 3.5vw, 2.7rem);
     margin-bottom: 0.85rem;
+    letter-spacing: -0.5px;
     text-shadow: 0 2px 10px rgba(0,0,0,0.25);
 }
-.pelatihan-section-title {
-    font-family: var(--font-heading);
-    font-weight: 800;
-    color: var(--navy);
-    font-size: clamp(1.35rem, 2.5vw, 1.65rem);
-    margin-bottom: 0.45rem;
-}
-.pelatihan-card {
+.pelatihan-narrative-card {
     background: #ffffff;
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 4px 20px rgba(10,25,47,0.04);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(10,25,47,0.05);
+    padding: 2.75rem 2.5rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+@media (max-width: 767px) {
+    .pelatihan-narrative-card {
+        padding: 1.75rem 1.25rem;
+    }
+}
+.pelatihan-narrative-body p {
+    color: var(--text-main);
+    font-size: 1.05rem;
+    line-height: 1.85;
+    margin-bottom: 1.25rem;
+}
+.pelatihan-narrative-body p:last-child {
+    margin-bottom: 0;
+}
+.brosur-showcase-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(10,25,47,0.06);
+    overflow: hidden;
+}
+.brosur-toolbar {
+    background: linear-gradient(135deg, #0A192F 0%, #132D54 100%);
+    color: #ffffff;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.brosur-tab-btn {
+    border-radius: 30px;
+    padding: 0.55rem 1.35rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+    border: 1.5px solid #CBD5E1;
+    background: #ffffff;
+    color: var(--navy);
+    transition: all 0.2s ease;
+}
+.brosur-tab-btn.active, .brosur-tab-btn:hover {
+    background: var(--navy);
+    color: #ffffff;
+    border-color: var(--navy);
+    box-shadow: 0 4px 12px rgba(10,25,47,0.15);
+}
+.pdf-embed-frame {
+    width: 100%;
+    min-height: 720px;
+    height: 75vh;
+    border: none;
+    background: #525659;
+}
+.docx-preview-box {
+    background: #F8FAFC;
+    border: 2px dashed #93C5FD;
+    border-radius: 16px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+.img-poster-view {
+    max-height: 850px;
+    width: auto;
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 </style>
 ';
@@ -65,301 +128,292 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
-<!-- Hero Banner (Tanpa Badge di atas judul) -->
+<!-- Hero Banner -->
 <section class="pelatihan-hero">
-    <div class="container text-center">
+    <div class="container text-center position-relative" style="z-index:2;">
         <h1><?= htmlspecialchars($pelatihan_hero_title) ?></h1>
-        <p style="font-size:1.05rem;color:rgba(255,255,255,0.92);max-width:780px;margin:0 auto;line-height:1.7;">
+        <p style="font-size:1.1rem;color:rgba(255,255,255,0.92);max-width:820px;margin:0 auto;line-height:1.75;">
             <?= nl2br(htmlspecialchars($pelatihan_hero_desc)) ?>
         </p>
     </div>
 </section>
 
-<!-- Main Single-Page Content -->
+<!-- Main Page Content -->
 <section class="py-5" style="background:#F8FAFC;">
     <div class="container">
 
         <!-- ========================================================================= -->
-        <!-- 1. BROSUR RESMI PELATIHAN                                                 -->
+        <!-- 1. NARASI INFO PELATIHAN LPM UNIKA (CMS ADMIN)                            -->
         <!-- ========================================================================= -->
-        <?php if (!empty($brosur_list)): ?>
-        <div class="mb-5">
-            <div class="row g-4 justify-content-center">
-                <?php foreach ($brosur_list as $br): ?>
-                <div class="col-lg-10 col-xl-9">
-                    <div class="p-4 p-md-5 rounded-4 d-flex flex-column flex-md-row align-items-center gap-4" style="background:linear-gradient(135deg, #0A192F, #132D54);color:#ffffff;box-shadow:0 12px 35px rgba(10,25,47,0.18);">
-                        <div style="width:90px;height:90px;min-width:90px;background:rgba(255,255,255,0.12);border-radius:20px;display:flex;align-items:center;justify-content:center;color:#FFD54F;font-size:3rem;">
-                            <i class="bi bi-file-earmark-pdf"></i>
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-11 col-xl-10">
+                <div class="pelatihan-narrative-card">
+                    <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3 flex-wrap">
+                        <div style="width:52px;height:52px;border-radius:14px;background:rgba(30,58,138,0.08);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">
+                            <i class="bi bi-mortarboard-fill"></i>
                         </div>
-                        <div class="flex-grow-1 text-center text-md-start">
-                            <div class="badge bg-warning text-dark px-3 py-1 mb-2 fw-bold" style="border-radius:20px;font-size:0.75rem;">
-                                EDISI RESMI TAHUN <?= htmlspecialchars($br['tahun']) ?>
+                        <div>
+                            <div class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold text-uppercase" style="font-size:0.75rem;letter-spacing:0.5px;">
+                                Layanan Penjaminan Mutu &amp; Kemitraan
                             </div>
-                            <h4 style="font-family:var(--font-heading);font-weight:800;font-size:1.35rem;margin-bottom:0.4rem;color:#ffffff;">
-                                <?= htmlspecialchars($br['judul_brosur']) ?>
-                            </h4>
-                            <p style="font-size:0.875rem;color:rgba(255,255,255,0.85);margin-bottom:1.25rem;line-height:1.6;">
-                                <?= htmlspecialchars($br['deskripsi'] ?? 'Panduan lengkap silabus materi pelatihan, jadwal pelaksanaan, format pendaftaran peserta, dan fasilitas kemitraan.') ?>
-                            </p>
-                            <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
-                                <button type="button" class="btn btn-warning px-4 py-2 fw-bold rounded-pill" onclick="openPdfModal('<?= SITE_URL ?>/uploads/layanan/<?= htmlspecialchars($br['file_brosur']) ?>', '<?= htmlspecialchars($br['judul_brosur']) ?>')" style="font-size:0.9rem;">
-                                    <i class="bi bi-eye-fill me-1"></i> Baca Brosur Online
-                                </button>
-                                <a href="<?= SITE_URL ?>/uploads/layanan/<?= htmlspecialchars($br['file_brosur']) ?>" download class="btn btn-outline-light px-4 py-2 fw-bold rounded-pill" style="font-size:0.9rem;">
-                                    <i class="bi bi-download me-1"></i> Unduh Berkas PDF
-                                </a>
-                                <?php if (!empty($br['link_pendaftaran'])): ?>
-                                <a href="<?= htmlspecialchars($br['link_pendaftaran']) ?>" target="_blank" class="btn btn-success px-4 py-2 fw-bold rounded-pill" style="font-size:0.9rem;">
-                                    <i class="bi bi-pencil-square me-1"></i> Formulir Pendaftaran Daring
-                                </a>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- ========================================================================= -->
-        <!-- 2. ALUR & MEKANISME KERJASAMA PELATIHAN (CMS DINAMIS)                     -->
-        <!-- ========================================================================= -->
-        <?php if (!empty($alur_list)): ?>
-        <div class="mb-5 pb-2">
-            <div class="text-center mb-4">
-                <h3 class="pelatihan-section-title">
-                    Alur &amp; Mekanisme Kerjasama Pelatihan Mutu
-                </h3>
-                <p style="font-size:0.92rem;color:var(--text-muted);max-width:760px;" class="mx-auto">
-                    Standar baku bagi perguruan tinggi mitra, fakultas, atau lembaga pendidikan dalam menyelenggarakan pelatihan publik maupun <em>in-house training</em> bersama LPM UNIKA Soegijapranata.
-                </p>
-            </div>
-
-            <div class="row g-3">
-                <?php 
-                $bg_colors = ['#EFF6FF', '#F0FDF4', '#FEF3C7', '#F3E8FF', '#ECFDF5'];
-                $tx_colors = ['#2563EB', '#16A34A', '#D97706', '#9333EA', '#059669'];
-                $idx = 0;
-                foreach ($alur_list as $al): 
-                    $bg_badge = $bg_colors[$idx % count($bg_colors)];
-                    $tx_badge = $tx_colors[$idx % count($tx_colors)];
-                    $idx++;
-                ?>
-                <div class="col-md-4 col-lg">
-                    <div class="card-lpm p-4 h-100 text-center" style="background:#ffffff;border:1px solid var(--border);border-radius:14px;box-shadow:0 3px 12px rgba(10,25,47,0.03);">
-                        <div style="width:48px;height:48px;border-radius:50%;background:<?= $bg_badge ?>;color:<?= $tx_badge ?>;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.15rem;margin-bottom:1rem;">
-                            <?= htmlspecialchars($al['langkah_ke']) ?>
-                        </div>
-                        <h5 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);font-size:1rem;margin-bottom:0.4rem;">
-                            <?= htmlspecialchars($al['judul']) ?>
-                        </h5>
-                        <p style="font-size:0.83rem;color:var(--text-muted);line-height:1.55;margin:0;">
-                            <?= htmlspecialchars($al['deskripsi']) ?>
-                        </p>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- ========================================================================= -->
-        <!-- 3. STANDAR KEUNGGULAN & FASILITAS PESERTA (CMS DINAMIS)                   -->
-        <!-- ========================================================================= -->
-        <?php if (!empty($keunggulan_list)): ?>
-        <div class="mb-5 pb-2">
-            <div class="card-lpm p-4 p-md-5" style="background:#ffffff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 20px rgba(10,25,47,0.04);">
-                <div class="text-center mb-4">
-                    <h3 class="pelatihan-section-title">
-                        Standar Keunggulan &amp; Fasilitas Peserta
-                    </h3>
-                    <p style="font-size:0.9rem;color:var(--text-muted);max-width:700px;" class="mx-auto">
-                        Seluruh pelatihan penjaminan mutu di LPM UNIKA diselenggarakan dengan jaminan standar profesionalitas perguruan tinggi unggul.
-                    </p>
-                </div>
-
-                <div class="row g-4">
-                    <?php 
-                    $icon_bgs = ['#EFF6FF', '#F0FDF4', '#FEF3C7', '#F3E8FF'];
-                    $icon_txs = ['#2563EB', '#16A34A', '#D97706', '#9333EA'];
-                    $k_idx = 0;
-                    foreach ($keunggulan_list as $kg): 
-                        $i_bg = $icon_bgs[$k_idx % count($icon_bgs)];
-                        $i_tx = $icon_txs[$k_idx % count($icon_txs)];
-                        $k_idx++;
-                    ?>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-3 align-items-start">
-                            <div style="width:46px;height:46px;min-width:46px;border-radius:12px;background:<?= $i_bg ?>;color:<?= $i_tx ?>;display:flex;align-items:center;justify-content:center;font-size:1.35rem;">
-                                <i class="bi <?= htmlspecialchars($kg['icon'] ?? 'bi-award-fill') ?>"></i>
-                            </div>
-                            <div>
-                                <h5 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);font-size:1.02rem;margin-bottom:0.3rem;">
-                                    <?= htmlspecialchars($kg['judul']) ?>
-                                </h5>
-                                <p style="font-size:0.86rem;color:var(--text-muted);line-height:1.6;margin:0;">
-                                    <?= htmlspecialchars($kg['deskripsi']) ?>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- ========================================================================= -->
-        <!-- 4. KALENDER & JADWAL TERLAKSANA (DI BAWAHNYA STANDAR KEUNGGULAN)          -->
-        <!-- ========================================================================= -->
-        <div class="mb-5 pb-2">
-            <div class="card-lpm p-4 p-md-5" style="background:#ffffff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 20px rgba(10,25,47,0.05);">
-                <div class="text-center mb-4">
-                    <h3 class="pelatihan-section-title">
-                        Agenda &amp; Rekapitulasi Jadwal Terlaksana
-                    </h3>
-                    <p style="font-size:0.92rem;color:var(--text-muted);max-width:720px;" class="mx-auto">
-                        Daftar pelaksanaan program pelatihan, workshop penjaminan mutu, dan bimbingan teknis yang diselenggarakan bersama perguruan tinggi mitra.
-                    </p>
-                </div>
-
-                <?php if (!empty($jadwal_list)): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
-                        <thead style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;color:var(--navy);">
-                            <tr>
-                                <th style="width:40px;" class="text-center">No</th>
-                                <th>Nama Pelatihan / Agenda</th>
-                                <th>Tanggal Pelaksanaan</th>
-                                <th>Lokasi / Tempat</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            $no = 1;
-                            foreach ($jadwal_list as $j): 
-                                $tgl_teks = date('d M Y', strtotime($j['tanggal_mulai']));
-                                if (!empty($j['tanggal_selesai']) && $j['tanggal_selesai'] !== $j['tanggal_mulai']) {
-                                    $tgl_teks .= ' - ' . date('d M Y', strtotime($j['tanggal_selesai']));
-                                }
-
-                                $status_badge = 'bg-secondary';
-                                $st = strtolower($j['status']);
-                                if ($st === 'terlaksana') {
-                                    $status_badge = 'bg-success';
-                                } elseif (strpos($st, 'dibuka') !== false || $st === 'pendaftaran dibuka') {
-                                    $status_badge = 'bg-primary';
-                                } elseif ($st === 'penuh') {
-                                    $status_badge = 'bg-warning text-dark';
-                                } elseif ($st === 'akan datang') {
-                                    $status_badge = 'bg-info text-dark';
-                                }
-                            ?>
-                            <tr>
-                                <td class="text-center text-muted fw-bold"><?= $no++ ?></td>
-                                <td>
-                                    <div class="fw-bold text-navy" style="font-size:0.92rem;"><?= htmlspecialchars($j['nama_kegiatan'] ?? $j['nama_pelatihan'] ?? '') ?></div>
-                                    <?php if (!empty($j['institusi_peserta'])): ?>
-                                        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">
-                                            <i class="bi bi-people me-1"></i><?= htmlspecialchars($j['institusi_peserta']) ?>
-                                            <?php if (!empty($j['jumlah_peserta'])): ?>
-                                                <span class="badge bg-light text-dark border ms-1"><?= (int)$j['jumlah_peserta'] ?> Peserta</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($j['keterangan'])): ?>
-                                        <small class="text-muted d-block mt-1" style="font-size:0.78rem;font-style:italic;"><?= htmlspecialchars($j['keterangan']) ?></small>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="white-space:nowrap;">
-                                    <i class="bi bi-calendar3 text-primary me-1"></i>
-                                    <strong><?= $tgl_teks ?></strong>
-                                </td>
-                                <td>
-                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i><?= htmlspecialchars($j['lokasi'] ?? 'Kampus UNIKA Soegijapranata, Semarang') ?>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge <?= $status_badge ?> px-3 py-1 rounded-pill fw-bold" style="font-size:0.75rem;letter-spacing:0.5px;">
-                                        <?= htmlspecialchars(strtoupper($j['status'])) ?>
-                                    </span>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php else: ?>
-                    <div class="text-center py-5 text-muted">Belum ada agenda jadwal pelatihan yang diunggah.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- ========================================================================= -->
-        <!-- 5. PERTANYAAN UMUM SEPUTAR PELATIHAN (FAQ DINAMIS)                        -->
-        <!-- ========================================================================= -->
-        <?php if (!empty($faq_list)): ?>
-        <div class="mb-5 pb-2">
-            <div class="text-center mb-4">
-                <h3 class="pelatihan-section-title">
-                    Pertanyaan Umum Seputar Pelatihan
-                </h3>
-                <p style="font-size:0.9rem;color:var(--text-muted);max-width:650px;" class="mx-auto">
-                    Jawaban atas pertanyaan yang sering diajukan oleh calon peserta dan pimpinan institusi mitra.
-                </p>
-            </div>
-
-            <div class="row justify-content-center">
-                <div class="col-lg-10">
-                    <div class="accordion" id="accordionFaqPelatihan">
-                        <?php 
-                        $f_idx = 0;
-                        foreach ($faq_list as $fq): 
-                            $is_first = ($f_idx === 0);
-                            $f_idx++;
-                        ?>
-                        <div class="accordion-item mb-3" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-                            <h2 class="accordion-header" id="faqHeading<?= $fq['id'] ?>">
-                                <button class="accordion-button <?= $is_first ? '' : 'collapsed' ?> fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse<?= $fq['id'] ?>" aria-expanded="<?= $is_first ? 'true' : 'false' ?>" aria-controls="faqCollapse<?= $fq['id'] ?>" style="font-size:0.95rem;color:var(--navy);">
-                                    <?= htmlspecialchars($fq['pertanyaan']) ?>
-                                </button>
+                            <h2 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.25rem, 2.2vw, 1.55rem);margin:0.25rem 0 0;">
+                                Profil &amp; Program Pelatihan Penjaminan Mutu
                             </h2>
-                            <div id="faqCollapse<?= $fq['id'] ?>" class="accordion-collapse collapse <?= $is_first ? 'show' : '' ?>" aria-labelledby="faqHeading<?= $fq['id'] ?>" data-bs-parent="#accordionFaqPelatihan">
-                                <div class="accordion-body" style="font-size:0.88rem;color:var(--text-main);line-height:1.65;background:#FAFAFA;">
-                                    <?= nl2br(htmlspecialchars($fq['jawaban'])) ?>
+                        </div>
+                    </div>
+
+                    <!-- Teks Narasi Komprehensif -->
+                    <div class="pelatihan-narrative-body">
+                        <?php 
+                        $paragraphs = preg_split('/\r\n|\r|\n/', trim($pelatihan_narasi_lengkap));
+                        $current_p = '';
+                        foreach ($paragraphs as $line) {
+                            $clean_line = trim($line);
+                            if ($clean_line === '') {
+                                if ($current_p !== '') {
+                                    echo '<p>' . nl2br(htmlspecialchars($current_p)) . '</p>';
+                                    $current_p = '';
+                                }
+                            } else {
+                                $current_p .= ($current_p === '' ? '' : "\n") . $clean_line;
+                            }
+                        }
+                        if ($current_p !== '') {
+                            echo '<p>' . nl2br(htmlspecialchars($current_p)) . '</p>';
+                        }
+                        ?>
+                    </div>
+
+                    <!-- 4 Pilar Program Pelatihan Utama -->
+                    <div class="row g-3 mt-4 pt-3 border-top">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-3 rounded-4 h-100" style="background:#EFF6FF;border:1px solid #DBEAFE;">
+                                <div class="text-primary mb-2" style="font-size:1.35rem;"><i class="bi bi-patch-check-fill"></i></div>
+                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Sertifikasi Auditor AMI</h6>
+                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Standar audit mutu, kode etik, penyusunan instrumen, dan registrasi kelulusan auditor.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-3 rounded-4 h-100" style="background:#F0FDF4;border:1px solid #DCFCE7;">
+                                <div class="text-success mb-2" style="font-size:1.35rem;"><i class="bi bi-arrow-repeat"></i></div>
+                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Bimtek SPMI PPEPP</h6>
+                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Perumusan Standar Dikti, manual mutu, SOP, serta IKU/IKT berbasis Permendikbudristek 53/2023.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-3 rounded-4 h-100" style="background:#FEF3C7;border:1px solid #FDE68A;">
+                                <div class="text-warning mb-2" style="font-size:1.35rem;"><i class="bi bi-file-earmark-medical-fill"></i></div>
+                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">Klinik Borang Akreditasi</h6>
+                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Bedah borang LED &amp; LKPS bersama asesor berpengalaman BAN-PT dan Lembaga Akreditasi Mandiri.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-3 rounded-4 h-100" style="background:#F3E8FF;border:1px solid #E9D5FF;">
+                                <div class="text-purple mb-2" style="font-size:1.35rem;color:#9333EA;"><i class="bi bi-buildings-fill"></i></div>
+                                <h6 class="fw-bold text-navy mb-1" style="font-size:0.92rem;">In-House Training</h6>
+                                <p class="text-muted mb-0" style="font-size:0.8rem;line-height:1.5;">Pelatihan fleksibel langsung di kampus mitra dengan penyesuaian materi spesifik institusi.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 2. BROSUR TERPAMPANG DI HALAMAN + AKSI UNDUH                               -->
+        <!-- ========================================================================= -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-11 col-xl-10">
+
+                <div class="text-center mb-4">
+                    <div class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold mb-2" style="font-size:0.8rem;">
+                        <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> DOKUMEN RESMI
+                    </div>
+                    <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.4rem, 2.5vw, 1.85rem);margin-bottom:0.4rem;">
+                        Brosur &amp; Silabus Program Pelatihan Mutu
+                    </h3>
+                    <p class="text-muted mx-auto" style="max-width:720px;font-size:0.95rem;">
+                        Brosur resmi dapat langsung Anda telaah pada jendela tampilan di bawah ini. Gunakan tombol aksi yang tersedia untuk mengunduh dokumen atau mengakses formulir pendaftaran.
+                    </p>
+
+                    <!-- Nav Selector jika Brosur Aktif Lebih Dari 1 -->
+                    <?php if (count($brosur_list) > 1): ?>
+                    <div class="d-flex justify-content-center gap-2 flex-wrap mt-3" id="brosurTabSelector">
+                        <?php foreach ($brosur_list as $b_idx => $b_item): ?>
+                        <button type="button" class="brosur-tab-btn <?= $b_idx === 0 ? 'active' : '' ?>" onclick="switchBrosur(<?= $b_idx ?>)" id="btnBrosurTab<?= $b_idx ?>">
+                            <i class="bi bi-file-earmark-text me-1"></i> <?= htmlspecialchars($b_item['judul_brosur']) ?> (<?= htmlspecialchars($b_item['tahun']) ?>)
+                        </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!empty($brosur_list)): ?>
+                    <?php foreach ($brosur_list as $idx => $br): 
+                        $f_name = $br['file_brosur'];
+                        $f_ext  = strtolower(pathinfo($f_name, PATHINFO_EXTENSION));
+                        $f_url  = SITE_URL . '/uploads/layanan/' . rawurlencode($f_name);
+
+                        // Tentukan jenis viewer
+                        $is_pdf   = ($f_ext === 'pdf');
+                        $is_image = in_array($f_ext, ['png', 'jpg', 'jpeg', 'webp']);
+                        $is_docx  = in_array($f_ext, ['docx', 'doc']);
+
+                        if ($is_image) {
+                            $format_badge = '<span class="badge bg-success px-3 py-1 rounded-pill"><i class="bi bi-image me-1"></i>FORMAT GAMBAR / POSTER (' . strtoupper($f_ext) . ')</span>';
+                            $btn_unduh_text = 'Unduh Brosur (' . strtoupper($f_ext) . ')';
+                        } elseif ($is_docx) {
+                            $format_badge = '<span class="badge bg-primary px-3 py-1 rounded-pill"><i class="bi bi-file-earmark-word me-1"></i>FORMAT DOKUMEN WORD (' . strtoupper($f_ext) . ')</span>';
+                            $btn_unduh_text = 'Unduh Berkas Word (' . strtoupper($f_ext) . ')';
+                        } else {
+                            $format_badge = '<span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-file-earmark-pdf me-1"></i>FORMAT RESMI PDF</span>';
+                            $btn_unduh_text = 'Unduh Brosur PDF';
+                        }
+                    ?>
+                    <div class="brosur-showcase-card mb-4" id="brosurContainer<?= $idx ?>" style="<?= $idx > 0 ? 'display:none;' : '' ?>">
+                        
+                        <!-- Toolbar & Action Bar Terintegrasi -->
+                        <div class="brosur-toolbar">
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <?= $format_badge ?>
+                                        <span class="badge bg-light text-dark px-2 py-1 rounded-pill fw-semibold" style="font-size:0.75rem;">
+                                            EDISI <?= htmlspecialchars($br['tahun']) ?>
+                                        </span>
+                                        <?php if (!empty($br['ukuran_file'])): ?>
+                                        <span class="badge bg-secondary-subtle text-white border px-2 py-1 rounded-pill" style="font-size:0.75rem;">
+                                            <i class="bi bi-hdd-fill me-1"></i><?= htmlspecialchars($br['ukuran_file']) ?>
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.35rem;margin:0.25rem 0 0.2rem;">
+                                        <?= htmlspecialchars($br['judul_brosur']) ?>
+                                    </h4>
+                                    <?php if (!empty($br['deskripsi'])): ?>
+                                    <p style="color:rgba(255,255,255,0.85);font-size:0.88rem;margin:0;line-height:1.5;">
+                                        <?= htmlspecialchars($br['deskripsi']) ?>
+                                    </p>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Tombol Aksi Unduh & Aksi Lain -->
+                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end flex-shrink-0">
+                                    <a href="<?= $f_url ?>" download class="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2" style="font-size:0.92rem;">
+                                        <i class="bi bi-download"></i> <?= $btn_unduh_text ?>
+                                    </a>
+                                    <a href="<?= $f_url ?>" target="_blank" class="btn btn-outline-light fw-semibold px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.9rem;" title="Buka berkas di jendela baru">
+                                        <i class="bi bi-box-arrow-up-right"></i> Layar Penuh
+                                    </a>
+                                    <?php if (!empty($br['link_pendaftaran'])): ?>
+                                    <a href="<?= htmlspecialchars($br['link_pendaftaran']) ?>" target="_blank" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2" style="font-size:0.92rem;">
+                                        <i class="bi bi-pencil-square"></i> Pendaftaran Online
+                                    </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach; ?>
+
+                        <!-- Viewer / Tampilan Terpampang Langsung di Halaman -->
+                        <div class="brosur-viewer-content">
+                            <?php if ($is_pdf): ?>
+                                <!-- PDF Terpampang Langsung via Embedded Viewer -->
+                                <div class="position-relative">
+                                    <iframe src="<?= $f_url ?>#toolbar=1&navpanes=0&scrollbar=1" class="pdf-embed-frame" title="<?= htmlspecialchars($br['judul_brosur']) ?>">
+                                        <div class="p-5 text-center bg-light">
+                                            <p class="text-muted mb-3">Browser Anda tidak mendukung pratinjau PDF langsung di halaman.</p>
+                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold">
+                                                <i class="bi bi-download me-1"></i> Unduh Berkas PDF Brosur
+                                            </a>
+                                        </div>
+                                    </iframe>
+                                </div>
+
+                            <?php elseif ($is_image): ?>
+                                <!-- Gambar Terpampang Langsung -->
+                                <div class="text-center p-3 p-md-4 bg-light">
+                                    <a href="<?= $f_url ?>" target="_blank" title="Klik untuk memperbesar gambar">
+                                        <img src="<?= $f_url ?>" class="img-poster-view img-fluid" alt="<?= htmlspecialchars($br['judul_brosur']) ?>">
+                                    </a>
+                                    <div class="mt-3 text-muted small">
+                                        <i class="bi bi-zoom-in me-1"></i> Klik pada poster untuk membuka resolusi penuh di tab baru.
+                                    </div>
+                                </div>
+
+                            <?php elseif ($is_docx): ?>
+                                <!-- Berkas Word DOCX Terpampang dengan Card Interaktif -->
+                                <div class="p-4 p-md-5 bg-white">
+                                    <div class="docx-preview-box">
+                                        <div style="font-size:3.5rem;color:#2563EB;line-height:1;margin-bottom:1rem;">
+                                            <i class="bi bi-file-earmark-word-fill"></i>
+                                        </div>
+                                        <h5 class="fw-bold text-navy mb-2"><?= htmlspecialchars($br['judul_brosur']) ?></h5>
+                                        <p class="text-muted mx-auto mb-4" style="max-width:550px;font-size:0.9rem;">
+                                            Dokumen resmi panduan dan formulir pendaftaran pelatihan tersedia dalam format Microsoft Word (.<?= strtoupper($f_ext) ?>). Anda dapat mengunduh dan menyunting sesuai kebutuhan surat tugas institusi Anda.
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold px-4 py-2 rounded-pill">
+                                                <i class="bi bi-download me-1"></i> Unduh Berkas Word (.<?= strtoupper($f_ext) ?>)
+                                            </a>
+                                            <a href="https://view.officeapps.live.com/op/view.aspx?src=<?= urlencode($f_url) ?>" target="_blank" class="btn btn-outline-secondary fw-semibold px-4 py-2 rounded-pill">
+                                                <i class="bi bi-eye me-1"></i> Baca via Office Viewer Daring
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Footer Brosur Info -->
+                        <div class="px-4 py-3 bg-light border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <span class="text-muted" style="font-size:0.83rem;">
+                                <i class="bi bi-shield-check text-success me-1"></i> Dokumen resmi diterbitkan oleh <strong>Lembaga Penjaminan Mutu UNIKA Soegijapranata</strong>.
+                            </span>
+                            <a href="<?= $f_url ?>" download class="text-decoration-none fw-bold text-primary" style="font-size:0.85rem;">
+                                <i class="bi bi-cloud-arrow-down-fill me-1"></i> Klik di sini jika ingin mengunduh langsung berkas ini
+                            </a>
+                        </div>
+
                     </div>
-                </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center p-5 bg-white rounded-4 border">
+                        <i class="bi bi-file-earmark-text text-muted" style="font-size:3rem;"></i>
+                        <h5 class="fw-bold text-navy mt-3">Brosur Pelatihan Segera Dirilis</h5>
+                        <p class="text-muted mb-0">Dokumen brosur dan jadwal pelatihan periode terbaru sedang dalam tahap finalisasi administrasi.</p>
+                    </div>
+                <?php endif; ?>
+
             </div>
         </div>
-        <?php endif; ?>
 
         <!-- ========================================================================= -->
-        <!-- 6. NARAHUBUNG & KONSULTASI RESMI KERJASAMA (VIA EMAIL RESMI)             -->
+        <!-- 3. KONSULTASI RESMI & NARAHUBUNG KEMITRAAN                                -->
         <!-- ========================================================================= -->
-        <div>
-            <div class="p-4 p-md-5 rounded-4 text-center text-md-start d-flex flex-column flex-md-row align-items-center justify-content-between gap-4" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);color:#ffffff;box-shadow:0 8px 30px rgba(10,25,47,0.15);">
-                <div>
-                    <h4 style="font-family:var(--font-heading);font-weight:800;font-size:1.3rem;margin-bottom:0.4rem;color:#ffffff;">
-                        Konsultasi Kemitraan &amp; Pelatihan Institusi
-                    </h4>
-                    <p style="font-size:0.88rem;color:rgba(255,255,255,0.85);margin-bottom:0.75rem;max-width:620px;line-height:1.6;">
-                        Sekretariat Lembaga Penjaminan Mutu (LPM) siap membantu perencanaan pelatihan, penyesuaian silabus, dan jadwal pelaksanaan bagi perguruan tinggi Anda.
-                    </p>
-                    <div class="d-flex flex-wrap gap-3 text-white-50" style="font-size:0.82rem;">
-                        <span><i class="bi bi-building text-warning me-1"></i> <?= htmlspecialchars($pelatihan_alamat) ?></span>
-                        <span><i class="bi bi-clock text-warning me-1"></i> <?= htmlspecialchars($pelatihan_jam) ?></span>
-                        <span><i class="bi bi-telephone text-warning me-1"></i> <?= htmlspecialchars($pelatihan_telepon) ?></span>
+        <div class="row justify-content-center">
+            <div class="col-lg-11 col-xl-10">
+                <div class="p-4 p-md-5 rounded-4 text-center text-md-start d-flex flex-column flex-md-row align-items-center justify-content-between gap-4" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);color:#ffffff;box-shadow:0 8px 30px rgba(10,25,47,0.15);">
+                    <div>
+                        <div class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold mb-2" style="font-size:0.75rem;">
+                            SEKRETARIAT RESMI LPM
+                        </div>
+                        <h4 style="font-family:var(--font-heading);font-weight:800;font-size:1.35rem;margin-bottom:0.4rem;color:#ffffff;">
+                            Konsultasi Kemitraan &amp; Pelatihan Institusi
+                        </h4>
+                        <p style="font-size:0.88rem;color:rgba(255,255,255,0.85);margin-bottom:0.85rem;max-width:650px;line-height:1.65;">
+                            Ingin merancang program pelatihan khusus (In-House Training), bimbingan teknis borang akreditasi, atau verifikasi jadwal narasumber bagi institusi Anda? Tim LPM UNIKA siap mendampingi kebutuhan institusi Anda.
+                        </p>
+                        <div class="d-flex flex-wrap gap-3 text-white-50" style="font-size:0.82rem;">
+                            <span><i class="bi bi-building text-warning me-1"></i> <?= htmlspecialchars($pelatihan_alamat) ?></span>
+                            <span><i class="bi bi-clock text-warning me-1"></i> <?= htmlspecialchars($pelatihan_jam) ?></span>
+                            <span><i class="bi bi-telephone text-warning me-1"></i> <?= htmlspecialchars($pelatihan_telepon) ?></span>
+                        </div>
                     </div>
-                </div>
-                <div class="d-flex flex-column sm:flex-row gap-2 flex-shrink-0">
-                    <a href="mailto:<?= htmlspecialchars($pelatihan_email) ?>?subject=Permohonan%20Informasi%20&%20Kerjasama%20Pelatihan%20LPM%20UNIKA" class="btn btn-warning px-4 py-2 fw-bold rounded-pill text-dark d-inline-flex align-items-center justify-content-center gap-2" style="font-size:0.92rem;">
-                        <i class="bi bi-envelope-fill"></i> Hubungi via Email: <?= htmlspecialchars($pelatihan_email) ?>
-                    </a>
+                    <div class="flex-shrink-0">
+                        <a href="mailto:<?= htmlspecialchars($pelatihan_email) ?>?subject=Permohonan%20Konsultasi%20dan%20Kerjasama%20Pelatihan%20LPM%20UNIKA" class="btn btn-warning px-4 py-3 fw-bold rounded-pill text-dark d-inline-flex align-items-center gap-2 shadow" style="font-size:0.95rem;">
+                            <i class="bi bi-envelope-fill"></i> Hubungi via Email: <?= htmlspecialchars($pelatihan_email) ?>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -367,31 +421,25 @@ require_once __DIR__ . '/includes/navbar.php';
     </div>
 </section>
 
-<!-- Modal Baca Brosur Online -->
-<div class="modal fade" id="modalPdfViewer" tabindex="-1" aria-labelledby="modalPdfTitle" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="border-radius:var(--radius-lg);overflow:hidden;border:none;">
-            <div class="modal-header bg-dark text-white px-4 py-3">
-                <h5 class="modal-title fs-6 fw-bold" id="modalPdfTitle">Brosur Pelatihan Resmi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0" style="height:75vh;background:#525659;">
-                <iframe id="pdfIframe" src="" style="width:100%;height:100%;border:none;"></iframe>
-            </div>
-            <div class="modal-footer bg-light px-4 py-2 d-flex justify-content-between">
-                <span class="text-muted" style="font-size:0.8rem;">Gunakan kontrol viewer PDF untuk zoom in/out atau mencetak brosur.</span>
-                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-function openPdfModal(pdfUrl, pdfTitle) {
-    document.getElementById('modalPdfTitle').innerText = pdfTitle;
-    document.getElementById('pdfIframe').src = pdfUrl;
-    var myModal = new bootstrap.Modal(document.getElementById('modalPdfViewer'));
-    myModal.show();
+function switchBrosur(targetIndex) {
+    var containers = document.querySelectorAll('.brosur-showcase-card');
+    containers.forEach(function(el, idx) {
+        if (idx === targetIndex) {
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+
+    var buttons = document.querySelectorAll('#brosurTabSelector .brosur-tab-btn');
+    buttons.forEach(function(btn, idx) {
+        if (idx === targetIndex) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 </script>
 

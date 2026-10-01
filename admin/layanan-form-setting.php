@@ -185,39 +185,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save_brosur') {
         $id = (int)($_POST['id'] ?? 0);
         $judul = trim($_POST['judul_brosur'] ?? '');
-        $tahun = trim($_POST['tahun'] ?? date('Y'));
+        $tahun = (int)($_POST['tahun'] ?? date('Y'));
         $deskripsi = trim($_POST['deskripsi'] ?? '');
         $link = trim($_POST['link_pendaftaran'] ?? '');
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         
         $file_brosur = '';
+        $tipe_file   = 'pdf';
+        $ukuran_file = '';
         if ($id > 0) {
-            $cur = $db->prepare("SELECT file_brosur FROM layanan_brosur WHERE id = ?");
+            $cur = $db->prepare("SELECT file_brosur, tipe_file, ukuran_file FROM layanan_brosur WHERE id = ?");
             $cur->execute([$id]);
-            $file_brosur = $cur->fetchColumn() ?: '';
+            $row_cur = $cur->fetch(PDO::FETCH_ASSOC);
+            if ($row_cur) {
+                $file_brosur = $row_cur['file_brosur'] ?? '';
+                $tipe_file   = $row_cur['tipe_file'] ?? 'pdf';
+                $ukuran_file = $row_cur['ukuran_file'] ?? '';
+            }
         }
 
-        // Handle File Upload
+        // Handle File Upload (PDF, DOCX, DOC, PNG, JPG, JPEG, WEBP)
         if (isset($_FILES['file_brosur']) && $_FILES['file_brosur']['error'] === UPLOAD_ERR_OK) {
             $upload_dir = __DIR__ . '/../uploads/layanan/';
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
-            $file_tmp = $_FILES['file_brosur']['tmp_name'];
+            $file_tmp  = $_FILES['file_brosur']['tmp_name'];
             $file_name = $_FILES['file_brosur']['name'];
-            $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            $file_size = (int)$_FILES['file_brosur']['size'];
+            $ext       = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-            if ($ext === 'pdf') {
-                $new_filename = 'brosur_lpm_' . time() . '_' . rand(100, 999) . '.pdf';
+            $allowed_exts = ['pdf', 'docx', 'doc', 'png', 'jpg', 'jpeg', 'webp'];
+
+            if (in_array($ext, $allowed_exts)) {
+                // Tentukan tipe file
+                if (in_array($ext, ['png', 'jpg', 'jpeg', 'webp'])) {
+                    $tipe_file = 'image';
+                } elseif (in_array($ext, ['docx', 'doc'])) {
+                    $tipe_file = 'docx';
+                } else {
+                    $tipe_file = 'pdf';
+                }
+
+                // Hitung ukuran file ramah pengguna
+                if ($file_size >= 1048576) {
+                    $ukuran_file = number_format($file_size / 1048576, 2) . ' MB';
+                } else {
+                    $ukuran_file = number_format(max(1, $file_size / 1024), 0) . ' KB';
+                }
+
+                $new_filename = 'brosur_lpm_' . time() . '_' . rand(100, 999) . '.' . $ext;
                 if (move_uploaded_file($file_tmp, $upload_dir . $new_filename)) {
-                    // unlink old file if exists
+                    // Hapus file lama jika ada dan merupakan file yang diupload sistem
                     if (!empty($file_brosur) && file_exists($upload_dir . $file_brosur) && strpos($file_brosur, 'brosur_lpm_') === 0) {
                         @unlink($upload_dir . $file_brosur);
                     }
                     $file_brosur = $new_filename;
                 }
             } else {
-                $_SESSION['flash_error'] = 'Berkas brosur harus berformat PDF.';
+                $_SESSION['flash_error'] = 'Format berkas tidak didukung. Harap unggah berkas berformat PDF, Word (DOCX/DOC), atau Foto (PNG, JPG, JPEG, WEBP).';
                 redirect(SITE_URL . '/admin/layanan-form-setting.php?tab=brosur');
             }
         }
@@ -226,18 +252,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($id > 0) {
                 $stmt = $db->prepare("UPDATE layanan_brosur SET 
                     judul_brosur = ?, tahun = ?, deskripsi = ?, link_pendaftaran = ?, 
-                    file_brosur = ?, is_active = ? 
+                    file_brosur = ?, tipe_file = ?, ukuran_file = ?, is_active = ? 
                     WHERE id = ?");
-                $stmt->execute([$judul, $tahun, $deskripsi, $link, $file_brosur, $is_active, $id]);
+                $stmt->execute([$judul, $tahun, $deskripsi, $link, $file_brosur, $tipe_file, $ukuran_file, $is_active, $id]);
                 $_SESSION['flash'] = 'Brosur "' . e($judul) . '" berhasil diperbarui.';
             } else {
                 if (empty($file_brosur)) {
-                    $file_brosur = 'brosur_pelatihan_mutu_2026.pdf';
+                    $_SESSION['flash_error'] = 'Harap pilih berkas brosur (PDF, Word, atau Foto) untuk diunggah.';
+                    redirect(SITE_URL . '/admin/layanan-form-setting.php?tab=brosur');
                 }
                 $stmt = $db->prepare("INSERT INTO layanan_brosur 
-                    (judul_brosur, tahun, deskripsi, link_pendaftaran, file_brosur, is_active) 
-                    VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$judul, $tahun, $deskripsi, $link, $file_brosur, $is_active]);
+                    (judul_brosur, tahun, deskripsi, link_pendaftaran, file_brosur, tipe_file, ukuran_file, is_active) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$judul, $tahun, $deskripsi, $link, $file_brosur, $tipe_file, $ukuran_file, $is_active]);
                 $_SESSION['flash'] = 'Brosur pelatihan baru berhasil ditambahkan.';
             }
         } else {
@@ -366,21 +393,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(SITE_URL . '/admin/layanan-form-setting.php?tab=faq');
     }
 
-    // 10. Pengaturan Banner & Kontak Email Pelatihan
+    // 10. Pengaturan Banner Hero, Narasi & Kontak Email Pelatihan
     if ($action === 'save_pelatihan_umum') {
         setPengaturan('pelatihan_hero_title', trim($_POST['pelatihan_hero_title'] ?? ''));
         setPengaturan('pelatihan_hero_desc', trim($_POST['pelatihan_hero_desc'] ?? ''));
+        setPengaturan('pelatihan_narasi_lengkap', trim($_POST['pelatihan_narasi_lengkap'] ?? ''));
         setPengaturan('pelatihan_email_kontak', trim($_POST['pelatihan_email_kontak'] ?? 'lpm@unika.ac.id'));
         setPengaturan('pelatihan_telepon', trim($_POST['pelatihan_telepon'] ?? ''));
         setPengaturan('pelatihan_jam_layanan', trim($_POST['pelatihan_jam_layanan'] ?? ''));
         setPengaturan('pelatihan_alamat', trim($_POST['pelatihan_alamat'] ?? ''));
 
-        $_SESSION['flash'] = 'Pengaturan banner & kontak pelatihan berhasil disimpan.';
+        $_SESSION['flash'] = 'Pengaturan narasi & kontak info pelatihan berhasil disimpan.';
         redirect(SITE_URL . '/admin/layanan-form-setting.php?tab=pelatihan-umum');
     }
 }
 
-$tab = $_GET['tab'] ?? 'jadwal';
+$tab = $_GET['tab'] ?? 'pelatihan-umum';
 
 // Fetch lists for tabs
 $pelatihan_list  = [];
@@ -402,12 +430,13 @@ try {
 } catch (Exception $e) {}
 
 // Pelatihan Settings
-$pelatihan_hero_title = getPengaturan('pelatihan_hero_title', 'Pelatihan Eksternal & Pengembangan Mutu');
-$pelatihan_hero_desc  = getPengaturan('pelatihan_hero_desc', 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata menyelenggarakan bimbingan teknis, workshop klinik akreditasi, dan pelatihan sertifikasi auditor penjaminan mutu internal bagi perguruan tinggi mitra.');
-$pelatihan_email      = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
-$pelatihan_telepon    = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');
-$pelatihan_jam        = getPengaturan('pelatihan_jam_layanan', 'Senin – Jumat (08:00 – 15:30 WIB)');
-$pelatihan_alamat     = getPengaturan('pelatihan_alamat', 'Kampus UNIKA Bendan Dhuwur, Semarang');
+$pelatihan_hero_title     = getPengaturan('pelatihan_hero_title', 'Info Pelatihan Lembaga Penjaminan Mutu');
+$pelatihan_hero_desc      = getPengaturan('pelatihan_hero_desc', 'Program Pelatihan, Bimbingan Teknis, Sertifikasi Auditor Mutu Internal (AMI), dan Klinik Akreditasi Perguruan Tinggi Mitra');
+$pelatihan_narasi_lengkap = getPengaturan('pelatihan_narasi_lengkap', 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata berkomitmen mengawal dan menumbuhkan budaya mutu pendidikan tinggi yang unggul, berkelanjutan, dan berdaya saing global.');
+$pelatihan_email          = getPengaturan('pelatihan_email_kontak', 'lpm@unika.ac.id');
+$pelatihan_telepon        = getPengaturan('pelatihan_telepon', '(024) 8441555 Ext. 1473');
+$pelatihan_jam            = getPengaturan('pelatihan_jam_layanan', 'Senin – Jumat (08:00 – 15:30 WIB)');
+$pelatihan_alamat         = getPengaturan('pelatihan_alamat', 'Kampus UNIKA Bendan Dhuwur, Semarang');
 
 // Feedback Settings
 $default_categories = "Kritik & Saran Pelayanan\nSaran & Masukan Perbaikan LPM\nAspirasi Peningkatan Mutu\nFeedback / Umpan Balik Kemitraan\nApresiasi Layanan & Testimoni";
@@ -477,29 +506,29 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <!-- Tabs Switcher -->
 <div class="d-flex gap-2 border-bottom mb-4 pb-2 flex-wrap" style="overflow-x:auto;">
-    <a href="layanan-form-setting.php?tab=jadwal" class="btn btn-sm <?= $tab === 'jadwal' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-calendar-check me-1"></i> 1. Kalender &amp; Jadwal (<?= count($jadwal_list) ?>)
+    <a href="layanan-form-setting.php?tab=pelatihan-umum" class="btn btn-sm <?= $tab === 'pelatihan-umum' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-card-text me-1"></i> 1. Narasi Info Pelatihan
     </a>
     <a href="layanan-form-setting.php?tab=brosur" class="btn btn-sm <?= $tab === 'brosur' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-file-earmark-pdf me-1"></i> 2. Upload Brosur (<?= count($brosur_list) ?>)
+        <i class="bi bi-file-earmark-pdf me-1"></i> 2. Upload Brosur Pelatihan (<?= count($brosur_list) ?>)
     </a>
-    <a href="layanan-form-setting.php?tab=keunggulan" class="btn btn-sm <?= $tab === 'keunggulan' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-award me-1"></i> 3. Standar Keunggulan (<?= count($keunggulan_list) ?>)
-    </a>
-    <a href="layanan-form-setting.php?tab=alur" class="btn btn-sm <?= $tab === 'alur' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-diagram-3 me-1"></i> 4. Alur Kerjasama (<?= count($alur_list) ?>)
-    </a>
-    <a href="layanan-form-setting.php?tab=faq" class="btn btn-sm <?= $tab === 'faq' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-question-circle me-1"></i> 5. FAQ Pelatihan (<?= count($faq_list) ?>)
-    </a>
-    <a href="layanan-form-setting.php?tab=pelatihan-umum" class="btn btn-sm <?= $tab === 'pelatihan-umum' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-sliders me-1"></i> 6. Banner &amp; Kontak Pelatihan
+    <a href="layanan-form-setting.php?tab=jadwal" class="btn btn-sm <?= $tab === 'jadwal' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-calendar-check me-1"></i> 3. Kalender &amp; Jadwal (<?= count($jadwal_list) ?>)
     </a>
     <a href="layanan-form-setting.php?tab=feedback" class="btn btn-sm <?= $tab === 'feedback' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-chat-heart me-1"></i> 7. Form Kritik &amp; Saran
+        <i class="bi bi-chat-heart me-1"></i> 4. Form Kritik &amp; Saran
     </a>
     <a href="layanan-form-setting.php?tab=kunjungan" class="btn btn-sm <?= $tab === 'kunjungan' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
-        <i class="bi bi-building-check me-1"></i> 8. Form Kunjungan
+        <i class="bi bi-building-check me-1"></i> 5. Form Kunjungan
+    </a>
+    <a href="layanan-form-setting.php?tab=keunggulan" class="btn btn-sm <?= $tab === 'keunggulan' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-award me-1"></i> 6. Standar Keunggulan (<?= count($keunggulan_list) ?>)
+    </a>
+    <a href="layanan-form-setting.php?tab=alur" class="btn btn-sm <?= $tab === 'alur' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-diagram-3 me-1"></i> 7. Alur Kerjasama (<?= count($alur_list) ?>)
+    </a>
+    <a href="layanan-form-setting.php?tab=faq" class="btn btn-sm <?= $tab === 'faq' ? 'btn-primary fw-bold' : 'btn-light text-muted' ?>" style="border-radius:20px;padding:0.45rem 1.15rem;">
+        <i class="bi bi-question-circle me-1"></i> 8. FAQ Pelatihan (<?= count($faq_list) ?>)
     </a>
 </div>
 
@@ -942,19 +971,19 @@ require_once __DIR__ . '/includes/admin-header.php';
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- TAB 4: BROSUR PELATIHAN                                                  -->
+<!-- TAB 2: BROSUR PELATIHAN                                                  -->
 <!-- ========================================================================= -->
 <?php if ($tab === 'brosur'): ?>
 <div class="admin-table-wrap p-4" style="border-top:4px solid var(--navy);">
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2 border-bottom pb-3">
         <div>
             <h5 style="font-weight:700;color:var(--navy);margin:0;">
-                <i class="bi bi-file-earmark-pdf-fill text-primary me-2"></i> Dokumen Brosur &amp; Panduan Pelatihan
+                <i class="bi bi-file-earmark-richtext-fill text-primary me-2"></i> Dokumen &amp; Poster Brosur Pelatihan
             </h5>
-            <small class="text-muted">Unggah berkas brosur resmi program pelatihan mutu (PDF) serta tautan formulir pendaftaran kemitraan.</small>
+            <small class="text-muted">Kelola berkas brosur resmi program pelatihan mutu (PDF, Word DOCX, atau Foto/Gambar JPG/PNG) yang terpampang di halaman publik dengan aksi unduh.</small>
         </div>
         <button type="button" class="btn-save" data-bs-toggle="modal" data-bs-target="#modalBrosur" onclick="resetFormBrosur()">
-            <i class="bi bi-plus-lg me-1"></i> Upload Brosur Baru
+            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Brosur Baru
         </button>
     </div>
 
@@ -962,40 +991,56 @@ require_once __DIR__ . '/includes/admin-header.php';
         <table class="table table-hover align-middle" style="font-size:0.875rem;">
             <thead class="table-light">
                 <tr>
-                    <th>Judul Brosur</th>
-                    <th>Tahun</th>
-                    <th>Nama Berkas PDF</th>
+                    <th style="min-width:240px;">Judul &amp; Deskripsi Brosur</th>
+                    <th style="width:90px;" class="text-center">Tahun</th>
+                    <th>Format &amp; Berkas</th>
+                    <th>Ukuran</th>
                     <th>Link Pendaftaran</th>
-                    <th>Status</th>
-                    <th style="width:120px;" class="text-center">Aksi</th>
+                    <th class="text-center">Status</th>
+                    <th style="width:130px;" class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($brosur_list)): ?>
-                    <?php foreach ($brosur_list as $br): ?>
+                    <?php foreach ($brosur_list as $br): 
+                        $t_file = strtolower($br['tipe_file'] ?? 'pdf');
+                        $f_name = $br['file_brosur'] ?? '';
+                        $f_ext  = strtolower(pathinfo($f_name, PATHINFO_EXTENSION));
+                        if (in_array($f_ext, ['png', 'jpg', 'jpeg', 'webp'])) {
+                            $badge_format = '<span class="badge bg-success"><i class="bi bi-image me-1"></i>Gambar (' . strtoupper($f_ext) . ')</span>';
+                        } elseif (in_array($f_ext, ['docx', 'doc'])) {
+                            $badge_format = '<span class="badge bg-primary"><i class="bi bi-file-earmark-word me-1"></i>Word (' . strtoupper($f_ext) . ')</span>';
+                        } else {
+                            $badge_format = '<span class="badge bg-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>';
+                        }
+                    ?>
                     <tr>
                         <td class="fw-bold text-navy">
-                            <?= htmlspecialchars($br['judul_brosur']) ?>
+                            <div class="fs-6"><?= htmlspecialchars($br['judul_brosur']) ?></div>
                             <?php if (!empty($br['deskripsi'])): ?>
-                            <small class="text-muted d-block"><?= htmlspecialchars(truncate($br['deskripsi'], 80)) ?></small>
+                            <small class="text-muted d-block mt-1 font-weight-normal"><?= htmlspecialchars(truncate($br['deskripsi'], 95)) ?></small>
                             <?php endif; ?>
                         </td>
-                        <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($br['tahun']) ?></span></td>
+                        <td class="text-center"><span class="badge bg-light text-dark border"><?= htmlspecialchars($br['tahun']) ?></span></td>
                         <td>
-                            <a href="<?= SITE_URL ?>/uploads/layanan/<?= htmlspecialchars($br['file_brosur']) ?>" target="_blank" class="text-decoration-none fw-semibold text-danger">
-                                <i class="bi bi-file-pdf me-1"></i><?= htmlspecialchars($br['file_brosur']) ?>
+                            <div class="mb-1"><?= $badge_format ?></div>
+                            <a href="<?= SITE_URL ?>/uploads/layanan/<?= htmlspecialchars($br['file_brosur']) ?>" target="_blank" class="text-decoration-none fw-semibold text-secondary" style="font-size:0.8rem;word-break:break-all;">
+                                <i class="bi bi-box-arrow-up-right me-1"></i><?= htmlspecialchars($br['file_brosur']) ?>
                             </a>
+                        </td>
+                        <td>
+                            <span class="text-muted small"><?= htmlspecialchars($br['ukuran_file'] ?: '-') ?></span>
                         </td>
                         <td>
                             <?php if (!empty($br['link_pendaftaran'])): ?>
                             <a href="<?= htmlspecialchars($br['link_pendaftaran']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;">
-                                <i class="bi bi-box-arrow-up-right me-1"></i> Form Online
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Form Daring
                             </a>
                             <?php else: ?>
-                            <span class="text-muted">-</span>
+                            <span class="text-muted small">-</span>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <?php if ($br['is_active']): ?>
                                 <span class="badge bg-success">Aktif</span>
                             <?php else: ?>
@@ -1004,6 +1049,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
+                                <a href="<?= SITE_URL ?>/uploads/layanan/<?= htmlspecialchars($br['file_brosur']) ?>" download class="btn btn-sm btn-outline-success" title="Unduh Berkas">
+                                    <i class="bi bi-download"></i>
+                                </a>
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick='editBrosur(<?= json_encode($br, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>)' title="Edit Brosur">
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -1021,7 +1069,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Belum ada dokumen brosur pelatihan.</td>
+                        <td colspan="7" class="text-center py-4 text-muted">Belum ada dokumen brosur pelatihan yang diunggah.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -1029,7 +1077,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
-<!-- Modal Upload/Edit Brosur -->
+<!-- Modal Upload/Edit Brosur (Multi-Format) -->
 <div class="modal fade" id="modalBrosur" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="post" enctype="multipart/form-data" class="modal-content">
@@ -1037,35 +1085,37 @@ require_once __DIR__ . '/includes/admin-header.php';
             <input type="hidden" name="tab" value="brosur">
             <input type="hidden" name="id" id="br_id" value="0">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalBrosurTitle"><i class="bi bi-file-earmark-pdf me-2"></i> Upload Brosur Pelatihan</h5>
+                <h5 class="modal-title fw-bold" id="modalBrosurTitle"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload Brosur Pelatihan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body row g-3">
                 <div class="col-md-9">
                     <label class="form-label fw-bold">Judul Brosur / Panduan <span class="text-danger">*</span></label>
-                    <input type="text" name="judul_brosur" id="br_judul" class="form-control" required placeholder="Contoh: Brosur Pelatihan & Pengembangan Mutu LPM UNIKA 2026">
+                    <input type="text" name="judul_brosur" id="br_judul" class="form-control" required placeholder="Contoh: Brosur Program Pelatihan & Kemitraan Mutu LPM SCU 2026">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Tahun Terbit</label>
-                    <input type="text" name="tahun" id="br_tahun" class="form-control" value="2026">
+                    <input type="number" name="tahun" id="br_tahun" class="form-control" value="2026">
                 </div>
                 <div class="col-12">
-                    <label class="form-label fw-bold">Unggah Berkas PDF Brosur (Maks 15MB)</label>
-                    <input type="file" name="file_brosur" id="br_file" class="form-control" accept=".pdf">
-                    <div class="form-text" id="br_file_info">Pilih file PDF brosur untuk diunggah ke server.</div>
+                    <label class="form-label fw-bold">Unggah Berkas Brosur (PDF, DOCX, atau Foto) <span class="text-danger">*</span></label>
+                    <input type="file" name="file_brosur" id="br_file" class="form-control" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.webp">
+                    <div class="form-text" id="br_file_info">
+                        Format berkas yang didukung: <strong>PDF, Word (DOCX/DOC), atau Foto Poster (PNG, JPG, JPEG, WEBP)</strong>. Maksimal 20MB.
+                    </div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label fw-bold">Link Formulir Pendaftaran Online (Google Form / Portal Eksternal)</label>
-                    <input type="url" name="link_pendaftaran" id="br_link" class="form-control" placeholder="https://forms.gle/xxxx">
+                    <label class="form-label fw-bold">Link Formulir Pendaftaran Online (Opsional)</label>
+                    <input type="url" name="link_pendaftaran" id="br_link" class="form-control" placeholder="https://forms.gle/xxxx atau portal pendaftaran">
                 </div>
                 <div class="col-12">
-                    <label class="form-label fw-bold">Deskripsi Ringkas</label>
+                    <label class="form-label fw-bold">Deskripsi Ringkas Brosur</label>
                     <textarea name="deskripsi" id="br_deskripsi" rows="3" class="form-control" placeholder="Tuliskan keterangan brosur, target pembaca, atau catatan pendaftaran..."></textarea>
                 </div>
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" name="is_active" id="br_is_active" value="1" checked>
-                        <label class="form-check-label fw-bold" for="br_is_active">Aktif dan Tampilkan di Halaman Layanan Publik</label>
+                        <label class="form-check-label fw-bold" for="br_is_active">Aktif dan Tampilkan Brosur di Halaman Info Pelatihan Publik</label>
                     </div>
                 </div>
             </div>
@@ -1470,15 +1520,27 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <label class="form-label fw-bold" style="color:var(--navy);font-size:0.88rem;">
                     Judul Banner Hero <span class="text-danger">*</span>
                 </label>
-                <input type="text" name="pelatihan_hero_title" class="form-control" value="<?= e($pelatihan_hero_title) ?>" required placeholder="Pelatihan Eksternal & Pengembangan Mutu">
+                <input type="text" name="pelatihan_hero_title" class="form-control" value="<?= e($pelatihan_hero_title) ?>" required placeholder="Info Pelatihan Lembaga Penjaminan Mutu">
             </div>
 
             <div class="col-12">
                 <label class="form-label fw-bold" style="color:var(--navy);font-size:0.88rem;">
-                    Deskripsi / Ikhtisar Banner Hero <span class="text-danger">*</span>
+                    Subjudul / Ikhtisar Singkat Banner <span class="text-danger">*</span>
                 </label>
-                <textarea name="pelatihan_hero_desc" rows="3" class="form-control" required><?= e($pelatihan_hero_desc) ?></textarea>
-                <div class="form-text">Teks penjelasan singkat tentang komitmen LPM UNIKA dalam menyelenggarakan bimtek dan sertifikasi bagi perguruan tinggi mitra.</div>
+                <textarea name="pelatihan_hero_desc" rows="2" class="form-control" required><?= e($pelatihan_hero_desc) ?></textarea>
+                <div class="form-text">Teks ikhtisar singkat yang tampil di dalam banner biru hero teratas.</div>
+            </div>
+
+            <div class="col-12 mt-3">
+                <div class="p-3 mb-2 rounded-3" style="background:#F0FDF4;border:1px solid #BBF7D0;">
+                    <div class="fw-bold text-success mb-1"><i class="bi bi-file-earmark-text-fill me-1"></i> Narasi Utama Info Pelatihan LPM UNIKA</div>
+                    <small class="text-muted">Narasi resmi di bawah ini akan tampil sebagai konten utama di halaman publik <code>pelatihan.php</code> tepat di bawah banner dan sebelum brosur terpampang.</small>
+                </div>
+                <label class="form-label fw-bold" style="color:var(--navy);font-size:0.88rem;">
+                    Narasi Lengkap Info Pelatihan <span class="text-danger">*</span>
+                </label>
+                <textarea name="pelatihan_narasi_lengkap" rows="10" class="form-control" style="line-height:1.7;font-size:0.92rem;" required placeholder="Tuliskan narasi komprehensif profil pelatihan, kompetensi narasumber asesor BAN-PT/LAM, ruang lingkup pelatihan, dan panduan kemitraan..."><?= e($pelatihan_narasi_lengkap) ?></textarea>
+                <div class="form-text">Pisahkan antar paragraf dengan menekan <strong>Enter (baris baru)</strong>. Format paragraf akan otomatis tersusun rapi di halaman publik.</div>
             </div>
 
             <div class="col-12 mt-4">
@@ -1892,14 +1954,14 @@ function editJadwal(data) {
 }
 
 function resetFormBrosur() {
-    document.getElementById('modalBrosurTitle').innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Upload Brosur Pelatihan';
+    document.getElementById('modalBrosurTitle').innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload Brosur Pelatihan';
     document.getElementById('br_id').value = '0';
     document.getElementById('br_judul').value = '';
     document.getElementById('br_tahun').value = '2026';
     document.getElementById('br_file').value = '';
     document.getElementById('br_link').value = '';
     document.getElementById('br_deskripsi').value = '';
-    document.getElementById('br_file_info').innerHTML = 'Pilih file PDF brosur untuk diunggah ke server.';
+    document.getElementById('br_file_info').innerHTML = 'Format berkas yang didukung: <strong>PDF, Word (DOCX/DOC), atau Foto Poster (PNG, JPG, JPEG, WEBP)</strong>. Maksimal 20MB.';
     document.getElementById('br_is_active').checked = true;
 }
 
@@ -1911,7 +1973,10 @@ function editBrosur(data) {
     document.getElementById('br_file').value = '';
     document.getElementById('br_link').value = data.link_pendaftaran || '';
     document.getElementById('br_deskripsi').value = data.deskripsi || '';
-    document.getElementById('br_file_info').innerHTML = 'File saat ini: <code>' + (data.file_brosur || '-') + '</code> (Biarkan kosong jika tidak ingin mengganti file).';
+    
+    var fType = (data.tipe_file || 'PDF').toUpperCase();
+    var fSize = data.ukuran_file ? (' &bull; ' + data.ukuran_file) : '';
+    document.getElementById('br_file_info').innerHTML = 'Berkas saat ini: <code>' + (data.file_brosur || '-') + '</code> (' + fType + fSize + ')<br><small class="text-muted">Biarkan kosong jika tidak ingin mengganti file.</small>';
     document.getElementById('br_is_active').checked = (data.is_active == 1);
 
     var myModal = new bootstrap.Modal(document.getElementById('modalBrosur'));

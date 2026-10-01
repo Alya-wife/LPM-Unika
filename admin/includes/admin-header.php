@@ -257,7 +257,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <span>• Hasil SPMI Kemendikti</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/spmi-portal-setting.php" class="admin-subnav-link <?= $current_admin === 'spmi-portal-setting' ? 'active' : '' ?>">
-                    <span>• Tautan Portal SPMI</span>
+                    <span>• Chart &amp; Portal SPMI</span>
                 </a>
             </div>
         </div>

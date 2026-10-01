@@ -105,6 +105,49 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
   - `pelatihan_hero_desc`: Ikhtisar singkat pada banner hero.
   - `pelatihan_narasi_lengkap`: Teks narasi komprehensif profil pelatihan, kompetensi narasumber asesor BAN-PT/LAM, ruang lingkup materi (Auditor AMI, Bimtek SPMI PPEPP, Klinik Borang Akreditasi, RTM), serta kemitraan yang dapat disunting langsung oleh Administrator.
 
+### H. Kolom Alur Publikasi Berita (`berita.status`)
+- Penambahan kolom `status ENUM('draft', 'published') NOT NULL DEFAULT 'published' AFTER tampil_di_ami`.
+- Memungkinkan implementasi sistem pratinjau dan persetujuan publikasi (Draft sebelum Terbit).
+
+### I. Tabel Tanya Jawab FAQ (`faqs`)
+- **Tabel Baru Ditambahkan**:
+  ```sql
+  CREATE TABLE IF NOT EXISTS `faqs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `pertanyaan` VARCHAR(255) NOT NULL,
+    `jawaban` TEXT NOT NULL,
+    `kategori` VARCHAR(100) DEFAULT 'Umum',
+    `urutan` INT DEFAULT 1,
+    `is_active` TINYINT(1) DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  ```
+- Dikelola melalui CMS Administrator (`admin/faq-setting.php`) dan tampil dinamis di `faq.php`.
+
+### J. Tabel Glosarium Istilah Mutu (`glosarium`)
+- **Tabel Baru Ditambahkan**:
+  ```sql
+  CREATE TABLE IF NOT EXISTS `glosarium` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `istilah` VARCHAR(100) NOT NULL,
+    `istilah_lengkap` VARCHAR(255) DEFAULT NULL,
+    `definisi` TEXT NOT NULL,
+    `sumber` VARCHAR(150) DEFAULT 'Kemendikbudristek / SPMI',
+    `urutan` INT DEFAULT 1,
+    `is_active` TINYINT(1) DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  ```
+- Dikelola melalui CMS Administrator (`admin/glosarium-setting.php`) dan tampil dinamis dengan pencarian interaktif di `glosarium.php`.
+
+### K. Kunci Pengaturan Tautan Portal SPMI & UI GreenMetric (`pengaturan`)
+- Penambahan kunci pengaturan status portal SPMI (Aktif vs Coming Soon) beserta URL dan narasi:
+  - `portal_sista_status`, `portal_sista_url`, `portal_sista_cs_title`, `portal_sista_cs_desc`
+  - `portal_spmi_status`, `portal_spmi_url`, `portal_spmi_cs_title`, `portal_spmi_cs_desc`
+  - `portal_eppepp_status`, `portal_eppepp_url`, `portal_eppepp_cs_title`, `portal_eppepp_cs_desc`
+- Kunci pengaturan UI GreenMetric (`admin/pemeringkatan-setting.php` & `pemeringkatan.php`):
+  - `greenmetric_rank`, `greenmetric_scope`, `greenmetric_badge`, `greenmetric_title`, `greenmetric_desc`, `greenmetric_sertifikat`
+
 ---
 
 ## 2. Pemulihan & Sinkronisasi Data Konten

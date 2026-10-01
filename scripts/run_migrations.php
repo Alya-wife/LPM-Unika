@@ -199,4 +199,91 @@ if ($brosurCount == 0) {
     echo "Seeded initial layanan_brosur record.\n";
 }
 
+// 6. Kolom Status pada Tabel Berita (Draft vs Published)
+$beritaCols = $db->query("SHOW COLUMNS FROM berita LIKE 'status'")->fetchAll();
+if (empty($beritaCols)) {
+    $db->exec("ALTER TABLE berita ADD COLUMN status ENUM('draft', 'published') NOT NULL DEFAULT 'published' AFTER tampil_di_ami");
+    echo "Added status column to berita table.\n";
+}
+
+// 7. Tabel FAQs
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `faqs` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `pertanyaan` VARCHAR(255) NOT NULL,
+        `jawaban` TEXT NOT NULL,
+        `kategori` VARCHAR(100) DEFAULT 'Umum',
+        `urutan` INT DEFAULT 1,
+        `is_active` TINYINT(1) DEFAULT 1,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$faqCount = (int)$db->query("SELECT COUNT(*) FROM faqs")->fetchColumn();
+if ($faqCount === 0) {
+    $db->exec("
+        INSERT INTO `faqs` (`pertanyaan`, `jawaban`, `kategori`, `urutan`, `is_active`) VALUES
+        ('Apa itu Sistem Penjaminan Mutu Internal (SPMI)?', 'SPMI adalah kegiatan sistemik penjaminan mutu pendidikan tinggi oleh setiap perguruan tinggi secara otonom untuk mengendalikan dan meningkatkan penyelenggaraan pendidikan tinggi secara berencana dan berkelanjutan.', 'SPMI', 1, 1),
+        ('Apa perbedaan SPMI dan SPME (Akreditasi)?', 'SPMI dijalankan secara internal oleh perguruan tinggi, sedangkan SPME (Sistem Penjaminan Mutu Eksternal) dilakukan oleh lembaga eksternal seperti BAN-PT atau LAM melalui proses akreditasi.', 'SPMI', 2, 1),
+        ('Apa siklus utama dalam SPMI di UNIKA?', 'Siklus SPMI berpedoman pada PPEPP: Penetapan Standar, Pelaksanaan Standar, Evaluasi Pelaksanaan Standar, Pengendalian Pelaksanaan Standar, dan Peningkatan Standar Pendidikan Tinggi.', 'SPMI', 3, 1),
+        ('Kapan Audit Mutu Internal (AMI) dilaksanakan?', 'AMI dilaksanakan secara berkala setiap tahun akademik untuk memastikan ketercapaian dan kepatuhan standar mutu pada setiap program studi dan unit kerja.', 'AMI', 4, 1),
+        ('Bagaimana cara mengajukan permohonan kunjungan studi banding ke LPM UNIKA?', 'Permohonan dapat diajukan secara resmi melalui menu Layanan > Kunjungan & Studi Banding dengan mengisi formulir pengajuan dan melampirkan surat permohonan resmi institusi.', 'Layanan', 5, 1);
+    ");
+    echo "Seeded initial faqs table.\n";
+}
+
+// 8. Tabel Glosarium
+$db->exec("
+    CREATE TABLE IF NOT EXISTS `glosarium` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `istilah` VARCHAR(100) NOT NULL,
+        `istilah_lengkap` VARCHAR(255) DEFAULT NULL,
+        `definisi` TEXT NOT NULL,
+        `sumber` VARCHAR(150) DEFAULT 'Kemendikbudristek / SPMI',
+        `urutan` INT DEFAULT 1,
+        `is_active` TINYINT(1) DEFAULT 1,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+");
+$gloCount = (int)$db->query("SELECT COUNT(*) FROM glosarium")->fetchColumn();
+if ($gloCount === 0) {
+    $db->exec("
+        INSERT INTO `glosarium` (`istilah`, `istilah_lengkap`, `definisi`, `sumber`, `urutan`, `is_active`) VALUES
+        ('AMI', 'Audit Mutu Internal', 'Proses pengujian yang sistematik, mandiri, dan terdokumentasi untuk memastikan pelaksanaan kegiatan di perguruan tinggi sesuai prosedur dan standar.', 'Pedoman SPMI', 1, 1),
+        ('PPEPP', 'Penetapan, Pelaksanaan, Evaluasi, Pengendalian, Peningkatan', 'Siklus penjaminan mutu pendidikan tinggi yang mencakup lima tahapan pokok secara berkelanjutan.', 'Permendikbudristek', 2, 1),
+        ('SPMI', 'Sistem Penjaminan Mutu Internal', 'Kegiatan sistemik penjaminan mutu pendidikan tinggi oleh perguruan tinggi secara otonom.', 'UU No. 12 Tahun 2012', 3, 1),
+        ('RTM', 'Rapat Tinjauan Manajemen', 'Pertemuan pimpinan untuk mengevaluasi efektivitas penerapan sistem mutu dan menindaklanjuti temuan audit.', 'Pedoman AMI', 4, 1),
+        ('BAN-PT', 'Badan Akreditasi Nasional Perguruan Tinggi', 'Badan akreditasi yang bertugas melakukan akreditasi perguruan tinggi.', 'Permendikbud', 5, 1),
+        ('LAM', 'Lembaga Akreditasi Mandiri', 'Lembaga yang dibentuk masyarakat atau profesi untuk melakukan akreditasi program studi.', 'Permendikbud', 6, 1);
+    ");
+    echo "Seeded initial glosarium table.\n";
+}
+
+// 9. Pengaturan Tautan Portal SPMI & UI GreenMetric
+$portalSettings = [
+    'portal_sista_status'     => 'active',
+    'portal_sista_url'        => 'https://sista.unika.ac.id',
+    'portal_sista_cs_title'   => 'Tautan Sistem SISTA Belum Dibuka',
+    'portal_sista_cs_desc'    => 'Pemantauan dan pelaporan siklus PPEPP diaktifkan sesuai jadwal.',
+    'portal_spmi_status'      => 'active',
+    'portal_spmi_url'         => 'https://spmi.kemdiktisaintek.go.id/auth/login',
+    'portal_spmi_cs_title'    => 'Tautan Sistem SPMI Kemendikti Belum Dibuka',
+    'portal_spmi_cs_desc'     => 'Pelaporan evaluasi pelaksanaan penjaminan mutu akan diaktifkan sesuai jadwal.',
+    'portal_eppepp_status'    => 'coming_soon',
+    'portal_eppepp_url'       => 'https://e-ppepp.unika.ac.id',
+    'portal_eppepp_cs_title'  => 'Tautan Sistem e-PPEPP Belum Dibuka',
+    'portal_eppepp_cs_desc'   => 'Pelaksanaan visitasi dan rekapitulasi audit e-PPEPP akan diaktifkan sesuai jadwal.',
+    'greenmetric_rank'        => '#84',
+    'greenmetric_scope'       => 'Peringkat Nasional (Indonesia)',
+    'greenmetric_badge'       => 'UI GREENMETRIC 2024',
+    'greenmetric_title'       => 'World University Rankings Network',
+    'greenmetric_desc'        => 'Komitmen Universitas Katolik Soegijapranata dalam pembangunan kampus berkelanjutan, pengelolaan energi hijau ramah lingkungan, dan pelestarian alam terukur secara global.',
+];
+
+foreach ($portalSettings as $k => $v) {
+    if (getPengaturan($k, '') === '') {
+        setPengaturan($k, $v);
+    }
+}
+echo "Synced portal & greenmetric settings.\n";
+
 echo "All migrations finished successfully!\n";

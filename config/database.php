@@ -29,8 +29,6 @@ define('UPLOAD_URL', SITE_URL . '/uploads/');
 // 3. Konfigurasi Google OAuth (Terpisah di berkas config/oauth.php)
 if (file_exists(__DIR__ . '/oauth.php')) {
     require_once __DIR__ . '/oauth.php';
-} elseif (file_exists(__DIR__ . '/oauth.example.php')) {
-    require_once __DIR__ . '/oauth.example.php';
 }
 
 // Inisialisasi Sesi jika belum aktif

@@ -301,11 +301,19 @@ Seluruh data uji coba / dummy pada modul layanan telah dibersihkan agar siap dig
   - **Lokal (Semarang & Jateng)**: Rekognisi PTS #1 di Kota Semarang (Espos.id / EduRank 2026), 6 Kampus Swasta Terbaik Semarang (Suara Merdeka 2026), 55 Kampus Unggulan Jawa Tengah (uniRank 2026), dan Peringkat EduRank Semarang (#3 of 14).
   - **Nasional (Indonesia)**: Top 100 PTS Terbaik di Indonesia (EduRank 2026), Penghargaan Entrepreneurial Marketing Campus for Impact 2026 (Marketeers & MCorp), dan Peringkat EduRank Indonesia (#65 of 562).
   - **Internasional (Global / World)**: AD Scientific Index 2026 (World Scientist & University Rankings), uniRank Global & National Profile 2026, dan UI GreenMetric World University Rankings (#1398 World).
-- **CMS Admin CRUD Lengkap**:
-  - Halaman [`admin/pemeringkatan-list.php`](./admin/pemeringkatan-list.php): Tab filter segmentasi (Semua, Lokal, Nasional, Internasional), pencarian real-time, toggle status publikasi, dan aksi hapus data aman.
-  - Halaman [`admin/pemeringkatan-form.php`](./admin/pemeringkatan-form.php): Form tambah & sunting data dengan segmentasi radio buttons, pengunggahan berkas sertifikat (PDF/gambar), dan tautan sumber rilis resmi.
-- **Halaman Publik Interaktif**:
-  - Halaman [`pemeringkatan.php`](./pemeringkatan.php) diperbarui dengan counter statistik, segmentasi filter pills instan, kartu capaian modern beraksen warna segmen, tombol link berita luar, dan modal lightbox penampil sertifikat PDF (`#certPreviewModal`).
+- **Kustomisasi Tema Warna & Kolom `warna`**:
+  - Kolom `warna VARCHAR(30) NULL DEFAULT NULL AFTER badge_teks` ditambahkan ke tabel `pemeringkatan`.
+  - Penambahan kunci konfigurasi warna tema segmen ke tabel `pengaturan`:
+    - `pemeringkatan_color_internasional`: Default `#1E3A8A` (Deep Royal Indigo)
+    - `pemeringkatan_color_nasional`: Default `#991B1B` (Rich Crimson Red)
+    - `pemeringkatan_color_lokal`: Default `#0D9488` (Deep Pine Teal)
+  - Admin dapat mengubah palet warna ini kapan saja melalui panel di [`admin/pemeringkatan-list.php`](./admin/pemeringkatan-list.php), atau memberikan warna aksen khusus per kartu di [`admin/pemeringkatan-form.php`](./admin/pemeringkatan-form.php).
+- **Struktur Halaman Publik Berbasis Seksi Terpisah (Section-by-Section)**:
+  - Halaman publik [`pemeringkatan.php`](./pemeringkatan.php) dirancang terbagi menjadi 3 seksi mandiri tanpa bercampur:
+    1. **Seksi Internasional** (Global & Dunia) di bagian paling atas
+    2. **Seksi Nasional** (Tingkat Indonesia) di bagian tengah
+    3. **Seksi Lokal** (Kota Semarang & Jawa Tengah) di bagian bawah
+  - Dilengkapi *sticky jump navigator* di bagian atas untuk lompat cepat antar seksi serta lightbox penampil sertifikat resmi (`#certPreviewModal`).
 
 
 

@@ -405,6 +405,7 @@ $db->exec("
       `peringkat` VARCHAR(100) NULL,
       `peringkat_dari` VARCHAR(100) NULL,
       `badge_teks` VARCHAR(100) NULL,
+      `warna` VARCHAR(30) NULL DEFAULT NULL,
       `deskripsi` TEXT NULL,
       `link_url` VARCHAR(500) NULL,
       `file_sertifikat` VARCHAR(255) NULL,
@@ -419,7 +420,24 @@ $db->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ");
 
+$wCols = $db->query("SHOW COLUMNS FROM pemeringkatan LIKE 'warna'")->fetchAll();
+if (empty($wCols)) {
+    $db->exec("ALTER TABLE pemeringkatan ADD COLUMN warna VARCHAR(30) NULL DEFAULT NULL AFTER badge_teks");
+}
+
+$colorSettings = [
+    'pemeringkatan_color_internasional' => '#1E3A8A',
+    'pemeringkatan_color_nasional'      => '#991B1B',
+    'pemeringkatan_color_lokal'         => '#0D9488',
+];
+foreach ($colorSettings as $k => $v) {
+    if (getPengaturan($k, '') === '') {
+        setPengaturan($k, $v);
+    }
+}
+
 $pRankCount = (int)$db->query("SELECT COUNT(*) FROM pemeringkatan")->fetchColumn();
+
 if ($pRankCount === 0) {
     $initialRankings = [
         // 1. Lokal (Semarang & Jateng)

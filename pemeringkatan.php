@@ -1,156 +1,198 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 
-$page_title   = 'Pemeringkatan Universitas & Jurusan – Lokal, Nasional, Internasional';
-$meta_desc    = 'Capaian peringkat resmi Universitas Katolik Soegijapranata (SCU) pada skala Lokal (Semarang & Jateng), Nasional (Indonesia), dan Internasional (Global).';
+$page_title   = 'Pemeringkatan Universitas & Jurusan – Internasional, Nasional, Lokal';
+$meta_desc    = 'Capaian peringkat resmi Universitas Katolik Soegijapranata (SCU) pada skala Internasional (Global), Nasional (Indonesia), dan Lokal (Semarang & Jawa Tengah).';
 $current_page = 'pemeringkatan';
 
 $db = getDB();
 
-// Ambil data pemeringkatan aktif dari tabel pemeringkatan
-$rankings = [];
+// Ambil konfigurasi warna tema segmentasi dari database (dapat diubah admin)
+$color_int = getPengaturan('pemeringkatan_color_internasional', '#1E3A8A');
+$color_nas = getPengaturan('pemeringkatan_color_nasional', '#991B1B');
+$color_lok = getPengaturan('pemeringkatan_color_lokal', '#0D9488');
+
+// Ambil semua data pemeringkatan aktif
+$rankings_int = [];
+$rankings_nas = [];
+$rankings_lok = [];
+
 try {
     $stmt = $db->query("
         SELECT * FROM pemeringkatan 
         WHERE is_active = 1 
-        ORDER BY CASE WHEN kategori = 'lokal' THEN 1 WHEN kategori = 'nasional' THEN 2 ELSE 3 END ASC, urutan ASC, id DESC
+        ORDER BY urutan ASC, id DESC
     ");
-    $rankings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $all = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($all as $item) {
+        if ($item['kategori'] === 'internasional') {
+            $rankings_int[] = $item;
+        } elseif ($item['kategori'] === 'nasional') {
+            $rankings_nas[] = $item;
+        } else {
+            $rankings_lok[] = $item;
+        }
+    }
 } catch (Exception $e) {}
 
-$counts = [
-    'all'           => count($rankings),
-    'lokal'         => count(array_filter($rankings, fn($r) => $r['kategori'] === 'lokal')),
-    'nasional'      => count(array_filter($rankings, fn($r) => $r['kategori'] === 'nasional')),
-    'internasional' => count(array_filter($rankings, fn($r) => $r['kategori'] === 'internasional')),
-];
-
-$active_segmen = trim($_GET['segmen'] ?? 'all');
-if (!in_array($active_segmen, ['all', 'lokal', 'nasional', 'internasional'])) {
-    $active_segmen = 'all';
-}
+$total_all = count($rankings_int) + count($rankings_nas) + count($rankings_lok);
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
 <style>
-/* Styling Premium Pemeringkatan Kampus */
-.ranking-segmen-btn {
-    border: 1.5px solid #E2E8F0;
-    background: #ffffff;
-    color: #475569;
+:root {
+    --rank-color-int: <?= htmlspecialchars($color_int) ?>;
+    --rank-color-nas: <?= htmlspecialchars($color_nas) ?>;
+    --rank-color-lok: <?= htmlspecialchars($color_lok) ?>;
+}
+
+/* Navigasi Cepat Antar Section (Sticky Jump Bar) */
+.section-jump-wrapper {
+    position: sticky;
+    top: 76px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #E2E8F0;
+    box-shadow: 0 4px 18px rgba(7, 23, 57, 0.05);
+}
+.jump-pill {
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
     font-weight: 700;
     font-size: 0.88rem;
-    padding: 0.65rem 1.35rem;
-    border-radius: 50px;
+    text-decoration: none;
     transition: all 0.22s ease;
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    gap: 0.5rem;
+    border: 1.5px solid transparent;
 }
-.ranking-segmen-btn:hover {
-    border-color: #071739;
-    color: #071739;
-    background: #F8FAFC;
+.jump-pill-int {
+    background: rgba(30, 58, 138, 0.08);
+    color: var(--rank-color-int);
+    border-color: rgba(30, 58, 138, 0.2);
+}
+.jump-pill-int:hover {
+    background: var(--rank-color-int);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
     transform: translateY(-2px);
 }
-.ranking-segmen-btn.active {
-    background: #071739;
-    color: #ffffff !important;
-    border-color: #071739;
-    box-shadow: 0 4px 14px rgba(7,23,57,0.18);
+.jump-pill-nas {
+    background: rgba(153, 27, 27, 0.08);
+    color: var(--rank-color-nas);
+    border-color: rgba(153, 27, 27, 0.2);
 }
-.ranking-segmen-btn.active-lokal {
-    background: #0284C7;
-    border-color: #0284C7;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(2,132,199,0.22);
+.jump-pill-nas:hover {
+    background: var(--rank-color-nas);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(153, 27, 27, 0.25);
+    transform: translateY(-2px);
 }
-.ranking-segmen-btn.active-nasional {
-    background: #D97706;
-    border-color: #D97706;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(217,119,6,0.22);
+.jump-pill-lok {
+    background: rgba(13, 148, 136, 0.08);
+    color: var(--rank-color-lok);
+    border-color: rgba(13, 148, 136, 0.2);
 }
-.ranking-segmen-btn.active-internasional {
-    background: #7C3AED;
-    border-color: #7C3AED;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(124,58,237,0.22);
+.jump-pill-lok:hover {
+    background: var(--rank-color-lok);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    transform: translateY(-2px);
 }
 
+/* Section Header Styling */
+.section-ranking-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid #E2E8F0;
+    position: relative;
+}
+.section-ranking-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    border-radius: 3px;
+}
+.section-header-int::after { background: var(--rank-color-int); }
+.section-header-nas::after { background: var(--rank-color-nas); }
+.section-header-lok::after { background: var(--rank-color-lok); }
+
+.badge-segmen-tag {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 0.4rem 0.9rem;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Card Styling */
 .ranking-card {
     background: #ffffff;
-    border: 1.5px solid #E2E8F0;
+    border: 1px solid #E2E8F0;
     border-radius: 18px;
     overflow: hidden;
     height: 100%;
     display: flex;
     flex-direction: column;
     transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 16px rgba(7, 23, 57, 0.03);
     position: relative;
 }
 .ranking-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 16px 32px rgba(7,23,57,0.1);
+    box-shadow: 0 16px 36px rgba(7, 23, 57, 0.1);
     border-color: #CBD5E1;
 }
 
-/* Category Accent Strip */
-.ranking-card.cat-lokal {
-    border-top: 5px solid #0284C7 !important;
-}
-.ranking-card.cat-nasional {
-    border-top: 5px solid #D97706 !important;
-}
-.ranking-card.cat-internasional {
-    border-top: 5px solid #7C3AED !important;
-}
-
 .ranking-hero-number {
-    font-size: 2.75rem;
+    font-size: 2.85rem;
     font-weight: 900;
     font-family: var(--font-heading);
     letter-spacing: -1.2px;
-    line-height: 1.1;
-    margin-bottom: 0.25rem;
+    line-height: 1;
+    margin-bottom: 0.35rem;
 }
-.cat-lokal .ranking-hero-number { color: #0284C7; }
-.cat-nasional .ranking-hero-number { color: #D97706; }
-.cat-internasional .ranking-hero-number { color: #7C3AED; }
-
 .ranking-hero-sub {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #64748B;
     margin-bottom: 1rem;
     display: block;
 }
 
-/* Summary Counter Cards */
-.ranking-counter-card {
-    background: #ffffff;
-    border: 1.5px solid #E2E8F0;
-    border-radius: 16px;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+/* Section Divider */
+.section-separator {
+    margin: 4.5rem 0;
+    position: relative;
+    text-align: center;
 }
-.ranking-counter-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    flex-shrink: 0;
+.section-separator hr {
+    border-top: 1px dashed #CBD5E1;
+    margin: 0;
+    opacity: 0.7;
+}
+.section-separator-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #F8FAFC;
+    padding: 0.5rem 1.25rem;
+    color: #94A3B8;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    border: 1px solid #E2E8F0;
 }
 </style>
 
@@ -163,7 +205,7 @@ require_once __DIR__ . '/includes/navbar.php';
         </div>
         <h1 class="page-banner-title">Pemeringkatan Universitas &amp; Jurusan</h1>
         <p class="text-white-50 mt-2 mb-0" style="max-width:760px;font-size:0.95rem;line-height:1.6;">
-            Capaian peringkat resmi dan rekognisi mutu <strong>Universitas Katolik Soegijapranata (SCU)</strong> dari lembaga pemeringkat independen bereputasi pada skala <strong>Lokal</strong>, <strong>Nasional</strong>, dan <strong>Internasional</strong>.
+            Capaian peringkat resmi dan rekognisi mutu <strong>Universitas Katolik Soegijapranata (SCU)</strong> dari lembaga pemeringkat independen bereputasi pada skala <strong>Internasional</strong>, <strong>Nasional</strong>, dan <strong>Lokal</strong>.
         </p>
         <div class="breadcrumb-lpm">
             <a href="<?= SITE_URL ?>/">Beranda</a>
@@ -175,193 +217,409 @@ require_once __DIR__ . '/includes/navbar.php';
     </div>
 </div>
 
-<section class="py-5" style="background:#F8FAFC;min-height:75vh;">
+<!-- Sticky Jump Bar Navigasi Antar Section -->
+<div class="section-jump-wrapper py-3">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="small fw-bold text-muted text-uppercase me-1" style="font-size:0.75rem;letter-spacing:0.5px;">
+                    <i class="bi bi-compass me-1"></i> Lompat Ke:
+                </span>
+                <a href="#section-internasional" class="jump-pill jump-pill-int">
+                    <i class="bi bi-globe2"></i> Internasional
+                    <span class="badge rounded-pill bg-white text-dark ms-1 shadow-sm"><?= count($rankings_int) ?></span>
+                </a>
+                <a href="#section-nasional" class="jump-pill jump-pill-nas">
+                    <i class="bi bi-flag-fill"></i> Nasional
+                    <span class="badge rounded-pill bg-white text-dark ms-1 shadow-sm"><?= count($rankings_nas) ?></span>
+                </a>
+                <a href="#section-lokal" class="jump-pill jump-pill-lok">
+                    <i class="bi bi-geo-alt-fill"></i> Lokal
+                    <span class="badge rounded-pill bg-white text-dark ms-1 shadow-sm"><?= count($rankings_lok) ?></span>
+                </a>
+            </div>
+            <div class="text-muted small d-none d-md-block">
+                <i class="bi bi-award-fill text-warning me-1"></i> Total <strong><?= $total_all ?></strong> Capaian Resmi Terdata
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="py-5" style="background:#F8FAFC;min-height:80vh;">
     <div class="container">
 
-        <!-- Ringkasan Statistik 3 Segmentasi -->
-        <div class="row g-3 mb-5">
-            <div class="col-md-4">
-                <div class="ranking-counter-card">
-                    <div class="ranking-counter-icon" style="background:rgba(2,132,199,0.1);color:#0284C7;">
-                        <i class="bi bi-geo-alt-fill"></i>
-                    </div>
-                    <div>
-                        <div class="text-uppercase fw-bold text-muted small" style="letter-spacing:0.5px;font-size:0.75rem;">Skala Wilayah</div>
-                        <h4 class="fw-bold mb-0" style="color:var(--navy);font-size:1.15rem;">Lokal (Kota &amp; Jateng)</h4>
-                        <div class="text-primary fw-bold small mt-1"><?= $counts['lokal'] ?> Capaian Resmi</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="ranking-counter-card">
-                    <div class="ranking-counter-icon" style="background:rgba(217,119,6,0.1);color:#D97706;">
-                        <i class="bi bi-flag-fill"></i>
-                    </div>
-                    <div>
-                        <div class="text-uppercase fw-bold text-muted small" style="letter-spacing:0.5px;font-size:0.75rem;">Skala Wilayah</div>
-                        <h4 class="fw-bold mb-0" style="color:var(--navy);font-size:1.15rem;">Nasional (Indonesia)</h4>
-                        <div class="text-warning fw-bold small mt-1" style="color:#D97706 !important;"><?= $counts['nasional'] ?> Capaian Resmi</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="ranking-counter-card">
-                    <div class="ranking-counter-icon" style="background:rgba(124,58,237,0.1);color:#7C3AED;">
-                        <i class="bi bi-globe2"></i>
-                    </div>
-                    <div>
-                        <div class="text-uppercase fw-bold text-muted small" style="letter-spacing:0.5px;font-size:0.75rem;">Skala Wilayah</div>
-                        <h4 class="fw-bold mb-0" style="color:var(--navy);font-size:1.15rem;">Internasional (Global)</h4>
-                        <div class="text-purple fw-bold small mt-1" style="color:#7C3AED !important;"><?= $counts['internasional'] ?> Capaian Resmi</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filter Segmentasi Interaktif (Semua, Lokal, Nasional, Internasional) -->
-        <div class="card p-3 p-md-4 border-0 shadow-sm rounded-4 bg-white mb-5">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <!-- ========================================== -->
+        <!-- SECTION 1: INTERNASIONAL (GLOBAL / WORLD)  -->
+        <!-- ========================================== -->
+        <section id="section-internasional" class="pt-2">
+            <div class="section-ranking-header section-header-int d-flex align-items-end justify-content-between flex-wrap gap-3">
                 <div>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-filter me-1"></i>Pilih Segmentasi</span>
-                        <span class="text-uppercase fw-bold text-dark small" style="letter-spacing:0.5px;">Filter Rekognisi Pemeringkatan:</span>
+                    <div class="badge-segmen-tag mb-2" style="background:rgba(30, 58, 138, 0.1);color:var(--rank-color-int);">
+                        <i class="bi bi-globe2"></i> Skala Internasional
                     </div>
-                    <div class="d-flex flex-wrap gap-2" id="rankingSegmenFilter">
-                        <button type="button" class="ranking-segmen-btn <?= $active_segmen === 'all' ? 'active' : '' ?>" data-segmen="all" onclick="applyRankingFilter('all', this)">
-                            <i class="bi bi-grid-fill"></i> Semua Rekognisi (<?= $counts['all'] ?>)
-                        </button>
-                        <button type="button" class="ranking-segmen-btn <?= $active_segmen === 'lokal' ? 'active-lokal' : '' ?>" data-segmen="lokal" onclick="applyRankingFilter('lokal', this)">
-                            <i class="bi bi-geo-alt-fill text-primary"></i> Lokal (<?= $counts['lokal'] ?>)
-                        </button>
-                        <button type="button" class="ranking-segmen-btn <?= $active_segmen === 'nasional' ? 'active-nasional' : '' ?>" data-segmen="nasional" onclick="applyRankingFilter('nasional', this)">
-                            <i class="bi bi-flag-fill text-warning"></i> Nasional (<?= $counts['nasional'] ?>)
-                        </button>
-                        <button type="button" class="ranking-segmen-btn <?= $active_segmen === 'internasional' ? 'active-internasional' : '' ?>" data-segmen="internasional" onclick="applyRankingFilter('internasional', this)">
-                            <i class="bi bi-globe2 text-purple"></i> Internasional (<?= $counts['internasional'] ?>)
-                        </button>
-                    </div>
+                    <h2 class="fw-bold mb-1" style="font-size:1.55rem;color:var(--navy);">
+                        Rekognisi Pemeringkatan Internasional
+                    </h2>
+                    <p class="text-muted small mb-0" style="max-width:700px;font-size:0.88rem;">
+                        Pengakuan reputasi global, indeks sitasi saintis, dan metrik keberlanjutan kampus di kancah perguruan tinggi dunia.
+                    </p>
                 </div>
-
-                <div class="text-muted small fst-italic">
-                    <i class="bi bi-info-circle me-1"></i>Menampilkan rekognisi pemeringkatan kampus sesuai skala wilayah
+                <div>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:var(--rank-color-int);color:#ffffff;font-size:0.82rem;">
+                        <?= count($rankings_int) ?> Capaian Global
+                    </span>
                 </div>
             </div>
-        </div>
 
-        <!-- Grid Kartu Pemeringkatan -->
-        <div class="row g-4" id="rankingGrid">
-            <?php if (empty($rankings)): ?>
-            <div class="col-12 text-center py-5 text-muted">
-                <i class="bi bi-award fs-1 opacity-50 mb-3 d-block"></i>
-                <h5>Belum ada data pemeringkatan yang dipublikasikan.</h5>
-                <p class="small">Data pemeringkatan akan segera diperbarui oleh pengelola LPM.</p>
+            <?php if (empty($rankings_int)): ?>
+            <div class="text-center py-4 text-muted bg-white rounded-4 border p-4">
+                <i class="bi bi-globe2 fs-2 opacity-50 mb-2 d-block"></i>
+                <div class="fw-semibold">Belum ada data pemeringkatan internasional yang dipublikasikan.</div>
             </div>
             <?php else: ?>
-            <?php foreach ($rankings as $r): ?>
-            <?php 
-            $cat_class = 'cat-' . $r['kategori'];
-            $file_url = '';
-            if (!empty($r['file_sertifikat'])) {
-                if (file_exists(__DIR__ . '/uploads/pemeringkatan/' . $r['file_sertifikat'])) {
-                    $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
-                } elseif (file_exists(__DIR__ . '/uploads/akreditasi/' . $r['file_sertifikat'])) {
-                    $file_url = SITE_URL . '/uploads/akreditasi/' . $r['file_sertifikat'];
-                } else {
-                    $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+            <div class="row g-4">
+                <?php foreach ($rankings_int as $r): ?>
+                <?php 
+                $card_color = !empty($r['warna']) ? $r['warna'] : $color_int;
+                $file_url = '';
+                if (!empty($r['file_sertifikat'])) {
+                    if (file_exists(__DIR__ . '/uploads/pemeringkatan/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    } elseif (file_exists(__DIR__ . '/uploads/akreditasi/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/akreditasi/' . $r['file_sertifikat'];
+                    } else {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    }
                 }
-            }
-            ?>
-            <div class="col-md-6 col-lg-4 ranking-item" data-segmen="<?= e($r['kategori']) ?>">
-                <div class="ranking-card <?= $cat_class ?>">
-                    
-                    <!-- Header Kartu: Badge Segmen & Tahun -->
-                    <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div>
-                            <?php if ($r['kategori'] === 'lokal'): ?>
-                            <span class="badge px-3 py-1 rounded-pill" style="background:#E0F2FE;color:#0369A1;font-weight:800;font-size:0.75rem;">
-                                <i class="bi bi-geo-alt-fill me-1"></i> LOKAL (SEMARANG &amp; JATENG)
+                ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                        
+                        <!-- Header Kartu: Badge & Tahun -->
+                        <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span class="badge px-3 py-1 rounded-pill" style="background:rgba(30, 58, 138, 0.08);color:<?= htmlspecialchars($card_color) ?>;font-weight:800;font-size:0.75rem;">
+                                <i class="bi bi-globe2 me-1"></i> INTERNASIONAL
                             </span>
-                            <?php elseif ($r['kategori'] === 'nasional'): ?>
-                            <span class="badge px-3 py-1 rounded-pill" style="background:#FEF3C7;color:#92400E;font-weight:800;font-size:0.75rem;">
-                                <i class="bi bi-flag-fill me-1"></i> NASIONAL (INDONESIA)
+                            <span class="badge bg-light text-muted border px-2 py-1 rounded-3" style="font-size:0.75rem;">
+                                <?= e($r['tahun']) ?>
                             </span>
-                            <?php else: ?>
-                            <span class="badge px-3 py-1 rounded-pill" style="background:#F3E8FF;color:#6B21A8;font-weight:800;font-size:0.75rem;">
-                                <i class="bi bi-globe2 me-1"></i> INTERNASIONAL (GLOBAL)
-                            </span>
-                            <?php endif; ?>
                         </div>
-                        <span class="badge bg-light text-muted border px-2 py-1 rounded-3" style="font-size:0.75rem;">
-                            <?= e($r['tahun']) ?>
-                        </span>
+
+                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
+                            <div class="mt-2 mb-1">
+                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                    <?= e($r['peringkat'] ?: '-') ?>
+                                </span>
+                                <?php if (!empty($r['peringkat_dari'])): ?>
+                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                                <?= e($r['judul']) ?>
+                            </h3>
+
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
+                                    <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
+                                </span>
+                                <?php if (!empty($r['badge_teks'])): ?>
+                                <span class="badge rounded-pill px-3 py-1" style="background:#F1F5F9;color:#334155;font-weight:700;font-size:0.75rem;">
+                                    <?= e($r['badge_teks']) ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (!empty($r['deskripsi'])): ?>
+                            <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
+                                <?= nl2br(e($r['deskripsi'])) ?>
+                            </p>
+                            <?php endif; ?>
+
+                            <!-- Tombol Aksi -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                                <?php if (!empty($file_url)): ?>
+                                <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
+                                    <i class="bi bi-file-earmark-check-fill"></i>
+                                    <span>Lihat Berkas Sertifikat</span>
+                                </button>
+                                <?php endif; ?>
+
+                                <?php if (!empty($r['link_url'])): ?>
+                                <a href="<?= e($r['link_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn <?= !empty($file_url) ? 'btn-outline-dark' : 'btn-dark' ?> w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size:0.82rem;"></i>
+                                    <span>Kunjungi Sumber Berita / Rilis</span>
+                                </a>
+                                <?php endif; ?>
+
+                                <?php if (empty($file_url) && empty($r['link_url'])): ?>
+                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
                     </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </section>
 
-                    <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
-                    <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
-                        <div class="mt-2 mb-1">
-                            <span class="ranking-hero-number"><?= e($r['peringkat'] ?: '-') ?></span>
-                            <?php if (!empty($r['peringkat_dari'])): ?>
-                            <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
-                            <?php endif; ?>
-                        </div>
+        <!-- Separator -->
+        <div class="section-separator">
+            <hr>
+            <div class="section-separator-icon">
+                <i class="bi bi-arrow-down-short"></i>
+            </div>
+        </div>
 
-                        <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.2rem;line-height:1.4;margin-bottom:0.75rem;">
-                            <?= e($r['judul']) ?>
-                        </h3>
-
-                        <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
-                                <i class="bi bi-patch-check-fill text-primary me-1"></i> <?= e($r['lembaga']) ?>
-                            </span>
-                            <?php if (!empty($r['badge_teks'])): ?>
-                            <span class="badge rounded-pill px-3 py-1" style="background:#F1F5F9;color:#334155;font-weight:700;font-size:0.75rem;">
-                                <?= e($r['badge_teks']) ?>
-                            </span>
-                            <?php endif; ?>
-                        </div>
-
-                        <?php if (!empty($r['deskripsi'])): ?>
-                        <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
-                            <?= nl2br(e($r['deskripsi'])) ?>
-                        </p>
-                        <?php endif; ?>
-
-                        <!-- Tombol Aksi di Bagian Bawah -->
-                        <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
-                            <?php if (!empty($file_url)): ?>
-                            <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
-                                <i class="bi bi-file-earmark-check-fill"></i>
-                                <span>Lihat Berkas Sertifikat</span>
-                            </button>
-                            <?php endif; ?>
-
-                            <?php if (!empty($r['link_url'])): ?>
-                            <a href="<?= e($r['link_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn <?= !empty($file_url) ? 'btn-outline-dark' : 'btn-dark' ?> w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;">
-                                <i class="bi bi-box-arrow-up-right" style="font-size:0.82rem;"></i>
-                                <span>Kunjungi Sumber Berita / Rilis</span>
-                            </a>
-                            <?php endif; ?>
-
-                            <?php if (empty($file_url) && empty($r['link_url'])): ?>
-                            <span class="text-muted small py-2">Data resmi terverifikasi</span>
-                            <?php endif; ?>
-                        </div>
+        <!-- ========================================== -->
+        <!-- SECTION 2: NASIONAL (INDONESIA)            -->
+        <!-- ========================================== -->
+        <section id="section-nasional">
+            <div class="section-ranking-header section-header-nas d-flex align-items-end justify-content-between flex-wrap gap-3">
+                <div>
+                    <div class="badge-segmen-tag mb-2" style="background:rgba(153, 27, 27, 0.1);color:var(--rank-color-nas);">
+                        <i class="bi bi-flag-fill"></i> Skala Nasional
                     </div>
-
+                    <h2 class="fw-bold mb-1" style="font-size:1.55rem;color:var(--navy);">
+                        Rekognisi Pemeringkatan Nasional
+                    </h2>
+                    <p class="text-muted small mb-0" style="max-width:700px;font-size:0.88rem;">
+                        Peringkat dan apresiasi universitas, kinerja riset, mutu lulusan, dan dampak kampus di tingkat Republik Indonesia.
+                    </p>
+                </div>
+                <div>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:var(--rank-color-nas);color:#ffffff;font-size:0.82rem;">
+                        <?= count($rankings_nas) ?> Capaian Nasional
+                    </span>
                 </div>
             </div>
-            <?php endforeach; ?>
+
+            <?php if (empty($rankings_nas)): ?>
+            <div class="text-center py-4 text-muted bg-white rounded-4 border p-4">
+                <i class="bi bi-flag-fill fs-2 opacity-50 mb-2 d-block"></i>
+                <div class="fw-semibold">Belum ada data pemeringkatan nasional yang dipublikasikan.</div>
+            </div>
+            <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($rankings_nas as $r): ?>
+                <?php 
+                $card_color = !empty($r['warna']) ? $r['warna'] : $color_nas;
+                $file_url = '';
+                if (!empty($r['file_sertifikat'])) {
+                    if (file_exists(__DIR__ . '/uploads/pemeringkatan/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    } elseif (file_exists(__DIR__ . '/uploads/akreditasi/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/akreditasi/' . $r['file_sertifikat'];
+                    } else {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    }
+                }
+                ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                        
+                        <!-- Header Kartu: Badge & Tahun -->
+                        <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span class="badge px-3 py-1 rounded-pill" style="background:rgba(153, 27, 27, 0.08);color:<?= htmlspecialchars($card_color) ?>;font-weight:800;font-size:0.75rem;">
+                                <i class="bi bi-flag-fill me-1"></i> NASIONAL
+                            </span>
+                            <span class="badge bg-light text-muted border px-2 py-1 rounded-3" style="font-size:0.75rem;">
+                                <?= e($r['tahun']) ?>
+                            </span>
+                        </div>
+
+                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
+                            <div class="mt-2 mb-1">
+                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                    <?= e($r['peringkat'] ?: '-') ?>
+                                </span>
+                                <?php if (!empty($r['peringkat_dari'])): ?>
+                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                                <?= e($r['judul']) ?>
+                            </h3>
+
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
+                                    <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
+                                </span>
+                                <?php if (!empty($r['badge_teks'])): ?>
+                                <span class="badge rounded-pill px-3 py-1" style="background:#F1F5F9;color:#334155;font-weight:700;font-size:0.75rem;">
+                                    <?= e($r['badge_teks']) ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (!empty($r['deskripsi'])): ?>
+                            <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
+                                <?= nl2br(e($r['deskripsi'])) ?>
+                            </p>
+                            <?php endif; ?>
+
+                            <!-- Tombol Aksi -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                                <?php if (!empty($file_url)): ?>
+                                <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
+                                    <i class="bi bi-file-earmark-check-fill"></i>
+                                    <span>Lihat Berkas Sertifikat</span>
+                                </button>
+                                <?php endif; ?>
+
+                                <?php if (!empty($r['link_url'])): ?>
+                                <a href="<?= e($r['link_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn <?= !empty($file_url) ? 'btn-outline-dark' : 'btn-dark' ?> w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size:0.82rem;"></i>
+                                    <span>Kunjungi Sumber Berita / Rilis</span>
+                                </a>
+                                <?php endif; ?>
+
+                                <?php if (empty($file_url) && empty($r['link_url'])): ?>
+                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
             <?php endif; ?>
+        </section>
+
+        <!-- Separator -->
+        <div class="section-separator">
+            <hr>
+            <div class="section-separator-icon">
+                <i class="bi bi-arrow-down-short"></i>
+            </div>
         </div>
 
-        <!-- Notifikasi saat filter tidak menemukan data -->
-        <div id="rankingEmptyFilterNotice" class="text-center py-5 text-muted" style="display:none;">
-            <i class="bi bi-filter-circle fs-1 text-muted opacity-50 mb-2 d-block"></i>
-            Tidak ada rekognisi pemeringkatan untuk segmentasi yang dipilih.
-        </div>
+        <!-- ========================================== -->
+        <!-- SECTION 3: LOKAL (SEMARANG & JAWA TENGAH)  -->
+        <!-- ========================================== -->
+        <section id="section-lokal">
+            <div class="section-ranking-header section-header-lok d-flex align-items-end justify-content-between flex-wrap gap-3">
+                <div>
+                    <div class="badge-segmen-tag mb-2" style="background:rgba(13, 148, 136, 0.1);color:var(--rank-color-lok);">
+                        <i class="bi bi-geo-alt-fill"></i> Skala Lokal &amp; Regional
+                    </div>
+                    <h2 class="fw-bold mb-1" style="font-size:1.55rem;color:var(--navy);">
+                        Rekognisi Pemeringkatan Lokal
+                    </h2>
+                    <p class="text-muted small mb-0" style="max-width:700px;font-size:0.88rem;">
+                        Posisi terdepan Universitas Katolik Soegijapranata sebagai PTS terbaik di Kota Semarang dan wilayah Jawa Tengah.
+                    </p>
+                </div>
+                <div>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:var(--rank-color-lok);color:#ffffff;font-size:0.82rem;">
+                        <?= count($rankings_lok) ?> Capaian Lokal
+                    </span>
+                </div>
+            </div>
+
+            <?php if (empty($rankings_lok)): ?>
+            <div class="text-center py-4 text-muted bg-white rounded-4 border p-4">
+                <i class="bi bi-geo-alt-fill fs-2 opacity-50 mb-2 d-block"></i>
+                <div class="fw-semibold">Belum ada data pemeringkatan lokal yang dipublikasikan.</div>
+            </div>
+            <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($rankings_lok as $r): ?>
+                <?php 
+                $card_color = !empty($r['warna']) ? $r['warna'] : $color_lok;
+                $file_url = '';
+                if (!empty($r['file_sertifikat'])) {
+                    if (file_exists(__DIR__ . '/uploads/pemeringkatan/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    } elseif (file_exists(__DIR__ . '/uploads/akreditasi/' . $r['file_sertifikat'])) {
+                        $file_url = SITE_URL . '/uploads/akreditasi/' . $r['file_sertifikat'];
+                    } else {
+                        $file_url = SITE_URL . '/uploads/pemeringkatan/' . $r['file_sertifikat'];
+                    }
+                }
+                ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                        
+                        <!-- Header Kartu: Badge & Tahun -->
+                        <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span class="badge px-3 py-1 rounded-pill" style="background:rgba(13, 148, 136, 0.08);color:<?= htmlspecialchars($card_color) ?>;font-weight:800;font-size:0.75rem;">
+                                <i class="bi bi-geo-alt-fill me-1"></i> LOKAL (SEMARANG &amp; JATENG)
+                            </span>
+                            <span class="badge bg-light text-muted border px-2 py-1 rounded-3" style="font-size:0.75rem;">
+                                <?= e($r['tahun']) ?>
+                            </span>
+                        </div>
+
+                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
+                            <div class="mt-2 mb-1">
+                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                    <?= e($r['peringkat'] ?: '-') ?>
+                                </span>
+                                <?php if (!empty($r['peringkat_dari'])): ?>
+                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                                <?= e($r['judul']) ?>
+                            </h3>
+
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
+                                    <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
+                                </span>
+                                <?php if (!empty($r['badge_teks'])): ?>
+                                <span class="badge rounded-pill px-3 py-1" style="background:#F1F5F9;color:#334155;font-weight:700;font-size:0.75rem;">
+                                    <?= e($r['badge_teks']) ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (!empty($r['deskripsi'])): ?>
+                            <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
+                                <?= nl2br(e($r['deskripsi'])) ?>
+                            </p>
+                            <?php endif; ?>
+
+                            <!-- Tombol Aksi -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                                <?php if (!empty($file_url)): ?>
+                                <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
+                                    <i class="bi bi-file-earmark-check-fill"></i>
+                                    <span>Lihat Berkas Sertifikat</span>
+                                </button>
+                                <?php endif; ?>
+
+                                <?php if (!empty($r['link_url'])): ?>
+                                <a href="<?= e($r['link_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn <?= !empty($file_url) ? 'btn-outline-dark' : 'btn-dark' ?> w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size:0.82rem;"></i>
+                                    <span>Kunjungi Sumber Berita / Rilis</span>
+                                </a>
+                                <?php endif; ?>
+
+                                <?php if (empty($file_url) && empty($r['link_url'])): ?>
+                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </section>
 
     </div>
-</section>
+</div>
 
 <!-- Modal Lightbox Pratinjau Sertifikat Dokumen / PDF / Gambar -->
 <div class="modal fade" id="certPreviewModal" tabindex="-1" aria-hidden="true">
@@ -406,61 +664,24 @@ require_once __DIR__ . '/includes/navbar.php';
 </div>
 
 <script>
-// Filter Segmentasi Pemeringkatan (Lokal, Nasional, Internasional)
-function applyRankingFilter(segmen, btn) {
-    if (!segmen) segmen = 'all';
-
-    // 1. Perbarui status tombol aktif
-    var btns = document.querySelectorAll('#rankingSegmenFilter .ranking-segmen-btn');
-    btns.forEach(function(b) {
-        b.classList.remove('active', 'active-lokal', 'active-nasional', 'active-internasional');
-        if (b.getAttribute('data-segmen') === segmen) {
-            if (segmen === 'lokal') b.classList.add('active-lokal');
-            else if (segmen === 'nasional') b.classList.add('active-nasional');
-            else if (segmen === 'internasional') b.classList.add('active-internasional');
-            else b.classList.add('active');
+// Smooth scroll for anchor jump links with offset for sticky header
+document.querySelectorAll('.jump-pill').forEach(function(anchor) {
+    anchor.addEventListener('click', function(e) {
+        var targetId = this.getAttribute('href');
+        if (targetId && targetId.startsWith('#')) {
+            var targetElem = document.querySelector(targetId);
+            if (targetElem) {
+                e.preventDefault();
+                var headerOffset = 140;
+                var elementPosition = targetElem.getBoundingClientRect().top;
+                var offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
         }
     });
-
-    // 2. Filter item kartu pada grid
-    var items = document.querySelectorAll('.ranking-item');
-    var visibleCount = 0;
-    items.forEach(function(it) {
-        var itSegmen = it.getAttribute('data-segmen');
-        if (segmen === 'all' || itSegmen === segmen) {
-            it.style.display = '';
-            visibleCount++;
-        } else {
-            it.style.display = 'none';
-        }
-    });
-
-    var emptyNotice = document.getElementById('rankingEmptyFilterNotice');
-    if (emptyNotice) {
-        emptyNotice.style.display = (visibleCount === 0 && items.length > 0) ? 'block' : 'none';
-    }
-
-    // 3. Perbarui URL tanpa reload (History API)
-    if (window.history && window.history.replaceState) {
-        var u = new URL(window.location.href);
-        if (segmen === 'all') {
-            u.searchParams.delete('segmen');
-        } else {
-            u.searchParams.set('segmen', segmen);
-        }
-        window.history.replaceState({}, '', u.toString());
-    }
-}
-
-// Inisialisasi segmen awal dari URL
-document.addEventListener('DOMContentLoaded', function() {
-    var initSegmen = '<?= e($active_segmen) ?>';
-    if (initSegmen && initSegmen !== 'all') {
-        var activeBtn = document.querySelector('#rankingSegmenFilter [data-segmen="' + initSegmen + '"]');
-        if (activeBtn) {
-            applyRankingFilter(initSegmen, activeBtn);
-        }
-    }
 });
 
 // Modal Pratinjau Sertifikat
@@ -491,7 +712,10 @@ function openCertModal(fileUrl, title, subtitle) {
         img.style.display = 'block';
     }
 
-    var modal = new bootstrap.Modal(document.getElementById('certPreviewModal'));
+    var modalEl = document.getElementById('certPreviewModal');
+    var modal = (typeof bootstrap !== 'undefined' && bootstrap.Modal.getOrCreateInstance)
+        ? bootstrap.Modal.getOrCreateInstance(modalEl)
+        : new bootstrap.Modal(modalEl);
     modal.show();
 }
 

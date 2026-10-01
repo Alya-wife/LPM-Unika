@@ -25,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $peringkat      = trim($_POST['peringkat'] ?? '');
     $peringkat_dari = trim($_POST['peringkat_dari'] ?? '');
     $badge_teks     = trim($_POST['badge_teks'] ?? '');
+    $warna          = trim($_POST['warna'] ?? '');
+    if ($warna !== '' && !preg_match('/^#[a-fA-F0-9]{3,8}$/', $warna)) {
+        $warna = '';
+    }
     $deskripsi      = trim($_POST['deskripsi'] ?? '');
     $link_url       = trim($_POST['link_url'] ?? '');
     $tahun          = trim($_POST['tahun'] ?? date('Y'));
@@ -76,29 +80,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        $db_warna = ($warna !== '') ? $warna : null;
         if ($id > 0) {
             $stmt = $db->prepare("
                 UPDATE pemeringkatan 
                 SET judul = ?, lembaga = ?, kategori = ?, peringkat = ?, peringkat_dari = ?, 
-                    badge_teks = ?, deskripsi = ?, link_url = ?, file_sertifikat = ?, tahun = ?, 
+                    badge_teks = ?, warna = ?, deskripsi = ?, link_url = ?, file_sertifikat = ?, tahun = ?, 
                     urutan = ?, is_active = ?
                 WHERE id = ?
             ");
             $stmt->execute([
                 $judul, $lembaga, $kategori, $peringkat, $peringkat_dari,
-                $badge_teks, $deskripsi, $link_url, $file_sertifikat, $tahun,
+                $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active, $id
             ]);
             $_SESSION['flash'] = 'Data pemeringkatan berhasil diperbarui.';
         } else {
             $stmt = $db->prepare("
                 INSERT INTO pemeringkatan 
-                (judul, lembaga, kategori, peringkat, peringkat_dari, badge_teks, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (judul, lembaga, kategori, peringkat, peringkat_dari, badge_teks, warna, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $judul, $lembaga, $kategori, $peringkat, $peringkat_dari,
-                $badge_teks, $deskripsi, $link_url, $file_sertifikat, $tahun,
+                $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active
             ]);
             $_SESSION['flash'] = 'Data pemeringkatan baru berhasil ditambahkan.';
@@ -181,22 +186,36 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <input type="text" name="judul" class="form-control" placeholder="Contoh: EduRank: PTS Nomor 1 di Kota Semarang" value="<?= htmlspecialchars($_POST['judul'] ?? ($item['judul'] ?? '')) ?>" required>
                 </div>
 
-                <!-- Angka Peringkat & Lingkup -->
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark">Peringkat / Capaian Utama</label>
-                    <input type="text" name="peringkat" class="form-control fw-bold" placeholder="Contoh: #1, Top 100, #65, Awardee 2026" value="<?= htmlspecialchars($_POST['peringkat'] ?? ($item['peringkat'] ?? '')) ?>">
-                    <small class="text-muted" style="font-size:0.75rem;">Ditampilkan sebagai angka tebal utama pada kartu.</small>
+                <!-- Angka Peringkat, Lingkup, Badge, dan Warna -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-dark">Peringkat Utama</label>
+                    <input type="text" name="peringkat" class="form-control fw-bold" placeholder="Contoh: #1, Top 100, #65" value="<?= htmlspecialchars($_POST['peringkat'] ?? ($item['peringkat'] ?? '')) ?>">
+                    <small class="text-muted" style="font-size:0.75rem;">Angka tebal utama kartu.</small>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark">Lingkup / Pembanding (of ...)</label>
-                    <input type="text" name="peringkat_dari" class="form-control" placeholder="Contoh: of 14 Kampus Semarang, of 562, World, 55 Kampus Jateng" value="<?= htmlspecialchars($_POST['peringkat_dari'] ?? ($item['peringkat_dari'] ?? '')) ?>">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-dark">Lingkup Pembanding</label>
+                    <input type="text" name="peringkat_dari" class="form-control" placeholder="Contoh: of 14 Kampus Semarang, of 562" value="<?= htmlspecialchars($_POST['peringkat_dari'] ?? ($item['peringkat_dari'] ?? '')) ?>">
                     <small class="text-muted" style="font-size:0.75rem;">Teks sub-peringkat pendamping.</small>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark">Badge / Label Teks Singkat</label>
-                    <input type="text" name="badge_teks" class="form-control" placeholder="Contoh: PTS Terbaik di Semarang 2026" value="<?= htmlspecialchars($_POST['badge_teks'] ?? ($item['badge_teks'] ?? '')) ?>">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-dark">Badge / Label Singkat</label>
+                    <input type="text" name="badge_teks" class="form-control" placeholder="Contoh: PTS Terbaik Semarang" value="<?= htmlspecialchars($_POST['badge_teks'] ?? ($item['badge_teks'] ?? '')) ?>">
+                    <small class="text-muted" style="font-size:0.75rem;">Label sorotan kecil.</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-dark">Warna Aksen Kartu (Opsional)</label>
+                    <?php $item_warna = $_POST['warna'] ?? ($item['warna'] ?? ''); ?>
+                    <div class="input-group">
+                        <input type="color" class="form-control form-control-color p-1" id="warnaPicker" value="<?= $item_warna ?: '#1E3A8A' ?>" style="width:44px;max-width:44px;height:38px;border-radius:8px 0 0 8px;cursor:pointer;" oninput="document.getElementById('warnaInput').value = this.value;">
+                        <input type="text" name="warna" id="warnaInput" class="form-control" placeholder="#HEX (default segmen)" value="<?= htmlspecialchars($item_warna) ?>" maxlength="10" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)) document.getElementById('warnaPicker').value = this.value;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" title="Gunakan Default Segmen" onclick="document.getElementById('warnaInput').value='';">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted" style="font-size:0.72rem;">Kosongkan jika ingin mengikuti warna segmen.</small>
                 </div>
 
                 <!-- Deskripsi Lengkap -->

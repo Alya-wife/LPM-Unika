@@ -235,7 +235,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 5. Halaman SPMI (Dropdown) -->
-        <?php $grp_spmi = in_array($current_admin, ['dokumen-list','dokumen-form','kategori-dokumen','spmi-kemendikti-list','spmi-kemendikti-form']); ?>
+        <?php $grp_spmi = in_array($current_admin, ['dokumen-list','dokumen-form','kategori-dokumen','spmi-kemendikti-list','spmi-kemendikti-form','spmi-portal-setting']); ?>
         <div class="admin-nav-dropdown <?= $grp_spmi ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_spmi ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -255,6 +255,9 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
                 <a href="<?= SITE_URL ?>/admin/spmi-kemendikti-list.php" class="admin-subnav-link <?= in_array($current_admin, ['spmi-kemendikti-list','spmi-kemendikti-form']) ? 'active' : '' ?>">
                     <span>• Hasil SPMI Kemendikti</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/spmi-portal-setting.php" class="admin-subnav-link <?= $current_admin === 'spmi-portal-setting' ? 'active' : '' ?>">
+                    <span>• Tautan Portal SPMI</span>
                 </a>
             </div>
         </div>

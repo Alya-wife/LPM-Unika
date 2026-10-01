@@ -471,6 +471,21 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
             break;
 
         case 'spmi_kemendikti':
+            // Pengaturan Dinamis 3 Portal Utama SPMI
+            $sista_st    = getPengaturan('portal_sista_status', 'active');
+            $sista_url   = getPengaturan('portal_sista_url', 'https://sista.unika.ac.id');
+            $sista_cs_t  = getPengaturan('portal_sista_cs_title', 'Tautan Sistem SISTA Belum Dibuka');
+            $sista_cs_d  = getPengaturan('portal_sista_cs_desc', 'Pemantauan dan pelaporan siklus PPEPP diaktifkan sesuai jadwal.');
+
+            $spmi_st     = getPengaturan('portal_spmi_status', 'active');
+            $spmi_url    = getPengaturan('portal_spmi_url', 'https://spmi.kemdiktisaintek.go.id/auth/login');
+            $spmi_cs_t   = getPengaturan('portal_spmi_cs_title', 'Tautan Sistem SPMI Kemendikti Belum Dibuka');
+            $spmi_cs_d   = getPengaturan('portal_spmi_cs_desc', 'Pelaporan evaluasi pelaksanaan penjaminan mutu akan diaktifkan sesuai jadwal.');
+
+            $eppepp_st   = getPengaturan('portal_eppepp_status', 'coming_soon');
+            $eppepp_url  = getPengaturan('portal_eppepp_url', 'https://e-ppepp.unika.ac.id');
+            $eppepp_cs_t = getPengaturan('portal_eppepp_cs_title', 'Tautan Sistem e-PPEPP Belum Dibuka');
+            $eppepp_cs_d = getPengaturan('portal_eppepp_cs_desc', 'Pelaksanaan dan evaluasi sistem e-PPEPP akan diaktifkan sesuai jadwal.');
             ?>
             <section class="py-5" style="background:#ffffff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>" id="hasil-kemendikti">
                 <div class="container">
@@ -493,10 +508,18 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                                     Pemantauan &amp; pelaporan siklus PPEPP, perumusan capaian, bukti dukung pelaksanaan, dan rencana tindak lanjut termonitor secara digital terintegrasi.
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
-                                    <a href="https://sista.unika.ac.id" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                    <?php if ($sista_st === 'active' && !empty($sista_url)): ?>
+                                    <a href="<?= e($sista_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
                                         <span>Buka Portal SISTA</span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
+                                    <?php else: ?>
+                                    <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 text-center w-100">
+                                        <div class="badge bg-info text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size:0.75rem;"><i class="bi bi-hourglass-split me-1"></i> Segera Hadir</div>
+                                        <div class="text-white fw-bold" style="font-size:0.9rem;"><?= e($sista_cs_t) ?></div>
+                                        <div class="text-white-50 small mt-1" style="font-size:0.78rem;line-height:1.45;"><?= e($sista_cs_d) ?></div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -519,10 +542,18 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                                     Rekapitulasi dan pelaporan evaluasi pelaksanaan penjaminan mutu perguruan tinggi secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
-                                    <a href="https://spmi.kemdiktisaintek.go.id/auth/login" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                    <?php if ($spmi_st === 'active' && !empty($spmi_url)): ?>
+                                    <a href="<?= e($spmi_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
                                         <span>Buka Portal SPMI</span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
+                                    <?php else: ?>
+                                    <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 text-center w-100">
+                                        <div class="badge bg-info text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size:0.75rem;"><i class="bi bi-hourglass-split me-1"></i> Segera Hadir</div>
+                                        <div class="text-white fw-bold" style="font-size:0.9rem;"><?= e($spmi_cs_t) ?></div>
+                                        <div class="text-white-50 small mt-1" style="font-size:0.78rem;line-height:1.45;"><?= e($spmi_cs_d) ?></div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -545,10 +576,18 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                                     Sistem informasi elektronik implementasi, evaluasi pelaksanaan, dan pengendalian tahapan siklus PPEPP secara berkesinambungan.
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
-                                    <a href="https://e-ppepp.unika.ac.id" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
+                                    <?php if ($eppepp_st === 'active' && !empty($eppepp_url)): ?>
+                                    <a href="<?= e($eppepp_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
                                         <span>Buka Portal E-PPEPP</span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
+                                    <?php else: ?>
+                                    <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 text-center w-100">
+                                        <div class="badge bg-info text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size:0.75rem;"><i class="bi bi-hourglass-split me-1"></i> Segera Hadir</div>
+                                        <div class="text-white fw-bold" style="font-size:0.9rem;"><?= e($eppepp_cs_t) ?></div>
+                                        <div class="text-white-50 small mt-1" style="font-size:0.78rem;line-height:1.45;"><?= e($eppepp_cs_d) ?></div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

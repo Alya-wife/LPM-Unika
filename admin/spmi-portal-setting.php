@@ -1,41 +1,51 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-$admin_page_title = 'Kelola Tautan Portal SPMI';
+$admin_page_title = 'Kelola Chart & Portal SPMI';
 $db = getDB();
 
 $flash = $_SESSION['flash'] ?? '';
 $error = '';
 unset($_SESSION['flash']);
 
+// Default Chart PPEPP Settings
+$chart_defaults = [
+    'title' => 'Siklus PPEPP SPMI Interaktif',
+    'badge' => 'Siklus Penjaminan Mutu Berkelanjutan',
+    'desc'  => 'Implementasi penjaminan mutu di Universitas Katolik Soegijapranata berlandaskan pada 5 tahap siklus berkelanjutan (PPEPP). Klik salah satu lingkaran siklus di bawah ini untuk menelaah penjelasan rinci setiap tahapannya.',
+];
+
 // List of portals to manage
 $portals_def = [
     'sista' => [
-        'name'        => 'Portal SISTA',
-        'badge'       => 'STANDAR AKADEMIK',
-        'icon'        => 'bi-mortarboard',
-        'default_url' => 'https://sista.unika.ac.id',
-        'default_st'  => 'active',
-        'btn_label'   => 'Buka Portal SISTA',
+        'name'             => 'Portal SISTA',
+        'badge'            => 'STANDAR AKADEMIK',
+        'desc'             => 'Pemantauan & pelaporan siklus PPEPP, perumusan capaian, bukti dukung pelaksanaan, dan rencana tindak lanjut termonitor secara digital terintegrasi.',
+        'icon'             => 'bi-mortarboard',
+        'default_url'      => 'https://sista.unika.ac.id',
+        'default_st'       => 'active',
+        'btn_label'        => 'Buka Portal SISTA',
         'default_cs_title' => 'Tautan Sistem SISTA Belum Dibuka',
         'default_cs_desc'  => 'Pemantauan dan pelaporan siklus PPEPP diaktifkan sesuai jadwal.',
     ],
     'spmi' => [
-        'name'        => 'Portal SPMI Kemendikti',
-        'badge'       => 'PELAPORAN NASIONAL',
-        'icon'        => 'bi-shield-check',
-        'default_url' => 'https://spmi.kemdiktisaintek.go.id/auth/login',
-        'default_st'  => 'active',
-        'btn_label'   => 'Buka Portal SPMI',
+        'name'             => 'Portal SPMI Kemendikti',
+        'badge'            => 'PELAPORAN NASIONAL',
+        'desc'             => 'Rekapitulasi dan pelaporan evaluasi pelaksanaan penjaminan mutu perguruan tinggi secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.',
+        'icon'             => 'bi-shield-check',
+        'default_url'      => 'https://spmi.kemdiktisaintek.go.id/auth/login',
+        'default_st'       => 'active',
+        'btn_label'        => 'Buka Portal SPMI',
         'default_cs_title' => 'Tautan Sistem SPMI Kemendikti Belum Dibuka',
         'default_cs_desc'  => 'Pelaporan evaluasi pelaksanaan penjaminan mutu akan diaktifkan sesuai jadwal.',
     ],
     'eppepp' => [
-        'name'        => 'Portal E-PPEPP',
-        'badge'       => 'SIKLUS MUTU PPEPP',
-        'icon'        => 'bi-arrow-repeat',
-        'default_url' => 'https://e-ppepp.unika.ac.id',
-        'default_st'  => 'coming_soon',
-        'btn_label'   => 'Buka Portal E-PPEPP',
+        'name'             => 'Portal E-PPEPP',
+        'badge'            => 'SIKLUS MUTU PPEPP',
+        'desc'             => 'Sistem informasi elektronik implementasi, evaluasi pelaksanaan, dan pengendalian tahapan siklus PPEPP secara berkesinambungan.',
+        'icon'             => 'bi-arrow-repeat',
+        'default_url'      => 'https://e-ppepp.unika.ac.id',
+        'default_st'       => 'coming_soon',
+        'btn_label'        => 'Buka Portal E-PPEPP',
         'default_cs_title' => 'Tautan Sistem e-PPEPP Belum Dibuka',
         'default_cs_desc'  => 'Pelaksanaan dan evaluasi sistem e-PPEPP akan diaktifkan sesuai jadwal.',
     ]
@@ -45,18 +55,36 @@ $portals_def = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $validation_errors = [];
 
-    foreach ($portals_def as $key => $p) {
-        $st = trim($_POST[$key . '_status'] ?? $p['default_st']);
-        $url = trim($_POST[$key . '_url'] ?? '');
-        $cs_title = trim($_POST[$key . '_cs_title'] ?? $p['default_cs_title']);
-        $cs_desc = trim($_POST[$key . '_cs_desc'] ?? $p['default_cs_desc']);
+    // 1. Chart Settings
+    $spmi_chart_title = trim($_POST['spmi_chart_title'] ?? $chart_defaults['title']);
+    $spmi_chart_badge = trim($_POST['spmi_chart_badge'] ?? $chart_defaults['badge']);
+    $spmi_chart_desc  = trim($_POST['spmi_chart_desc'] ?? $chart_defaults['desc']);
 
-        // Validasi: Bila aktif, URL WAJIB diisi!
+    if (empty($spmi_chart_title)) $spmi_chart_title = $chart_defaults['title'];
+    if (empty($spmi_chart_badge)) $spmi_chart_badge = $chart_defaults['badge'];
+    if (empty($spmi_chart_desc))  $spmi_chart_desc  = $chart_defaults['desc'];
+
+    // 2. Portals Settings
+    $portal_post_data = [];
+    foreach ($portals_def as $key => $p) {
+        $p_name     = trim($_POST[$key . '_name'] ?? $p['name']);
+        $p_badge    = trim($_POST[$key . '_badge'] ?? $p['badge']);
+        $p_desc     = trim($_POST[$key . '_desc'] ?? $p['desc']);
+        $st         = trim($_POST[$key . '_status'] ?? $p['default_st']);
+        $url        = trim($_POST[$key . '_url'] ?? '');
+        $cs_title   = trim($_POST[$key . '_cs_title'] ?? $p['default_cs_title']);
+        $cs_desc    = trim($_POST[$key . '_cs_desc'] ?? $p['default_cs_desc']);
+
+        if (empty($p_name))  $p_name  = $p['name'];
+        if (empty($p_badge)) $p_badge = $p['badge'];
+        if (empty($p_desc))  $p_desc  = $p['desc'];
+
+        // Validasi: Bila aktif, URL WAJIB diisi dan valid!
         if ($st === 'active') {
             if (empty($url)) {
-                $validation_errors[] = "Tautan URL untuk <strong>{$p['name']}</strong> wajib diisi jika status dipilih Aktif.";
+                $validation_errors[] = "Tautan URL untuk <strong>{$p_name}</strong> wajib diisi jika status dipilih Aktif.";
             } elseif (!filter_var($url, FILTER_VALIDATE_URL)) {
-                $validation_errors[] = "Format URL untuk <strong>{$p['name']}</strong> tidak valid (harus diawali http:// atau https://).";
+                $validation_errors[] = "Format URL untuk <strong>{$p_name}</strong> tidak valid (harus diawali http:// atau https://).";
             }
         }
 
@@ -67,26 +95,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cs_desc = $p['default_cs_desc'];
         }
 
-        if (empty($validation_errors)) {
-            setPengaturan('portal_' . $key . '_status', $st);
-            setPengaturan('portal_' . $key . '_url', $url);
-            setPengaturan('portal_' . $key . '_cs_title', $cs_title);
-            setPengaturan('portal_' . $key . '_cs_desc', $cs_desc);
-        }
+        $portal_post_data[$key] = [
+            'name'     => $p_name,
+            'badge'    => $p_badge,
+            'desc'     => $p_desc,
+            'st'       => $st,
+            'url'      => $url,
+            'cs_title' => $cs_title,
+            'cs_desc'  => $cs_desc
+        ];
     }
 
-    if (!empty($validation_errors)) {
-        $error = implode('<br>', $validation_errors);
-    } else {
-        $_SESSION['flash'] = 'Pengaturan tautan portal SPMI berhasil disimpan.';
+    if (empty($validation_errors)) {
+        // Simpan Chart Settings
+        setPengaturan('spmi_chart_title', $spmi_chart_title);
+        setPengaturan('spmi_chart_badge', $spmi_chart_badge);
+        setPengaturan('spmi_chart_desc',  $spmi_chart_desc);
+
+        // Simpan Portals Settings
+        foreach ($portal_post_data as $key => $d) {
+            setPengaturan('portal_' . $key . '_name',     $d['name']);
+            setPengaturan('portal_' . $key . '_badge',    $d['badge']);
+            setPengaturan('portal_' . $key . '_desc',     $d['desc']);
+            setPengaturan('portal_' . $key . '_status',   $d['st']);
+            setPengaturan('portal_' . $key . '_url',      $d['url']);
+            setPengaturan('portal_' . $key . '_cs_title', $d['cs_title']);
+            setPengaturan('portal_' . $key . '_cs_desc',  $d['cs_desc']);
+        }
+
+        $_SESSION['flash'] = 'Pengaturan judul chart, penjelasan portal, dan tautan SPMI berhasil disimpan.';
         redirect(SITE_URL . '/admin/spmi-portal-setting.php');
+    } else {
+        $error = implode('<br>', $validation_errors);
     }
 }
 
 // Current values
+$chart_val = [
+    'title' => getPengaturan('spmi_chart_title', $chart_defaults['title']),
+    'badge' => getPengaturan('spmi_chart_badge', $chart_defaults['badge']),
+    'desc'  => getPengaturan('spmi_chart_desc',  $chart_defaults['desc']),
+];
+
 $portal_values = [];
 foreach ($portals_def as $key => $p) {
     $portal_values[$key] = [
+        'name'     => getPengaturan('portal_' . $key . '_name', $p['name']),
+        'badge'    => getPengaturan('portal_' . $key . '_badge', $p['badge']),
+        'desc'     => getPengaturan('portal_' . $key . '_desc', $p['desc']),
         'status'   => getPengaturan('portal_' . $key . '_status', $p['default_st']),
         'url'      => getPengaturan('portal_' . $key . '_url', $p['default_url']),
         'cs_title' => getPengaturan('portal_' . $key . '_cs_title', $p['default_cs_title']),
@@ -105,7 +161,7 @@ require_once __DIR__ . '/includes/admin-header.php';
             <span>/</span>
             <a href="dokumen-list.php" style="color:var(--text-muted);text-decoration:none;">Halaman SPMI</a>
             <span>/</span>
-            <span style="color:var(--navy);font-weight:600;">Tautan Portal SPMI</span>
+            <span style="color:var(--navy);font-weight:600;">Chart &amp; Portal SPMI</span>
         </div>
 
         <?php if ($flash): ?>
@@ -126,22 +182,108 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
         <?php endif; ?>
 
-        <!-- Intro Card -->
+        <!-- Intro Banner Card -->
         <div class="card mb-4 border-0 shadow-sm" style="border-radius:12px;background:#F8FAFC;border:1px solid #E2E8F0;">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <div style="width:42px;height:42px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;color:#6D28D9;font-size:1.3rem;flex-shrink:0;">
-                    <i class="bi bi-box-arrow-up-right"></i>
+            <div class="card-body p-4 d-flex align-items-center gap-3">
+                <div style="width:48px;height:48px;border-radius:12px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;color:#6D28D9;font-size:1.4rem;flex-shrink:0;">
+                    <i class="bi bi-pie-chart-fill"></i>
                 </div>
                 <div>
-                    <strong style="color:var(--navy);font-size:0.95rem;">Pengaturan Tautan 3 Portal Utama SPMI</strong>
-                    <div class="small text-muted">
-                        Atur status ketersediaan masing-masing portal (<strong>Aktif &amp; Terbuka</strong> atau <strong>Coming Soon / Segera Hadir</strong>). Bila status diaktifkan, tautan URL wajib disertakan.
+                    <h5 class="fw-bold mb-1" style="color:var(--navy);font-size:1.1rem;">Pengelolaan Konten SPMI (Chart PPEPP &amp; 3 Portal Utama)</h5>
+                    <div class="small text-muted" style="line-height:1.5;">
+                        Di sini Anda dapat mengedit <strong>Judul &amp; Penjelasan Chart Siklus PPEPP</strong> serta <strong>Judul, Badge Kategori, Penjelasan, Status &amp; Tautan</strong> ketiga portal mutu (Portal SISTA, Portal SPMI Kemendikti, dan Portal E-PPEPP).
                     </div>
                 </div>
             </div>
         </div>
 
         <form method="POST" id="formPortals">
+
+            <!-- ============================================================ -->
+            <!-- BAGIAN 1: PENGATURAN JUDUL & PENJELASAN CHART SIKLUS PPEPP  -->
+            <!-- ============================================================ -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;">
+                <div class="card-header p-3 px-4 d-flex align-items-center justify-content-between" style="background:#0F172A;color:#ffffff;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-diagram-3-fill text-warning fs-5"></i>
+                        <h5 class="mb-0 fw-bold" style="font-size:1.05rem;color:#ffffff;">
+                            1. Judul &amp; Penjelasan Chart Siklus PPEPP SPMI
+                        </h5>
+                    </div>
+                    <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;">
+                        Diagram Interaktif SPMI
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4 align-items-start">
+                        <!-- Kolom Form Input Chart -->
+                        <div class="col-lg-7 col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-navy" for="spmi_chart_badge">
+                                    Label Subjudul / Tagline Chart <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="spmi_chart_badge" name="spmi_chart_badge" value="<?= e($chart_val['badge']) ?>" required placeholder="Contoh: Siklus Penjaminan Mutu Berkelanjutan">
+                                <div class="form-text small text-muted">
+                                    Teks badge kecil di atas judul diagram lingkaran PPEPP.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-navy" for="spmi_chart_title">
+                                    Judul Chart Siklus PPEPP <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control fw-bold" id="spmi_chart_title" name="spmi_chart_title" value="<?= e($chart_val['title']) ?>" required placeholder="Contoh: Siklus PPEPP SPMI Interaktif">
+                                <div class="form-text small text-muted">
+                                    Judul utama yang tampil besar di atas diagram siklus pada halaman SPMI.
+                                </div>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label fw-bold small text-navy" for="spmi_chart_desc">
+                                    Penjelasan / Narasi Pengantar Chart <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="spmi_chart_desc" name="spmi_chart_desc" rows="4" required style="line-height:1.6;" placeholder="Tuliskan narasi penjelasan implementasi siklus PPEPP..."><?= e($chart_val['desc']) ?></textarea>
+                                <div class="form-text small text-muted">
+                                    Deskripsi pengantar yang memberikan penjelasan fungsi dan alur siklus PPEPP kepada pengunjung.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Live Pratinjau Header Chart -->
+                        <div class="col-lg-5 col-md-12">
+                            <div class="small fw-bold text-muted mb-2">Pratinjau Tampilan Header Chart (Publik):</div>
+                            <div class="p-4 rounded-4 shadow-sm bg-white border text-center" style="background:#F8FAFC;">
+                                <div class="d-inline-flex align-items-center gap-1 badge rounded-pill px-3 py-1 mb-2 prev-chart-badge" style="background:#EFF6FF;color:#1D4ED8;font-size:0.75rem;font-weight:700;">
+                                    <i class="bi bi-arrow-repeat me-1"></i>
+                                    <span><?= e($chart_val['badge']) ?></span>
+                                </div>
+                                <h4 class="fw-bold mb-2 prev-chart-title" style="color:var(--navy);font-size:1.25rem;">
+                                    <?= e($chart_val['title']) ?>
+                                </h4>
+                                <p class="text-muted small mb-0 prev-chart-desc" style="line-height:1.65;font-size:0.82rem;">
+                                    <?= nl2br(e($chart_val['desc'])) ?>
+                                </p>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Diagram lingkaran siklus 5 tahap akan berada langsung di bawah teks ini.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- BAGIAN 2: PENGATURAN 3 PORTAL UTAMA SPMI                     -->
+            <!-- ============================================================ -->
+            <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
+                <div>
+                    <h5 class="fw-bold mb-0" style="color:var(--navy);font-size:1.15rem;">
+                        <i class="bi bi-grid-fill text-primary me-2"></i>2. Pengaturan 3 Portal Utama SPMI
+                    </h5>
+                    <div class="text-muted small">Atur judul portal, badge kategori, penjelasan fungsi, status ketersediaan, dan tautan masing-masing portal.</div>
+                </div>
+            </div>
+
             <div class="row g-4 mb-4">
                 <?php foreach ($portals_def as $key => $p): 
                     $val = $portal_values[$key];
@@ -151,11 +293,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <div class="card border-0 shadow-sm" style="border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;">
                         <div class="card-header p-3 px-4 d-flex align-items-center justify-content-between" style="background:#F1F5F9;border-bottom:1px solid #E2E8F0;">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge" style="background:#0F172A;color:#FFD54F;font-size:0.72rem;letter-spacing:0.5px;padding:0.35rem 0.65rem;">
-                                    <?= e($p['badge']) ?>
+                                <span class="badge prev-badge-pill-<?= $key ?>" style="background:#0F172A;color:#FFD54F;font-size:0.72rem;letter-spacing:0.5px;padding:0.35rem 0.65rem;">
+                                    <?= e($val['badge']) ?>
                                 </span>
-                                <h5 class="mb-0 fw-bold" style="color:var(--navy);font-size:1.05rem;">
-                                    <?= e($p['name']) ?>
+                                <h5 class="mb-0 fw-bold prev-name-pill-<?= $key ?>" style="color:var(--navy);font-size:1.05rem;">
+                                    <?= e($val['name']) ?>
                                 </h5>
                             </div>
                             <span class="badge status-pill-<?= $key ?>" style="background:<?= $is_active ? '#DCFCE7' : '#E0F2FE' ?>;color:<?= $is_active ? '#15803D' : '#0369A1' ?>;font-weight:700;font-size:0.75rem;padding:0.35rem 0.75rem;border-radius:20px;border:1px solid <?= $is_active ? '#86EFAC' : '#BAE6FD' ?>;">
@@ -165,9 +307,39 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                         <div class="card-body p-4">
                             <div class="row g-4 align-items-start">
-                                <!-- Kolom Pengaturan Input -->
+                                <!-- Kolom Pengaturan Input Portal -->
                                 <div class="col-lg-7 col-md-12">
-                                    <!-- Pilih Status -->
+
+                                    <div class="row g-3 mb-3">
+                                        <!-- Judul Portal -->
+                                        <div class="col-md-7">
+                                            <label class="form-label fw-bold small text-navy" for="<?= $key ?>_name">
+                                                Judul Portal <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control portal-name-input" id="<?= $key ?>_name" name="<?= $key ?>_name" value="<?= e($val['name']) ?>" required data-portal="<?= $key ?>">
+                                        </div>
+
+                                        <!-- Badge Kategori -->
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-bold small text-navy" for="<?= $key ?>_badge">
+                                                Badge Kategori <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control portal-badge-input" id="<?= $key ?>_badge" name="<?= $key ?>_badge" value="<?= e($val['badge']) ?>" required data-portal="<?= $key ?>">
+                                        </div>
+                                    </div>
+
+                                    <!-- Penjelasan / Deskripsi Portal -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small text-navy" for="<?= $key ?>_desc">
+                                            Penjelasan Portal <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea class="form-control portal-desc-input" id="<?= $key ?>_desc" name="<?= $key ?>_desc" rows="3" required style="line-height:1.55;" data-portal="<?= $key ?>" placeholder="Tuliskan penjelasan fungsi dari portal ini..."><?= e($val['desc']) ?></textarea>
+                                        <div class="form-text small text-muted">
+                                            Teks penjelasan detail fungsi modul sistem ini yang akan tampil di card portal halaman SPMI publik.
+                                        </div>
+                                    </div>
+
+                                    <!-- Pilih Status Ketersediaan -->
                                     <div class="mb-3">
                                         <label class="form-label fw-bold small text-navy" for="<?= $key ?>_status">
                                             Status Ketersediaan Portal <span class="text-danger">*</span>
@@ -195,7 +367,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                         </label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light text-muted"><i class="bi bi-link-45deg"></i></span>
-                                            <input type="url" class="form-control portal-url-input" id="<?= $key ?>_url" name="<?= $key ?>_url" placeholder="https://..." value="<?= e($val['url']) ?>" data-portal="<?= $key ?>">
+                                            <input type="url" class="form-control portal-url-input" id="<?= $key ?>_url" name="<?= $key ?>_url" placeholder="https://..." value="<?= e($val['url']) ?>" data-portal="<?= $key ?>" <?= $is_active ? 'required' : '' ?>>
                                         </div>
                                         <div class="form-text small text-muted">
                                             Tautan sistem yang akan dibuka ketika pengunjung mengklik tombol di website publik.
@@ -218,36 +390,36 @@ require_once __DIR__ . '/includes/admin-header.php';
                                     </div>
                                 </div>
 
-                                <!-- Kolom Live Visual Preview -->
+                                <!-- Kolom Live Visual Preview Card Publik -->
                                 <div class="col-lg-5 col-md-12">
                                     <div class="small fw-bold text-muted mb-2">Pratinjau Tampilan Card Publik:</div>
-                                    <div class="p-3 rounded-4 shadow-sm text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.15);">
-                                        <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.68rem;padding:0.25rem 0.5rem;font-weight:700;">
-                                                <?= e($p['badge']) ?>
+                                    <div class="p-4 rounded-4 shadow-sm text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.15);">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <span class="badge prev-card-badge-<?= $key ?>" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.72rem;padding:0.35rem 0.65rem;font-weight:700;letter-spacing:0.5px;">
+                                                <?= e($val['badge']) ?>
                                             </span>
-                                            <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;font-size:0.8rem;">
+                                            <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;font-size:0.95rem;">
                                                 <i class="bi <?= e($p['icon']) ?>"></i>
                                             </div>
                                         </div>
-                                        <div class="fw-bold text-white mb-1" style="font-size:1.05rem;">
-                                            <?= e($p['name']) ?>
+                                        <div class="fw-bold text-white mb-2 prev-card-name-<?= $key ?>" style="font-size:1.15rem;">
+                                            <?= e($val['name']) ?>
                                         </div>
-                                        <div class="text-white-50 small mb-3" style="font-size:0.75rem;line-height:1.45;">
-                                            Contoh deskripsi penjelasan fungsi sistem informasi modul SPMI terkait.
+                                        <div class="text-white-50 small mb-4 prev-card-desc-<?= $key ?>" style="font-size:0.84rem;line-height:1.6;min-height:55px;">
+                                            <?= nl2br(e($val['desc'])) ?>
                                         </div>
 
                                         <!-- Preview Bagian Aksi / Coming Soon -->
-                                        <div class="pt-2 border-top" style="border-color:rgba(255,255,255,0.12) !important;">
+                                        <div class="pt-3 border-top" style="border-color:rgba(255,255,255,0.12) !important;">
                                             <!-- Preview State Aktif -->
                                             <div id="preview_active_<?= $key ?>" style="display:<?= $is_active ? 'block' : 'none' ?>;">
-                                                <div class="btn w-100 py-2 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.84rem;box-shadow:0 4px 12px rgba(123,31,162,0.4);pointer-events:none;">
-                                                    <span><?= e($p['btn_label']) ?></span>
+                                                <div class="btn w-100 py-2 fw-bold rounded-3 d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.86rem;box-shadow:0 4px 12px rgba(123,31,162,0.4);pointer-events:none;">
+                                                    <span class="prev-btn-label-<?= $key ?>">Buka <?= e($val['name']) ?></span>
                                                     <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i>
                                                 </div>
                                             </div>
 
-                                            <!-- Preview State Coming Soon (Persis Gambar 2) -->
+                                            <!-- Preview State Coming Soon -->
                                             <div id="preview_cs_<?= $key ?>" style="display:<?= !$is_active ? 'block' : 'none' ?>;">
                                                 <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 text-center w-100">
                                                     <div class="badge bg-info text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size:0.72rem;">
@@ -276,7 +448,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     Batal
                 </a>
                 <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" style="border-radius:8px;background:var(--navy);border:none;">
-                    <i class="bi bi-check-circle-fill me-1"></i> Simpan Perubahan Portal
+                    <i class="bi bi-check-circle-fill me-1"></i> Simpan Seluruh Pengaturan SPMI
                 </button>
             </div>
         </form>
@@ -285,7 +457,65 @@ require_once __DIR__ . '/includes/admin-header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle radio toggle perubahan status
+    // 1. Live preview Chart PPEPP Header
+    const chartBadgeInput = document.getElementById('spmi_chart_badge');
+    const chartTitleInput = document.getElementById('spmi_chart_title');
+    const chartDescInput  = document.getElementById('spmi_chart_desc');
+
+    const prevChartBadge = document.querySelector('.prev-chart-badge span');
+    const prevChartTitle = document.querySelector('.prev-chart-title');
+    const prevChartDesc  = document.querySelector('.prev-chart-desc');
+
+    if (chartBadgeInput && prevChartBadge) {
+        chartBadgeInput.addEventListener('input', function() {
+            prevChartBadge.textContent = this.value.trim() || 'Siklus Penjaminan Mutu Berkelanjutan';
+        });
+    }
+    if (chartTitleInput && prevChartTitle) {
+        chartTitleInput.addEventListener('input', function() {
+            prevChartTitle.textContent = this.value.trim() || 'Siklus PPEPP SPMI Interaktif';
+        });
+    }
+    if (chartDescInput && prevChartDesc) {
+        chartDescInput.addEventListener('input', function() {
+            prevChartDesc.textContent = this.value.trim() || 'Implementasi penjaminan mutu di Universitas Katolik Soegijapranata berlandaskan pada 5 tahap siklus berkelanjutan (PPEPP).';
+        });
+    }
+
+    // 2. Live preview Portal Inputs (Name, Badge, Desc)
+    document.querySelectorAll('.portal-name-input').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            const pKey = this.dataset.portal;
+            const val = this.value.trim() || 'Portal';
+            const nameEl = document.querySelector('.prev-card-name-' + pKey);
+            const pillEl = document.querySelector('.prev-name-pill-' + pKey);
+            const btnEl  = document.querySelector('.prev-btn-label-' + pKey);
+            if (nameEl) nameEl.textContent = val;
+            if (pillEl) pillEl.textContent = val;
+            if (btnEl)  btnEl.textContent  = 'Buka ' + val;
+        });
+    });
+
+    document.querySelectorAll('.portal-badge-input').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            const pKey = this.dataset.portal;
+            const val = this.value.trim() || 'KATEGORI';
+            const badgeEl = document.querySelector('.prev-card-badge-' + pKey);
+            const pillEl  = document.querySelector('.prev-badge-pill-' + pKey);
+            if (badgeEl) badgeEl.textContent = val;
+            if (pillEl)  pillEl.textContent  = val;
+        });
+    });
+
+    document.querySelectorAll('.portal-desc-input').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            const pKey = this.dataset.portal;
+            const descEl = document.querySelector('.prev-card-desc-' + pKey);
+            if (descEl) descEl.textContent = this.value.trim() || 'Deskripsi fungsi sistem informasi modul SPMI terkait.';
+        });
+    });
+
+    // 3. Handle radio toggle perubahan status
     document.querySelectorAll('.status-radio').forEach(function(radio) {
         radio.addEventListener('change', function() {
             const portal = this.dataset.portal;
@@ -324,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Live update preview text
+    // 4. Live update preview text Coming Soon
     document.querySelectorAll('.cs-title-input').forEach(function(inp) {
         inp.addEventListener('input', function() {
             const portal = this.dataset.portal;
@@ -341,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Form client-side validation
+    // 5. Form client-side validation
     const form = document.getElementById('formPortals');
     if (form) {
         form.addEventListener('submit', function(e) {

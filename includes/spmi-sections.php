@@ -187,6 +187,9 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                     'aktor'     => 'Rektor, Senat Akademik Universitas, Dewan Pakar Mutu, & LPM'
                 ]
             ];
+            $chart_title = getPengaturan('spmi_chart_title', $block['title'] ?? 'Siklus PPEPP SPMI Interaktif');
+            $chart_badge = getPengaturan('spmi_chart_badge', $block['badge'] ?? 'Siklus Penjaminan Mutu Berkelanjutan');
+            $chart_desc  = getPengaturan('spmi_chart_desc', 'Implementasi penjaminan mutu di Universitas Katolik Soegijapranata berlandaskan pada 5 tahap siklus berkelanjutan (PPEPP). Klik salah satu lingkaran siklus di bawah ini untuk menelaah penjelasan rinci setiap tahapannya.');
             ?>
             <section class="py-5 py-md-6" style="background:#ffffff;border-bottom:1px solid var(--border);<?= $bg ?><?= $tc ?>" id="siklus-ppepp">
                 <div class="container">
@@ -195,11 +198,11 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
-                            <?= htmlspecialchars($block['badge'] ?? 'Siklus Penjaminan Mutu Berkelanjutan') ?>
+                            <?= htmlspecialchars($chart_badge) ?>
                         </span>
-                        <h2 class="section-title"><?= htmlspecialchars($block['title'] ?? 'Siklus PPEPP SPMI Interaktif') ?></h2>
+                        <h2 class="section-title"><?= htmlspecialchars($chart_title) ?></h2>
                         <p class="section-desc max-w-800 mx-auto" style="font-size:0.95rem;line-height:1.75;">
-                            Implementasi penjaminan mutu di Universitas Katolik Soegijapranata berlandaskan pada 5 tahap siklus berkelanjutan (PPEPP). Klik salah satu lingkaran siklus di bawah ini untuk menelaah penjelasan rinci setiap tahapannya.
+                            <?= nl2br(htmlspecialchars($chart_desc)) ?>
                         </p>
                     </div>
 
@@ -476,16 +479,25 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
 
         case 'spmi_kemendikti':
             // Pengaturan Dinamis 3 Portal Utama SPMI
+            $sista_name  = getPengaturan('portal_sista_name', 'Portal SISTA');
+            $sista_badge = getPengaturan('portal_sista_badge', 'STANDAR AKADEMIK');
+            $sista_desc  = getPengaturan('portal_sista_desc', 'Pemantauan & pelaporan siklus PPEPP, perumusan capaian, bukti dukung pelaksanaan, dan rencana tindak lanjut termonitor secara digital terintegrasi.');
             $sista_st    = getPengaturan('portal_sista_status', 'active');
             $sista_url   = getPengaturan('portal_sista_url', 'https://sista.unika.ac.id');
             $sista_cs_t  = getPengaturan('portal_sista_cs_title', 'Tautan Sistem SISTA Belum Dibuka');
             $sista_cs_d  = getPengaturan('portal_sista_cs_desc', 'Pemantauan dan pelaporan siklus PPEPP diaktifkan sesuai jadwal.');
 
+            $spmi_name   = getPengaturan('portal_spmi_name', 'Portal SPMI Kemendikti');
+            $spmi_badge  = getPengaturan('portal_spmi_badge', 'PELAPORAN NASIONAL');
+            $spmi_desc   = getPengaturan('portal_spmi_desc', 'Rekapitulasi dan pelaporan evaluasi pelaksanaan penjaminan mutu perguruan tinggi secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.');
             $spmi_st     = getPengaturan('portal_spmi_status', 'active');
             $spmi_url    = getPengaturan('portal_spmi_url', 'https://spmi.kemdiktisaintek.go.id/auth/login');
             $spmi_cs_t   = getPengaturan('portal_spmi_cs_title', 'Tautan Sistem SPMI Kemendikti Belum Dibuka');
             $spmi_cs_d   = getPengaturan('portal_spmi_cs_desc', 'Pelaporan evaluasi pelaksanaan penjaminan mutu akan diaktifkan sesuai jadwal.');
 
+            $eppepp_name  = getPengaturan('portal_eppepp_name', 'Portal E-PPEPP');
+            $eppepp_badge = getPengaturan('portal_eppepp_badge', 'SIKLUS MUTU PPEPP');
+            $eppepp_desc  = getPengaturan('portal_eppepp_desc', 'Sistem informasi elektronik implementasi, evaluasi pelaksanaan, dan pengendalian tahapan siklus PPEPP secara berkesinambungan.');
             $eppepp_st   = getPengaturan('portal_eppepp_status', 'coming_soon');
             $eppepp_url  = getPengaturan('portal_eppepp_url', 'https://e-ppepp.unika.ac.id');
             $eppepp_cs_t = getPengaturan('portal_eppepp_cs_title', 'Tautan Sistem e-PPEPP Belum Dibuka');
@@ -499,22 +511,22 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
-                                        STANDAR AKADEMIK
+                                        <?= htmlspecialchars($sista_badge) ?>
                                     </span>
                                     <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
                                         <i class="bi bi-mortarboard-fill fs-6"></i>
                                     </div>
                                 </div>
                                 <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
-                                    Portal SISTA
+                                    <?= htmlspecialchars($sista_name) ?>
                                 </h4>
                                 <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                                    Pemantauan &amp; pelaporan siklus PPEPP, perumusan capaian, bukti dukung pelaksanaan, dan rencana tindak lanjut termonitor secara digital terintegrasi.
+                                    <?= nl2br(htmlspecialchars($sista_desc)) ?>
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
                                     <?php if ($sista_st === 'active' && !empty($sista_url)): ?>
                                     <a href="<?= e($sista_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
-                                        <span>Buka Portal SISTA</span>
+                                        <span>Buka <?= htmlspecialchars($sista_name) ?></span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
                                     <?php else: ?>
@@ -533,22 +545,22 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
-                                        PELAPORAN NASIONAL
+                                        <?= htmlspecialchars($spmi_badge) ?>
                                     </span>
                                     <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
                                         <i class="bi bi-shield-check fs-6"></i>
                                     </div>
                                 </div>
                                 <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
-                                    Portal SPMI Kemendikti
+                                    <?= htmlspecialchars($spmi_name) ?>
                                 </h4>
                                 <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                                    Rekapitulasi dan pelaporan evaluasi pelaksanaan penjaminan mutu perguruan tinggi secara berkala kepada Kementerian Pendidikan Tinggi, Sains, dan Teknologi.
+                                    <?= nl2br(htmlspecialchars($spmi_desc)) ?>
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
                                     <?php if ($spmi_st === 'active' && !empty($spmi_url)): ?>
                                     <a href="<?= e($spmi_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
-                                        <span>Buka Portal SPMI</span>
+                                        <span>Buka <?= htmlspecialchars($spmi_name) ?></span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
                                     <?php else: ?>
@@ -567,22 +579,22 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             <div class="h-100 p-4 rounded-4 shadow-sm d-flex flex-column text-white" style="background:linear-gradient(145deg, #0A192F 0%, #132D54 100%);border:1px solid rgba(255,255,255,0.1);transition:transform 0.2s ease, box-shadow 0.2s ease;">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <span class="badge" style="background:rgba(255,255,255,0.15);color:#FFD54F;font-size:0.75rem;padding:0.35rem 0.7rem;font-weight:700;letter-spacing:0.5px;">
-                                        SIKLUS MUTU PPEPP
+                                        <?= htmlspecialchars($eppepp_badge) ?>
                                     </span>
                                     <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:#FFD54F;">
                                         <i class="bi bi-arrow-repeat fs-6"></i>
                                     </div>
                                 </div>
                                 <h4 style="font-family:var(--font-heading);font-weight:800;color:#ffffff;font-size:1.25rem;margin-bottom:0.6rem;">
-                                    Portal E-PPEPP
+                                    <?= htmlspecialchars($eppepp_name) ?>
                                 </h4>
                                 <p style="color:rgba(255,255,255,0.8);font-size:0.88rem;line-height:1.65;margin-bottom:1.5rem;" class="flex-grow-1">
-                                    Sistem informasi elektronik implementasi, evaluasi pelaksanaan, dan pengendalian tahapan siklus PPEPP secara berkesinambungan.
+                                    <?= nl2br(htmlspecialchars($eppepp_desc)) ?>
                                 </p>
                                 <div class="pt-3 border-top mt-auto" style="border-color:rgba(255,255,255,0.12) !important;">
                                     <?php if ($eppepp_st === 'active' && !empty($eppepp_url)): ?>
                                     <a href="<?= e($eppepp_url) ?>" target="_blank" rel="noopener noreferrer" class="btn w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" style="background:linear-gradient(135deg, #7B1FA2, #6A1B9A);border:none;font-size:0.9rem;box-shadow:0 4px 15px rgba(123,31,162,0.4);">
-                                        <span>Buka Portal E-PPEPP</span>
+                                        <span>Buka <?= htmlspecialchars($eppepp_name) ?></span>
                                         <i class="bi bi-box-arrow-up-right" style="font-size:0.8rem;"></i>
                                     </a>
                                     <?php else: ?>

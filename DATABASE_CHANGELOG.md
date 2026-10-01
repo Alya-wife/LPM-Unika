@@ -149,8 +149,30 @@ Untuk mencegah error saat mengakses halaman [`siklus-ami.php`](./siklus-ami.php)
   - `portal_sista_status`, `portal_sista_url`, `portal_sista_cs_title`, `portal_sista_cs_desc`
   - `portal_spmi_status`, `portal_spmi_url`, `portal_spmi_cs_title`, `portal_spmi_cs_desc`
   - `portal_eppepp_status`, `portal_eppepp_url`, `portal_eppepp_cs_title`, `portal_eppepp_cs_desc`
+- Kunci pengaturan Judul Chart PPEPP & Teks Portals SPMI (`admin/spmi-portal-setting.php` & `includes/spmi-sections.php`):
+  - `spmi_chart_title`, `spmi_chart_badge`, `spmi_chart_desc`
+  - `portal_sista_name`, `portal_sista_badge`, `portal_sista_desc`
+  - `portal_spmi_name`, `portal_spmi_badge`, `portal_spmi_desc`
+  - `portal_eppepp_name`, `portal_eppepp_badge`, `portal_eppepp_desc`
 - Kunci pengaturan UI GreenMetric (`admin/pemeringkatan-setting.php` & `pemeringkatan.php`):
   - `greenmetric_rank`, `greenmetric_scope`, `greenmetric_badge`, `greenmetric_title`, `greenmetric_desc`, `greenmetric_sertifikat`
+
+### H. Seeding Data Dummy Siklus AMI (Audit Mutu Internal) 1 s.d. 5
+Seluruh 5 tahapan siklus AMI pada halaman [`siklus-ami.php`](./siklus-ami.php) telah dilengkapi dengan data dummy akademis yang realistis dan lengkap:
+1. **Pengaturan 5 Tahapan Siklus (Tabel `pengaturan`)**:
+   - `ami_stage1_title` s.d. `ami_stage5_title` dan `ami_stage1_desc` s.d. `ami_stage5_desc`.
+   - `ami_siklus2_judul`, `ami_siklus2_url`, `ami_siklus2_status` ('active'), `ami_siklus2_desc` (Portal Pengisian DED).
+   - `ami_siklus3_judul`, `ami_siklus3_url`, `ami_siklus3_status` ('active'), `ami_siklus3_desc` (Portal Desk Evaluation).
+2. **Siklus 1: Rangkaian Kegiatan & Opening Meeting**:
+   - `ami_siklus1_kegiatan`: 4 entri dokumen (Jadwal Siklus XIX, Surat Tugas Auditor, Instrumen Audit 9 Kriteria, SOP Audit).
+   - `ami_siklus1_opening`: 2 entri dokumentasi kegiatan pembukaan dan sosialisasi dengan foto serta tanggal resmi.
+3. **Siklus 4: Audit Lapangan (Visitasi)**:
+   - `ami_siklus4_dokumen`: 4 dokumen (SOP Visitasi, Panduan KTS, Jadwal Visitasi Fakultas & Prodi, Jadwal Unit Non-Akademik).
+   - `ami_siklus4_dokumentasi`: 3 entri berita acara dan presensi (Fakultas Ilmu Komputer, S1 Teknik Informatika, S1 Manajemen).
+4. **Siklus 5: Rapat Tinjauan Manajemen (RTM)**:
+   - `ami_siklus5_rtm`: 3 entri notulensi, berkas presensi, dan galeri foto (Tingkat Universitas Pleno, Tingkat Fakultas FIK, Tingkat Prodi S1 Akuntansi).
+5. **Skrip Otomatisasi Seeding**:
+   - Skrip tersimpan di [`scripts/seed_ami_dummy_data.php`](./scripts/seed_ami_dummy_data.php) untuk memudahkan re-seeding kapan pun dibutuhkan.
 
 ### I. Tabel Manajemen Kategori Dinamis Admin CMS
 Untuk memungkinkan administrator menambah, mengubah (edit/rename dengan cascading sync), dan menghapus kategori secara aman tanpa merusak integritas relasi data:
@@ -167,16 +189,20 @@ Untuk memungkinkan administrator menambah, mengubah (edit/rename dengan cascadin
    - Tabel baru ditambahkan dan di-seed dengan kategori: `Profil`, `SPMI`, `AMI`, `Akreditasi`, `Mutu & Data`, `Dokumen`, `Knowledge Center`, `Layanan`, `Kontak`, `Umum`.
    - Modul CRUD penuh di `admin/kategori-page.php` terintegrasi dengan form `admin/page-form.php` dan filter `admin/page-list.php`.
 
-### J. Pengaturan Teks Banner Hero Beranda (Teks Tetap di Atas Slider)
-Pembaruan struktur tampilan banner slider beranda (`includes/beranda-sections.php`) di mana gambar latar belakang dapat berganti secara otomatis (fade/slide), namun susunan teks utama tetap (*stationary/persistent*) di depan layar:
-- Kunci pengaturan baru pada tabel `pengaturan`:
-  - `hero_welcome_text`: Teks pembuka/welcome badge (*default*: `Selamat datang di`).
-  - `hero_title`: Judul utama banner (*default*: `Lembaga Penjaminan Mutu Unika`).
-  - `hero_tagline`: Slogan/tagline mutu berbingkai emas (*default*: `GROW WITH QUALITY, SERVE WITH HEART`).
-  - `hero_desc`: Kalimat penjelasan komitmen mutu universitas.
-  - `hero_btn_text` & `hero_btn_link`: Tombol aksi utama (*default*: `Akses Dokumen SPMI` -> `spmi.php`).
-  - `hero_btn2_text` & `hero_btn2_link`: Tombol aksi sekunder (*default*: `Profil Lembaga` -> `profil.php`).
-- Form editor teks tetap dan live preview disediakan langsung pada [`admin/slider-list.php`](./admin/slider-list.php) bersama daftar gambar slide background.
+### J. Pengaturan Teks Banner Hero Beranda & Formulir Gambar Slider Simpel
+Pembaruan struktur tampilan banner slider beranda (`includes/beranda-sections.php` & `admin/slider-list.php`):
+1. **Teks Tetap di Atas Slider**:
+   - Susunan teks utama tetap (*stationary/persistent*) di depan layar banner, sedangkan foto background berganti secara halus (*cross-fade*).
+   - Kunci pengaturan baru pada tabel `pengaturan`:
+     - `hero_welcome_text`: Teks pembuka baris pertama (*default*: `Selamat datang di`).
+     - `hero_title`: Judul utama banner baris kedua (*default*: `Lembaga Penjaminan Mutu Unika`).
+     - `hero_tagline`: Slogan/tagline mutu berbingkai emas (*default*: `GROW WITH QUALITY, SERVE WITH HEART`).
+     - `hero_desc`: Kalimat penjelasan komitmen mutu universitas.
+     - `hero_btn_text` & `hero_btn_link`: Tombol aksi utama dengan dropdown halaman website & opsi URL eksternal.
+     - `hero_btn2_text` & `hero_btn2_link`: Tombol aksi sekunder dengan dropdown halaman website & opsi URL eksternal.
+2. **Formulir Input Gambar Slide Simpel (`admin/slider-form.php`)**:
+   - Disederhanakan khusus mengelola gambar background slide dengan fitur **Crop** (16:9, 21:9, Bebas), **Rotate** (90° kiri/kanan), dan **Flip** (Horizontal & Vertical).
+   - Otomatis terkonversi ke format WebP berkualitas tinggi di folder `uploads/slides/`.
 
 ---
 

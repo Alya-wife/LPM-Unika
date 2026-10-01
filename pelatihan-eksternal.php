@@ -352,43 +352,6 @@ require_once __DIR__ . '/includes/navbar.php';
             </div>
         </div>
 
-        <!-- ========================================================================= -->
-        <!-- 3. KONSULTASI RESMI & NARAHUBUNG KEMITRAAN                                -->
-        <!-- ========================================================================= -->
-        <div class="row justify-content-center">
-            <div class="col-lg-11 col-xl-10">
-                <div class="p-4 p-md-5 rounded-4 text-center text-md-start d-flex flex-column flex-md-row align-items-center justify-content-between gap-4" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);color:#ffffff;box-shadow:0 8px 30px rgba(10,25,47,0.15);">
-                    <div>
-                        <div class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold mb-2" style="font-size:0.75rem;">
-                            SEKRETARIAT RESMI LPM
-                        </div>
-                        <h4 style="font-family:var(--font-heading);font-weight:800;font-size:1.35rem;margin-bottom:0.4rem;color:#ffffff;">
-                            Konsultasi Kemitraan &amp; Pelatihan Institusi
-                        </h4>
-                        <p style="font-size:0.88rem;color:rgba(255,255,255,0.85);margin-bottom:0.85rem;max-width:650px;line-height:1.65;">
-                            Ingin merancang program pelatihan khusus (In-House Training), bimbingan teknis borang akreditasi, atau verifikasi jadwal narasumber bagi institusi Anda? Tim LPM UNIKA siap mendampingi kebutuhan institusi Anda.
-                        </p>
-                        <div class="d-flex flex-wrap gap-3 text-white-50" style="font-size:0.82rem;">
-                            <span><i class="bi bi-building text-warning me-1"></i> <?= htmlspecialchars($pelatihan_alamat) ?></span>
-                            <span><i class="bi bi-clock text-warning me-1"></i> <?= htmlspecialchars($pelatihan_jam) ?></span>
-                            <span><i class="bi bi-telephone text-warning me-1"></i> <?= htmlspecialchars($pelatihan_telepon) ?></span>
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0 d-flex flex-wrap gap-2 justify-content-center justify-content-md-end">
-                        <a href="mailto:<?= htmlspecialchars($pelatihan_email) ?>?subject=Permohonan%20Konsultasi%20dan%20Kerjasama%20Pelatihan%20LPM%20UNIKA" class="btn btn-warning px-4 py-3 fw-bold rounded-pill text-dark d-inline-flex align-items-center gap-2 shadow" style="font-size:0.95rem;">
-                            <i class="bi bi-envelope-fill"></i> Hubungi via Email: <?= htmlspecialchars($pelatihan_email) ?>
-                        </a>
-                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=<?= urlencode($pelatihan_email) ?>&su=<?= urlencode('Permohonan Konsultasi dan Kerjasama Pelatihan LPM UNIKA') ?>" target="_blank" class="btn btn-light px-3 py-3 fw-bold rounded-pill text-dark d-inline-flex align-items-center gap-2 shadow-sm" style="font-size:0.92rem;" title="Buka langsung di tab Gmail web">
-                            <i class="bi bi-google text-danger"></i> Buka via Gmail
-                        </a>
-                        <button type="button" class="btn btn-outline-light px-3 py-3 fw-semibold rounded-pill d-inline-flex align-items-center gap-2" onclick="copyEmailLpm('<?= htmlspecialchars($pelatihan_email) ?>', this)" title="Salin alamat email LPM">
-                            <i class="bi bi-clipboard"></i> <span class="copy-lbl">Salin</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </section>
 
@@ -411,25 +374,6 @@ function switchBrosur(targetIndex) {
             btn.classList.remove('active');
         }
     });
-}
-
-function copyEmailLpm(email, btn) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(email).then(function() {
-            var lbl = btn.querySelector('.copy-lbl');
-            var icon = btn.querySelector('i');
-            if (lbl) lbl.textContent = 'Tersalin!';
-            if (icon) icon.className = 'bi bi-check2 text-success';
-            setTimeout(function() {
-                if (lbl) lbl.textContent = 'Salin';
-                if (icon) icon.className = 'bi bi-clipboard';
-            }, 2500);
-        }).catch(function() {
-            prompt('Salin alamat email berikut:', email);
-        });
-    } else {
-        prompt('Salin alamat email berikut:', email);
-    }
 }
 </script>
 

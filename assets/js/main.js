@@ -117,4 +117,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    // 5. Desktop Navbar Dropdown Mutual Exclusivity & Clean Hover Coordination
+    const navHoverDropdowns = document.querySelectorAll('#main-navbar .nav-hover-dropdown');
+    if (navHoverDropdowns.length > 0) {
+        navHoverDropdowns.forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                if (window.innerWidth >= 1200) {
+                    navHoverDropdowns.forEach(sibling => {
+                        if (sibling !== item) {
+                            sibling.classList.remove('show');
+                            const toggle = sibling.querySelector('.dropdown-toggle');
+                            if (toggle) {
+                                toggle.classList.remove('show');
+                                toggle.setAttribute('aria-expanded', 'false');
+                            }
+                            const menu = sibling.querySelector('.dropdown-menu');
+                            if (menu) {
+                                menu.classList.remove('show');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    }
 });
+

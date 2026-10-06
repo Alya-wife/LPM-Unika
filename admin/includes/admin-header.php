@@ -184,7 +184,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 3. Halaman Profil (Dropdown) -->
-        <?php $grp_profil = in_array($current_admin, ['profil-edit','tim-list','tim-form']); ?>
+        <?php $grp_profil = in_array($current_admin, ['profil-edit','tim-list','tim-form','struktur-organisasi']); ?>
         <div class="admin-nav-dropdown <?= $grp_profil ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_profil ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -199,8 +199,11 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <a href="<?= SITE_URL ?>/admin/profil-edit.php" class="admin-subnav-link <?= $current_admin === 'profil-edit' ? 'active' : '' ?>">
                     <span>• Tentang, Visi &amp; Misi</span>
                 </a>
+                <a href="<?= SITE_URL ?>/admin/struktur-organisasi.php" class="admin-subnav-link <?= $current_admin === 'struktur-organisasi' ? 'active' : '' ?>">
+                    <span>• Visual Bagan Struktur (Drag &amp; Drop)</span>
+                </a>
                 <a href="<?= SITE_URL ?>/admin/tim-list.php" class="admin-subnav-link <?= in_array($current_admin, ['tim-list','tim-form']) ? 'active' : '' ?>">
-                    <span>• Struktur Tim LPM</span>
+                    <span>• Struktur Tim LPM &amp; GPM</span>
                 </a>
             </div>
         </div>

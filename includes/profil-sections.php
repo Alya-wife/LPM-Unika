@@ -45,6 +45,7 @@ function getProfilData() {
     $data['tim_lpm_list'] = $db->query("SELECT * FROM tim_lpm WHERE kategori = 'lpm' ORDER BY urutan ASC, id ASC")->fetchAll();
     $data['tim_gpm_list'] = $db->query("SELECT * FROM tim_lpm WHERE kategori = 'gpm' ORDER BY urutan ASC, id ASC")->fetchAll();
     $data['st_map']       = getStrukturLpmMap($data['tim_lpm_list']);
+    $data['org_data']     = getStrukturOrganisasiData();
 
     return $data;
 }
@@ -304,15 +305,15 @@ function renderProfilSection($type, $block = [], $is_builder = false) {
                         <style>
                         .org-chart-wrap { overflow-x: auto; padding: 2rem 1rem 1.5rem; background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 4px 20px rgba(10,25,47,0.04); }
                         .org-chart-inner { min-width: 820px; display: flex; flex-direction: column; align-items: center; }
-                        .org-box { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.65rem 1.25rem; border-radius: 10px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.06); transition: transform 0.15s, box-shadow 0.15s; cursor: default; position: relative; }
-                        .org-box:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
-                        .org-box-label { font-size: 0.72rem; font-weight: 500; opacity: 0.85; margin-top: 2px; }
-                        .org-box-top { background: linear-gradient(135deg, #0A192F, #1E3A8A); color: #fff; border: 2px solid #1E3A8A; min-width: 200px; }
-                        .org-box-wr { background: linear-gradient(135deg, #1E3A8A, #1565C0); color: #fff; border: 2px solid #1565C0; min-width: 220px; }
-                        .org-box-ka { background: linear-gradient(135deg, #7B1FA2, #6A1B9A); color: #fff; border: 2px solid #6A1B9A; min-width: 220px; }
-                        .org-box-pusat { background: #EEF2FF; color: #1E3A8A; border: 2px solid #C7D2FE; min-width: 145px; }
-                        .org-box-sub { background: #F8FAFC; color: #475569; border: 1.5px dashed #94A3B8; min-width: 135px; }
-                        .org-box-staff { background: #FDF4FF; color: #6A1B9A; border: 1.5px solid #E879F9; min-width: 135px; }
+                        .org-box { box-sizing: border-box !important; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.65rem 1.15rem; border-radius: 10px; font-family: inherit; font-size: 0.82rem; font-weight: 700; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.15s, box-shadow 0.15s; cursor: default; position: absolute; overflow: hidden; line-height: 1.25; }
+                        .org-box:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+                        .org-box-label { font-size: 0.72rem; font-weight: 500; opacity: 0.88; margin-top: 3px; line-height: 1.2; }
+                        .org-box-top { background: linear-gradient(135deg, #0A192F, #1E3A8A); color: #fff; border: 2px solid #1E3A8A; }
+                        .org-box-wr { background: linear-gradient(135deg, #1E3A8A, #1565C0); color: #fff; border: 2px solid #1565C0; }
+                        .org-box-ka { background: linear-gradient(135deg, #7B1FA2, #6A1B9A); color: #fff; border: 2px solid #6A1B9A; }
+                        .org-box-pusat { background: #EEF2FF; color: #1E3A8A; border: 2px solid #C7D2FE; }
+                        .org-box-sub { background: #F8FAFC; color: #475569; border: 1.5px dashed #94A3B8; }
+                        .org-box-staff { background: #FDF4FF; color: #6A1B9A; border: 1.5px solid #E879F9; }
                         .org-vline { width: 2px; background: #94A3B8; margin: 0 auto; flex-shrink: 0; }
                         .org-vline-dashed { width: 2px; border-left: 2px dashed #94A3B8; background: transparent; margin: 0 auto; flex-shrink: 0; }
                         .org-branches-row { display: flex; justify-content: space-between; width: 100%; max-width: 900px; position: relative; padding-top: 0; }
@@ -481,92 +482,173 @@ function renderProfilSection($type, $block = [], $is_builder = false) {
                             background: #F8FAFC;
                             border-color: #94A3B8;
                             color: var(--navy);
-                        }
+                        }                        /* Dynamic Themes */
+                        .theme-top { background: linear-gradient(135deg, #0A192F, #1E3A8A); color: #fff; border: 2px solid #1E3A8A; }
+                        .theme-wr { background: linear-gradient(135deg, #1E3A8A, #1565C0); color: #fff; border: 2px solid #1565C0; }
+                        .theme-ka { background: linear-gradient(135deg, #7B1FA2, #6A1B9A); color: #fff; border: 2px solid #6A1B9A; }
+                        .theme-pusat { background: #EEF2FF; color: #1E3A8A; border: 2px solid #C7D2FE; }
+                        .theme-staff { background: #FDF4FF; color: #6A1B9A; border: 1.5px solid #E879F9; }
+                        .theme-sub { background: #F0FDF4; color: #166534; border: 1.5px solid #86EFAC; }
+                        .theme-auditor { background: #F8FAFC; color: #475569; border: 1.5px dashed #94A3B8; }
                         </style>
 
+                        <?php
+                        if (!function_exists('getNodePortPosPhp')) {
+                            function getNodePortPosPhp($node, $portName) {
+                                $w = (int)($node['width'] ?? 180);
+                                $h = (int)($node['height'] ?? 68);
+                                $x = (int)($node['x'] ?? 0);
+                                $y = (int)($node['y'] ?? 0);
+                                switch ($portName) {
+                                    case 'top':    return ['x' => $x + $w / 2, 'y' => $y];
+                                    case 'bottom': return ['x' => $x + $w / 2, 'y' => $y + $h];
+                                    case 'left':   return ['x' => $x,          'y' => $y + $h / 2];
+                                    case 'right':  return ['x' => $x + $w,      'y' => $y + $h / 2];
+                                    default:       return ['x' => $x + $w / 2, 'y' => $y + $h];
+                                }
+                            }
+                        }
+
+                        if (!function_exists('calcSvgConnectorD')) {
+                            function calcSvgConnectorD($a, $b, $line = []) {
+                                $aW = (int)($a['width'] ?? 180);
+                                $aH = (int)($a['height'] ?? 68);
+                                $bW = (int)($b['width'] ?? 180);
+                                $bH = (int)($b['height'] ?? 68);
+                                $aX = (int)($a['x'] ?? 0);
+                                $aY = (int)($a['y'] ?? 0);
+                                $bX = (int)($b['x'] ?? 0);
+                                $bY = (int)($b['y'] ?? 0);
+
+                                $fromPort = $line['fromPort'] ?? 'auto';
+                                $toPort   = $line['toPort']   ?? 'auto';
+
+                                if ($fromPort === 'auto' || $toPort === 'auto') {
+                                    if ($bY >= $aY + $aH - 12) {
+                                        if ($fromPort === 'auto') $fromPort = 'bottom';
+                                        if ($toPort === 'auto')   $toPort = 'top';
+                                    } else if ($bY + $bH <= $aY + 12) {
+                                        if ($fromPort === 'auto') $fromPort = 'top';
+                                        if ($toPort === 'auto')   $toPort = 'bottom';
+                                    } else if ($bX >= $aX + $aW - 10) {
+                                        if ($fromPort === 'auto') $fromPort = 'right';
+                                        if ($toPort === 'auto')   $toPort = 'left';
+                                    } else if ($bX + $bW <= $aX + 10) {
+                                        if ($fromPort === 'auto') $fromPort = 'left';
+                                        if ($toPort === 'auto')   $toPort = 'right';
+                                    } else {
+                                        if ($fromPort === 'auto') $fromPort = 'bottom';
+                                        if ($toPort === 'auto')   $toPort = 'top';
+                                    }
+                                }
+
+                                $p1 = getNodePortPosPhp($a, $fromPort);
+                                $p2 = getNodePortPosPhp($b, $toPort);
+
+                                // 1. Bottom to Top (Hirarki Standar - garis trunk bus horizontal menyatu/saling tumpuk rapi)
+                                if ($fromPort === 'bottom' && $toPort === 'top') {
+                                    if (abs($p1['x'] - $p2['x']) < 4) {
+                                        return "M {$p1['x']} {$p1['y']} V {$p2['y']}";
+                                    }
+                                    $branchY = ($p2['y'] > $p1['y'] + 35) ? ($p1['y'] + 25) : (($p1['y'] + $p2['y']) * 0.5);
+                                    return "M {$p1['x']} {$p1['y']} V {$branchY} H {$p2['x']} V {$p2['y']}";
+                                }
+
+                                // 2. Top to Bottom
+                                if ($fromPort === 'top' && $toPort === 'bottom') {
+                                    if (abs($p1['x'] - $p2['x']) < 4) {
+                                        return "M {$p1['x']} {$p1['y']} V {$p2['y']}";
+                                    }
+                                    $branchY = ($p1['y'] > $p2['y'] + 35) ? ($p1['y'] - 25) : (($p1['y'] + $p2['y']) * 0.5);
+                                    return "M {$p1['x']} {$p1['y']} V {$branchY} H {$p2['x']} V {$p2['y']}";
+                                }
+
+                                // 3. Right to Left
+                                if ($fromPort === 'right' && $toPort === 'left') {
+                                    if (abs($p1['y'] - $p2['y']) < 4) {
+                                        return "M {$p1['x']} {$p1['y']} H {$p2['x']}";
+                                    }
+                                    $midX = ($p1['x'] + $p2['x']) * 0.5;
+                                    return "M {$p1['x']} {$p1['y']} H {$midX} V {$p2['y']} H {$p2['x']}";
+                                }
+
+                                // 4. Left to Right
+                                if ($fromPort === 'left' && $toPort === 'right') {
+                                    if (abs($p1['y'] - $p2['y']) < 4) {
+                                        return "M {$p1['x']} {$p1['y']} H {$p2['x']}";
+                                    }
+                                    $midX = ($p1['x'] + $p2['x']) * 0.5;
+                                    return "M {$p1['x']} {$p1['y']} H {$midX} V {$p2['y']} H {$p2['x']}";
+                                }
+
+                                // 5. Bottom to Left / Right
+                                if ($fromPort === 'bottom' && ($toPort === 'left' || $toPort === 'right')) {
+                                    return "M {$p1['x']} {$p1['y']} V {$p2['y']} H {$p2['x']}";
+                                }
+
+                                // 6. Top to Left / Right
+                                if ($fromPort === 'top' && ($toPort === 'left' || $toPort === 'right')) {
+                                    return "M {$p1['x']} {$p1['y']} V {$p2['y']} H {$p2['x']}";
+                                }
+
+                                // 7. Right to Top / Bottom
+                                if ($fromPort === 'right' && ($toPort === 'top' || $toPort === 'bottom')) {
+                                    return "M {$p1['x']} {$p1['y']} H {$p2['x']} V {$p2['y']}";
+                                }
+
+                                // 8. Left to Top / Bottom
+                                if ($fromPort === 'left' && ($toPort === 'top' || $toPort === 'bottom')) {
+                                    return "M {$p1['x']} {$p1['y']} H {$p2['x']} V {$p2['y']}";
+                                }
+
+                                $midY = ($p1['y'] + $p2['y']) * 0.5;
+                                return "M {$p1['x']} {$p1['y']} V {$midY} H {$p2['x']} V {$p2['y']}";
+                            }
+                        }
+
+                        $org_data = $data['org_data'] ?? getStrukturOrganisasiData();
+                        $nodes_by_id = [];
+                        $max_board_w = 1060;
+                        $max_board_h = 630;
+                        if (!empty($org_data['nodes'])) {
+                            foreach ($org_data['nodes'] as $nd) {
+                                $nodes_by_id[$nd['id']] = $nd;
+                                $rx = ($nd['x'] ?? 0) + ($nd['width'] ?? 180) + 40;
+                                $by = ($nd['y'] ?? 0) + ($nd['height'] ?? 68) + 40;
+                                if ($rx > $max_board_w) $max_board_w = $rx;
+                                if ($by > $max_board_h) $max_board_h = $by;
+                            }
+                        }
+                        ?>
+
                         <div class="org-chart-wrap">
-                            <div class="org-chart-inner">
-                                <!-- LEVEL 1: Rektorat -->
-                                <div class="org-box org-box-top" title="<?= htmlspecialchars($st_map['rektor']) ?>">
-                                    Rektorat
-                                    <div class="org-box-label"><?= htmlspecialchars($st_map['rektor']) ?></div>
-                                </div>
-                                <div class="org-vline" style="height:24px;"></div>
+                            <div class="org-chart-dynamic" style="position:relative; width:<?= $max_board_w ?>px; height:<?= $max_board_h ?>px; min-width:<?= $max_board_w ?>px; margin:0 auto;">
+                                <svg style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2;">
+                                    <?php if (!empty($org_data['lines'])): 
+                                        foreach ($org_data['lines'] as $line): 
+                                            $f = $nodes_by_id[$line['from'] ?? ''] ?? null;
+                                            $t = $nodes_by_id[$line['to'] ?? ''] ?? null;
+                                            if (!$f || !$t) continue;
+                                            $pathD = calcSvgConnectorD($f, $t, $line);
+                                            $isDashed = ($line['style'] ?? '') === 'dashed';
+                                    ?>
+                                    <path d="<?= $pathD ?>" stroke="<?= htmlspecialchars($line['color'] ?? '#94A3B8') ?>" stroke-width="2" fill="none" <?= $isDashed ? 'stroke-dasharray="5,4"' : '' ?> />
+                                    <?php endforeach; endif; ?>
+                                </svg>
 
-                                <!-- LEVEL 2: WR SDM TK -->
-                                <div class="org-box org-box-wr" title="<?= htmlspecialchars($st_map['wr1']) ?>">
-                                    Wakil Rektor SDM &amp; TK
-                                    <div class="org-box-label"><?= htmlspecialchars($st_map['wr1']) ?></div>
+                                <?php if (!empty($org_data['nodes'])): 
+                                    foreach ($org_data['nodes'] as $node): 
+                                        $theme = $node['theme'] ?? 'pusat';
+                                        $w = (int)($node['width'] ?? 180);
+                                        $h = (int)($node['height'] ?? 66);
+                                ?>
+                                <div class="org-box theme-<?= htmlspecialchars($theme) ?>" style="position:absolute; left:<?= (int)$node['x'] ?>px; top:<?= (int)$node['y'] ?>px; width:<?= $w ?>px; height:<?= $h ?>px; box-sizing:border-box; z-index:5;" title="<?= htmlspecialchars($node['subtitle'] ?? '') ?>">
+                                    <div style="font-size:0.82rem;font-weight:700;line-height:1.25;"><?= htmlspecialchars($node['title']) ?></div>
+                                    <?php if (!empty($node['subtitle'])): ?>
+                                        <div class="org-box-label"><?= htmlspecialchars($node['subtitle']) ?></div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="org-vline" style="height:24px;"></div>
-
-                                <!-- LEVEL 3: Kepala LPM -->
-                                <div class="org-box org-box-ka" title="<?= htmlspecialchars($st_map['kepala_lpm']) ?>">
-                                    Kepala LPM
-                                    <div class="org-box-label"><?= htmlspecialchars($st_map['kepala_lpm']) ?></div>
-                                </div>
-                                <div class="org-vline" style="height:20px;"></div>
-
-                                <!-- Branches -->
-                                <div class="org-branches-row">
-                                    <div style="position:absolute;top:0;left:10%;right:10%;height:2px;background:#94A3B8;"></div>
-                                    <!-- Branch 1: Tenaga Ahli -->
-                                    <div class="org-branch-col">
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-staff" title="<?= htmlspecialchars($st_map['tenaga_ahli']) ?>">
-                                            Tenaga Ahli
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['tenaga_ahli']) ?></div>
-                                        </div>
-                                    </div>
-                                    <!-- Branch 2: Sekretaris + Staf TU -->
-                                    <div class="org-branch-col">
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-pusat" title="<?= htmlspecialchars($st_map['sekretaris']) ?>">
-                                            Sekretaris LPM
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['sekretaris']) ?></div>
-                                        </div>
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-staff" title="<?= htmlspecialchars($st_map['staf_tu']) ?>">
-                                            Staf Tata Usaha
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['staf_tu']) ?></div>
-                                        </div>
-                                    </div>
-                                    <!-- Branch 3: Ka. PSPM -->
-                                    <div class="org-branch-col">
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-pusat" title="<?= htmlspecialchars($st_map['ka_ppspm']) ?>">
-                                            Ka. Pusat PSPM
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['ka_ppspm']) ?></div>
-                                        </div>
-                                    </div>
-                                    <!-- Branch 4: Ka. AMI -->
-                                    <div class="org-branch-col">
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-pusat" title="<?= htmlspecialchars($st_map['ka_ami']) ?>">
-                                            Ka. Pusat AMI
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['ka_ami']) ?></div>
-                                        </div>
-                                        <div class="org-vline org-vline-dashed" style="height:20px;"></div>
-                                        <div class="d-flex gap-2 justify-content-center flex-wrap">
-                                            <div class="org-box org-box-sub" title="Gugus Penjaminan Mutu (GPM) Fakultas berada di bawah koordinasi Ka. Pusat AMI" style="background:#F0FDF4;border:1.5px solid #86EFAC;color:#166534;">
-                                                Gugus Penjaminan Mutu
-                                                <div class="org-box-label">(GPM Fakultas)</div>
-                                            </div>
-                                            <div class="org-box org-box-sub" title="Tim Auditor Mutu Internal">
-                                                Auditor Mutu Internal
-                                                <div class="org-box-label">Tim Auditor</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Branch 5: Ka. Pemeringkatan -->
-                                    <div class="org-branch-col">
-                                        <div class="org-vline" style="height:20px;"></div>
-                                        <div class="org-box org-box-pusat" title="<?= htmlspecialchars($st_map['ka_pemeringkatan']) ?>">
-                                            Ka. Pusat Pemeringkatan
-                                            <div class="org-box-label"><?= htmlspecialchars($st_map['ka_pemeringkatan']) ?></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <?php endforeach; endif; ?>
                             </div>
                         </div>
                     </div>

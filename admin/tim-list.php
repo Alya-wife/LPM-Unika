@@ -33,9 +33,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     redirect(SITE_URL . '/admin/tim-list.php?kat=gpm');
 }
 
+// Handle Save Pimpinan Universitas & Struktur Map
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_pimpinan_struktur') {
+    $rektor_nama = trim($_POST['struktur_rektor_nama'] ?? '');
+    $rektor_jabatan = trim($_POST['struktur_rektor_jabatan'] ?? 'Rektorat');
+    $wr_nama = trim($_POST['struktur_wr_nama'] ?? '');
+    $wr_jabatan = trim($_POST['struktur_wr_jabatan'] ?? 'Wakil Rektor SDM & TK');
+
+    setPengaturan('struktur_rektor_nama', $rektor_nama);
+    setPengaturan('struktur_rektor_jabatan', $rektor_jabatan);
+    setPengaturan('struktur_wr_nama', $wr_nama);
+    setPengaturan('struktur_wr_jabatan', $wr_jabatan);
+
+    // Sync ke struktur_organisasi_json jika ada
+    $raw = getPengaturan('struktur_organisasi_json', '');
+    if (!empty($raw)) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded) && isset($decoded['nodes'])) {
+            foreach ($decoded['nodes'] as &$node) {
+                if (($node['id'] ?? '') === 'node_rektor') {
+                    if ($rektor_jabatan !== '') $node['title'] = $rektor_jabatan;
+                    if ($rektor_nama !== '') $node['subtitle'] = $rektor_nama;
+                } elseif (($node['id'] ?? '') === 'node_wr') {
+                    if ($wr_jabatan !== '') $node['title'] = $wr_jabatan;
+                    if ($wr_nama !== '') $node['subtitle'] = $wr_nama;
+                }
+            }
+            setPengaturan('struktur_organisasi_json', json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    $_SESSION['flash'] = 'Data Rektor & Wakil Rektor untuk bagan struktur berhasil diperbarui.';
+    redirect(SITE_URL . '/admin/tim-list.php?kat=' . $kat);
+}
+
 // Counts
 $count_lpm = (int)$db->query("SELECT COUNT(*) FROM tim_lpm WHERE kategori = 'lpm'")->fetchColumn();
 $count_gpm = (int)$db->query("SELECT COUNT(*) FROM tim_lpm WHERE kategori = 'gpm'")->fetchColumn();
+
+// Data Pimpinan untuk Bagan Struktur
+$rektor_nama_val    = getPengaturan('struktur_rektor_nama', 'Dr. Ferdinandus Hindiarto, M.Si.');
+$rektor_jabatan_val = getPengaturan('struktur_rektor_jabatan', 'Rektorat');
+$wr_nama_val        = getPengaturan('struktur_wr_nama', 'Robertus Setiawan Aji N., S.T., M.CompIT., Ph.D.');
+$wr_jabatan_val     = getPengaturan('struktur_wr_jabatan', 'Wakil Rektor SDM & TK');
 
 // Query
 $stmt = $db->prepare("SELECT * FROM tim_lpm WHERE kategori = ? ORDER BY urutan ASC, id ASC");
@@ -57,24 +97,84 @@ require_once __DIR__ . '/includes/admin-header.php';
             Kelola data pimpinan, koordinator, dan personel yang tampil pada kartu di halaman profil.
         </p>
     </div>
-    <a href="tim-form.php?kategori=<?= $kat ?>" class="btn-add">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Tambah Personel <?= $kat === 'gpm' ? 'GPM' : 'LPM' ?>
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="struktur-organisasi.php" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" style="font-size:0.85rem;font-weight:600;border-radius:8px;">
+            <i class="bi bi-diagram-3-fill"></i>
+            Visual Editor Bagan (Drag &amp; Drop)
+        </a>
+        <a href="tim-form.php?kategori=<?= $kat ?>" class="btn-add">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Tambah Personel <?= $kat === 'gpm' ? 'GPM' : 'LPM' ?>
+        </a>
+    </div>
+</div>
+
+<!-- Card Pimpinan Universitas (Rektor & Wakil Rektor) -->
+<div class="card mb-4 border-0 shadow-sm" style="background:#ffffff;border:1px solid #E2E8F0;border-left:5px solid #1E3A8A !important;border-radius:14px;overflow:hidden;">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+            <div>
+                <h5 class="m-0 fw-bold" style="font-size:1rem;color:var(--navy);">Pengaturan Rektor &amp; Wakil Rektor (Bagan Struktur Organisasi)</h5>
+                <small class="text-muted">Ubah nama dan sebutan jabatan Rektor &amp; Wakil Rektor yang tampil di pucuk hirarki bagan profil.</small>
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePimpinan" aria-expanded="false" aria-controls="collapsePimpinan" style="border-radius:6px;font-size:0.8rem;">
+            <i class="bi bi-pencil-square me-1"></i> Buka / Tutup Form
+        </button>
+    </div>
+    <div class="collapse show" id="collapsePimpinan">
+        <div class="card-body p-4 bg-light">
+            <form action="tim-list.php?kat=<?= $kat ?>" method="POST">
+                <input type="hidden" name="action" value="save_pimpinan_struktur">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold" style="font-size:0.82rem;color:var(--navy);">Nama Jabatan Rektor</label>
+                        <input type="text" name="struktur_rektor_jabatan" class="form-control form-control-sm" value="<?= e($rektor_jabatan_val) ?>" placeholder="Contoh: Rektorat / Rektor" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold" style="font-size:0.82rem;color:var(--navy);">Nama &amp; Gelar Rektor</label>
+                        <input type="text" name="struktur_rektor_nama" class="form-control form-control-sm" value="<?= e($rektor_nama_val) ?>" placeholder="Nama lengkap rektor beserta gelar" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold" style="font-size:0.82rem;color:var(--navy);">Nama Jabatan Wakil Rektor</label>
+                        <input type="text" name="struktur_wr_jabatan" class="form-control form-control-sm" value="<?= e($wr_jabatan_val) ?>" placeholder="Contoh: Wakil Rektor SDM & TK" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold" style="font-size:0.82rem;color:var(--navy);">Nama &amp; Gelar Wakil Rektor</label>
+                        <input type="text" name="struktur_wr_nama" class="form-control form-control-sm" value="<?= e($wr_nama_val) ?>" placeholder="Nama lengkap wakil rektor beserta gelar" required>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top flex-wrap gap-2">
+                    <div class="text-muted" style="font-size:0.8rem;">
+                        <i class="bi bi-info-circle me-1"></i> Perubahan di sini otomatis langsung memperbarui kotak bagan di halaman profil dan sinkron ke visual editor bagan.
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary px-3 py-1 fw-bold" style="border-radius:6px;">
+                        <i class="bi bi-check2-circle me-1"></i> Simpan Pimpinan Universitas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="mb-4 p-3 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#F0FDF4; border:1.5px solid #BBF7D0;">
     <div class="d-flex align-items-center gap-2">
         <i class="bi bi-diagram-3-fill text-success fs-5"></i>
         <div style="font-size:0.85rem; color:#166534;">
-            <strong>Sinkronisasi Bagan Struktur Organisasi:</strong> Nama personel LPM (Kepala, Sekretaris, Ka. Pusat PSPM, Ka. Pusat AMI, Ka. Pusat Pemeringkatan, Staf TU) yang Anda tambahkan atau edit di sini otomatis langsung memperbarui kotak nama pada Bagan Struktur Organisasi di Halaman Profil.
+            <strong>Visual Builder Bagan Struktur:</strong> Ingin menggeser posisi kotak, menambah kotak baru, memindahkan hirarki, atau menarik garis koneksi antar blok? Gunakan editor visual interaktif kami.
         </div>
     </div>
-    <a href="<?= SITE_URL ?>/profil.php#struktur" target="_blank" class="btn btn-sm btn-outline-success" style="font-size:0.78rem; border-radius:6px; white-space:nowrap;">
-        Lihat Bagan di Profil &rarr;
-    </a>
+    <div class="d-flex gap-2">
+        <a href="struktur-organisasi.php" class="btn btn-sm btn-success fw-bold" style="font-size:0.78rem; border-radius:6px; white-space:nowrap;">
+            <i class="bi bi-sliders me-1"></i> Buka Editor Bagan &rarr;
+        </a>
+        <a href="<?= SITE_URL ?>/profil.php#struktur" target="_blank" class="btn btn-sm btn-outline-success" style="font-size:0.78rem; border-radius:6px; white-space:nowrap;">
+            Lihat di Web &rarr;
+        </a>
+    </div>
 </div>
 
 <?php if ($flash): ?>

@@ -20,11 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $status_responden    = trim($_POST['status_responden'] ?? '');
     $saran_masukan       = trim($_POST['saran_masukan'] ?? '');
 
-    // Validation (umur dan token tidak digunakan)
+    // Validation (email wajib dan harus email resmi instansi untuk mencegah spam)
     if (empty($nama_pengisi) || empty($email_pengisi) || empty($nama_institusi)) {
         $error_message = 'Mohon melengkapi Nama, Alamat Email, dan Instansi/Lembaga Anda.';
     } elseif (!filter_var($email_pengisi, FILTER_VALIDATE_EMAIL)) {
         $error_message = 'Format alamat email tidak valid.';
+    } elseif (!isInstitutionalEmail($email_pengisi)) {
+        $error_message = 'Mohon gunakan alamat email resmi instansi/lembaga Anda. Email pribadi publik tidak dapat digunakan.';
     } elseif (empty($jenis_kelamin)) {
         $error_message = 'Mohon memilih Jenis Kelamin.';
     } elseif (empty($pendidikan_terakhir)) {
@@ -557,7 +559,7 @@ require_once __DIR__ . '/includes/navbar.php';
                             <label class="survei-form-label" for="email_pengisi">
                                 Alamat Email <span class="req">*</span>
                             </label>
-                            <input type="email" class="form-control survei-form-control" id="email_pengisi" name="email_pengisi" value="<?= e($_POST['email_pengisi'] ?? '') ?>" placeholder="nama@instansi.ac.id" required>
+                            <input type="email" class="form-control survei-form-control" id="email_pengisi" name="email_pengisi" value="<?= e($_POST['email_pengisi'] ?? '') ?>" placeholder="Masukkan alamat email Anda" required>
                         </div>
 
                         <!-- 3. Jenis Kelamin -->
@@ -738,5 +740,61 @@ require_once __DIR__ . '/includes/navbar.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var surveiForm = document.getElementById('surveiForm');
+    var emailInput = document.getElementById('email_pengisi');
+    if (!surveiForm || !emailInput) return;
+
+    var blockedDomains = [
+        'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.id', 'yahoo.co.uk', 'ymail.com', 'rocketmail.com',
+        'hotmail.com', 'hotmail.co.id', 'outlook.com', 'outlook.co.id', 'live.com', 'msn.com',
+        'icloud.com', 'me.com', 'mac.com', 'aol.com', 'aim.com', 'zoho.com', 'proton.me', 'protonmail.com',
+        'mail.com', 'gmx.com', 'yandex.com', 'tutanota.com', 'mailinator.com', 'tempmail.com', '10minutemail.com'
+    ];
+
+    function checkInstitutional(showNotice) {
+        var val = (emailInput.value || '').trim().toLowerCase();
+        if (!val) return true;
+
+        var atPos = val.lastIndexOf('@');
+        if (atPos === -1) return true;
+
+        var domain = val.substring(atPos + 1);
+        var isAcademic = /\.(ac\.id|edu|sch\.id|go\.id|mil\.id|gov|ac\.[a-z]{2,3}|edu\.[a-z]{2,3})$/i.test(domain);
+        var isBlocked = blockedDomains.some(function(b) {
+            return domain === b || domain.endsWith('.' + b);
+        });
+
+        if (isBlocked || (!isAcademic && domain.indexOf('.') === -1)) {
+            if (showNotice) {
+                emailInput.setCustomValidity('Mohon gunakan alamat email resmi instansi/lembaga Anda.');
+                emailInput.reportValidity();
+            }
+            return false;
+        }
+
+        emailInput.setCustomValidity('');
+        return true;
+    }
+
+    emailInput.addEventListener('input', function() {
+        emailInput.setCustomValidity('');
+    });
+
+    emailInput.addEventListener('blur', function() {
+        if (emailInput.value) {
+            checkInstitutional(true);
+        }
+    });
+
+    surveiForm.addEventListener('submit', function(e) {
+        if (!checkInstitutional(true)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -41,7 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $jabatan_pengisi = trim($_POST['jabatan_pengisi'] ?? '');
             $email_pengisi   = trim($_POST['email_pengisi'] ?? '');
 
-            // Fetch active questions
+            if (empty($email_pengisi)) {
+                $token_error = 'Alamat email instansi wajib diisi.';
+            } elseif (!filter_var($email_pengisi, FILTER_VALIDATE_EMAIL)) {
+                $token_error = 'Format alamat email tidak valid.';
+            } elseif (!isInstitutionalEmail($email_pengisi)) {
+                $token_error = 'Mohon gunakan alamat email resmi instansi/lembaga Anda.';
+            }
+
+            if (empty($token_error)) {
+                // Fetch active questions
             $questions = $db->query("SELECT * FROM kunjungan_kuesioner_pertanyaan WHERE is_aktif = 1 ORDER BY urutan ASC, id ASC")->fetchAll();
             $skala_scores = [];
             $answers = [];
@@ -96,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $upd_tok->execute([$valid_token['id']]);
 
             redirect(SITE_URL . '/feedback-kunjungan.php?submitted=1&instansi=' . urlencode($valid_token['nama_institusi']));
+            }
         }
     }
 }
@@ -657,8 +667,8 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <input type="text" name="jabatan_pengisi" class="form-control" placeholder="Contoh: Kepala LPM / Wakil Rektor I" style="border:1.5px solid var(--border);">
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Email Kontak Pengisi</label>
-                                <input type="email" name="email_pengisi" class="form-control" placeholder="nama@instansi.ac.id" style="border:1.5px solid var(--border);">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Alamat Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email_pengisi" class="form-control" placeholder="Masukkan alamat email Anda" value="<?= e($_POST['email_pengisi'] ?? '') ?>" required style="border:1.5px solid var(--border);">
                             </div>
                         </div>
                     </div>

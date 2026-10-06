@@ -59,6 +59,64 @@ function getUnikaUser(): ?array {
 }
 
 /**
+ * Memvalidasi apakah alamat email merupakan email resmi instansi / institusi / kampus
+ * Menolak email umum / gratisan / personal (seperti Gmail, Yahoo, Hotmail, Outlook pribadi, dsb.)
+ * demi mencegah spam dan menjamin kredibilitas responden survei layanan.
+ */
+function isInstitutionalEmail(string $email): bool {
+    $email = trim(strtolower($email));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    $parts = explode('@', $email);
+    if (count($parts) !== 2) {
+        return false;
+    }
+    $domain = trim($parts[1]);
+
+    // 1. Ekstensi resmi institusi akademik, sekolah, militer, dan pemerintahan
+    if (preg_match('/\.(ac\.id|edu|sch\.id|go\.id|mil\.id|gov|ac\.[a-z]{2,3}|edu\.[a-z]{2,3})$/i', $domain)) {
+        return true;
+    }
+
+    // 2. Daftar domain email publik gratisan / personal / sekali pakai (disposable) yang dilarang
+    $blockedDomains = [
+        'gmail.com', 'googlemail.com',
+        'yahoo.com', 'yahoo.co.id', 'yahoo.co.uk', 'yahoo.com.sg', 'ymail.com', 'rocketmail.com',
+        'hotmail.com', 'hotmail.co.id', 'hotmail.co.uk', 'outlook.com', 'outlook.co.id', 'live.com', 'msn.com',
+        'icloud.com', 'me.com', 'mac.com',
+        'aol.com', 'aim.com',
+        'zoho.com', 'zohomail.com',
+        'proton.me', 'protonmail.com', 'pm.me',
+        'mail.com', 'email.com', 'usa.com',
+        'gmx.com', 'gmx.net', 'gmx.de',
+        'yandex.com', 'yandex.ru',
+        'tutanota.com', 'tuta.io', 'tuta.com',
+        'fastmail.com', 'fastmail.fm',
+        'hushmail.com', 'inbox.com', 'lycos.com',
+        // Disposable / temporary spam domains
+        'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com',
+        'sharklasers.com', 'throwawaymail.com', 'dispostable.com', 'trashmail.com',
+        'temp-mail.org', 'fakeinbox.com', 'getnada.com', 'yopmail.com', 'burnermail.io'
+    ];
+
+    foreach ($blockedDomains as $blocked) {
+        if ($domain === $blocked || (strlen($domain) > strlen($blocked) && substr($domain, -strlen('.' . $blocked)) === '.' . $blocked)) {
+            return false;
+        }
+    }
+
+    // Domain harus memiliki format valid (memiliki titik dan bukan dummy/test domain)
+    if (strpos($domain, '.') === false || strpos($domain, 'localhost') !== false || strpos($domain, 'example.') !== false || strpos($domain, 'test.') !== false) {
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
  * Konversi dan simpan file gambar yang diunggah ke format WebP berkualitas HD (terkompresi ringan & tajam)
  *
  * @param string $sourceTmpPath Path temporer file ($_FILES['...']['tmp_name']) atau path file lokal
@@ -726,16 +784,25 @@ function getStrukturLpmMap(array $timList = []): array {
     }
 
     $map = [
-        'rektor' => 'Dr. Ferdinandus Hindiarto, M.Si.',
-        'wr1' => 'Robertus Setiawan Aji N., S.T., M.CompIT., Ph.D.',
+        'rektor' => getPengaturan('struktur_rektor_nama', 'Dr. Ferdinandus Hindiarto, M.Si.'),
+        'rektor_jabatan' => getPengaturan('struktur_rektor_jabatan', 'Rektorat'),
+        'wr1' => getPengaturan('struktur_wr_nama', 'Robertus Setiawan Aji N., S.T., M.CompIT., Ph.D.'),
+        'wr1_jabatan' => getPengaturan('struktur_wr_jabatan', 'Wakil Rektor SDM & TK'),
         'kepala' => '',
         'kepala_lpm' => '',
+        'kepala_jabatan' => getPengaturan('struktur_kepala_jabatan', 'Kepala LPM'),
         'sekretaris' => '',
+        'sekretaris_jabatan' => getPengaturan('struktur_sekretaris_jabatan', 'Sekretaris LPM'),
         'staf_tu' => '',
+        'staf_tu_jabatan' => getPengaturan('struktur_staf_tu_jabatan', 'Staf Tata Usaha'),
         'ka_ppspm' => '',
+        'ka_ppspm_jabatan' => getPengaturan('struktur_ka_ppspm_jabatan', 'Ka. Pusat PSPM'),
         'ka_ami' => '',
+        'ka_ami_jabatan' => getPengaturan('struktur_ka_ami_jabatan', 'Ka. Pusat AMI'),
         'ka_pemeringkatan' => '',
-        'tenaga_ahli' => 'Profesional Pendukung'
+        'ka_pemeringkatan_jabatan' => getPengaturan('struktur_ka_pemeringkatan_jabatan', 'Ka. Pusat Pemeringkatan'),
+        'tenaga_ahli' => getPengaturan('struktur_tenaga_ahli_nama', 'Profesional Pendukung'),
+        'tenaga_ahli_jabatan' => getPengaturan('struktur_tenaga_ahli_jabatan', 'Tenaga Ahli')
     ];
 
     foreach ($timList as $t) {
@@ -771,6 +838,161 @@ function getStrukturLpmMap(array $timList = []): array {
     if (empty($map['tenaga_ahli'])) $map['tenaga_ahli'] = 'Profesional Pendukung';
 
     return $map;
+}
+
+/**
+ * Data default preset bagan struktur organisasi LPM SCU
+ */
+function getDefaultStrukturOrganisasiData(array $st_map = []): array {
+    if (empty($st_map)) {
+        $st_map = getStrukturLpmMap();
+    }
+
+    $nodes = [
+        [
+            'id' => 'node_rektor',
+            'title' => $st_map['rektor_jabatan'] ?? 'Rektorat',
+            'subtitle' => $st_map['rektor'] ?? 'Dr. Ferdinandus Hindiarto, M.Si.',
+            'theme' => 'top',
+            'x' => 410,
+            'y' => 30,
+            'width' => 240,
+            'height' => 68
+        ],
+        [
+            'id' => 'node_wr',
+            'title' => $st_map['wr1_jabatan'] ?? 'Wakil Rektor SDM & TK',
+            'subtitle' => $st_map['wr1'] ?? 'Robertus Setiawan Aji N., S.T., M.CompIT., Ph.D.',
+            'theme' => 'wr',
+            'x' => 390,
+            'y' => 125,
+            'width' => 280,
+            'height' => 68
+        ],
+        [
+            'id' => 'node_kepala',
+            'title' => $st_map['kepala_jabatan'] ?? 'Kepala LPM',
+            'subtitle' => $st_map['kepala_lpm'] ?? 'Stefani Lily Indarto, SE., MM., Ak., CA., CPA.',
+            'theme' => 'ka',
+            'x' => 390,
+            'y' => 220,
+            'width' => 280,
+            'height' => 68
+        ],
+        [
+            'id' => 'node_tenaga_ahli',
+            'title' => $st_map['tenaga_ahli_jabatan'] ?? 'Tenaga Ahli',
+            'subtitle' => $st_map['tenaga_ahli'] ?? 'Profesional Pendukung',
+            'theme' => 'staff',
+            'x' => 35,
+            'y' => 335,
+            'width' => 175,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_sekretaris',
+            'title' => $st_map['sekretaris_jabatan'] ?? 'Sekretaris LPM',
+            'subtitle' => $st_map['sekretaris'] ?? 'Vera Retnowati, ST., MM.',
+            'theme' => 'pusat',
+            'x' => 230,
+            'y' => 335,
+            'width' => 180,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_tu',
+            'title' => $st_map['staf_tu_jabatan'] ?? 'Staf Tata Usaha',
+            'subtitle' => $st_map['staf_tu'] ?? 'Hermawan, S.M.',
+            'theme' => 'staff',
+            'x' => 245,
+            'y' => 435,
+            'width' => 150,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_pspm',
+            'title' => $st_map['ka_ppspm_jabatan'] ?? 'Ka. Pusat PSPM',
+            'subtitle' => $st_map['ka_ppspm'] ?? 'Ir. I.M. Tri Hesti Mulyani, MT.',
+            'theme' => 'pusat',
+            'x' => 430,
+            'y' => 335,
+            'width' => 180,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_ami',
+            'title' => $st_map['ka_ami_jabatan'] ?? 'Ka. Pusat AMI',
+            'subtitle' => $st_map['ka_ami'] ?? 'dr. Maya Yanuarty, M.Biomed',
+            'theme' => 'pusat',
+            'x' => 630,
+            'y' => 335,
+            'width' => 180,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_gpm',
+            'title' => 'Gugus Penjaminan Mutu',
+            'subtitle' => '(GPM Fakultas)',
+            'theme' => 'sub',
+            'x' => 630,
+            'y' => 435,
+            'width' => 180,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_auditor',
+            'title' => 'Auditor Mutu Internal',
+            'subtitle' => 'Tim Auditor',
+            'theme' => 'auditor',
+            'x' => 630,
+            'y' => 530,
+            'width' => 180,
+            'height' => 66
+        ],
+        [
+            'id' => 'node_pemeringkatan',
+            'title' => $st_map['ka_pemeringkatan_jabatan'] ?? 'Ka. Pusat Pemeringkatan',
+            'subtitle' => $st_map['ka_pemeringkatan'] ?? 'Ir. Lintang Jata Angghita, ST., M.Ling',
+            'theme' => 'pusat',
+            'x' => 830,
+            'y' => 335,
+            'width' => 195,
+            'height' => 66
+        ]
+    ];
+
+    $lines = [
+        ['id' => 'l_1', 'from' => 'node_rektor', 'to' => 'node_wr', 'style' => 'solid'],
+        ['id' => 'l_2', 'from' => 'node_wr', 'to' => 'node_kepala', 'style' => 'solid'],
+        ['id' => 'l_3', 'from' => 'node_kepala', 'to' => 'node_tenaga_ahli', 'style' => 'solid'],
+        ['id' => 'l_4', 'from' => 'node_kepala', 'to' => 'node_sekretaris', 'style' => 'solid'],
+        ['id' => 'l_5', 'from' => 'node_sekretaris', 'to' => 'node_tu', 'style' => 'solid'],
+        ['id' => 'l_6', 'from' => 'node_kepala', 'to' => 'node_pspm', 'style' => 'solid'],
+        ['id' => 'l_7', 'from' => 'node_kepala', 'to' => 'node_ami', 'style' => 'solid'],
+        ['id' => 'l_8', 'from' => 'node_ami', 'to' => 'node_gpm', 'style' => 'dashed'],
+        ['id' => 'l_9', 'from' => 'node_gpm', 'to' => 'node_auditor', 'style' => 'dashed'],
+        ['id' => 'l_10', 'from' => 'node_kepala', 'to' => 'node_pemeringkatan', 'style' => 'solid']
+    ];
+
+    return [
+        'canvas' => ['width' => 1060, 'height' => 630],
+        'nodes' => $nodes,
+        'lines' => $lines
+    ];
+}
+
+/**
+ * Mengambil data bagan struktur organisasi dari pengaturan (custom atau default)
+ */
+function getStrukturOrganisasiData(): array {
+    $raw = getPengaturan('struktur_organisasi_json', '');
+    if (!empty($raw)) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded) && !empty($decoded['nodes'])) {
+            return $decoded;
+        }
+    }
+    return getDefaultStrukturOrganisasiData();
 }
 
 /**

@@ -142,7 +142,13 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <div class="input-group">
                             <input type="file" name="file_dokumen" id="fileDokumen" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" <?= $is_edit ? '' : 'required' ?> onchange="handleFileSelected(this)">
                         </div>
-                        <div class="form-text text-primary">
+                        <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-warning-subtle text-dark border">
+                                <i class="bi bi-hdd-fill text-warning me-1"></i> Batas Ukuran: Maksimal 30 MB
+                            </span>
+                            <span class="small text-muted">Format didukung: PDF, Word (.doc, .docx), Excel (.xls, .xlsx).</span>
+                        </div>
+                        <div class="form-text text-primary mt-1">
                             <i class="bi bi-magic me-1"></i><strong>Fitur Pintar:</strong> Saat file dipilih, judul dokumen di bawah akan otomatis terisi dari nama file asli (tanpa ekstensi), namun Anda tetap dapat mengubahnya secara bebas.
                         </div>
 

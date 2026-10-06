@@ -13,8 +13,9 @@ $meta_desc  = 'Dokumen SPMI LPM UNIKA: Kebijakan Mutu, Manual Mutu, Standar Mutu
 
 $db = getDB();
 
-// Filter kategori
+// Filter kategori & tahun
 $kategori_filter = isset($_GET['kategori']) ? trim($_GET['kategori']) : '';
+$tahun_filter    = isset($_GET['tahun']) ? trim($_GET['tahun']) : '';
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
@@ -56,14 +57,14 @@ try {
 if (!empty($spmi_blocks) && is_array($spmi_blocks)) {
     foreach ($spmi_blocks as $block) {
         if (isset($block['is_visible']) && !$block['is_visible']) continue;
-        renderSpmiSection($block['type'], $block, false, $kategori_filter);
+        renderSpmiSection($block['type'], $block, false, $kategori_filter, $tahun_filter);
     }
 } else {
     // Alur Default 4 Seksi SPMI
-    renderSpmiSection('spmi_pengantar', [], false, $kategori_filter);
-    renderSpmiSection('spmi_ppepp', [], false, $kategori_filter);
-    renderSpmiSection('spmi_kemendikti', [], false, $kategori_filter);
-    renderSpmiSection('spmi_dokumen', [], false, $kategori_filter);
+    renderSpmiSection('spmi_pengantar', [], false, $kategori_filter, $tahun_filter);
+    renderSpmiSection('spmi_ppepp', [], false, $kategori_filter, $tahun_filter);
+    renderSpmiSection('spmi_kemendikti', [], false, $kategori_filter, $tahun_filter);
+    renderSpmiSection('spmi_dokumen', [], false, $kategori_filter, $tahun_filter);
 }
 ?>
 

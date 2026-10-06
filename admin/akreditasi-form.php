@@ -150,7 +150,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
                                 Upload File Sertifikat / Piagam (Opsional) <span class="badge bg-light text-primary border ms-1" style="font-size:0.75rem;">Otomatis PDF</span>
                             </label>
-                            <p class="text-muted small mb-2">Format: PDF atau Gambar (JPG, PNG, WebP). Jika berupa gambar, otomatis dikonversi menjadi dokumen PDF.</p>
+                            <div class="mb-2">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 20 MB</span>
+                                <small class="text-muted">Format: PDF atau Gambar (JPG, PNG, WebP). Jika berupa gambar, otomatis dikonversi menjadi dokumen PDF.</small>
+                            </div>
                             <input type="file" name="file_sertifikat" id="file_sertifikat_input" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf" style="border:1.5px solid var(--border);padding:0.6rem 1rem;">
                             
                             <div id="preview_cert_box" class="mt-2 p-2 bg-light rounded d-none" style="border: 2px dashed var(--purple);">

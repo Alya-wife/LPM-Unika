@@ -222,7 +222,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-1"><?= $akred_file ? 'Ganti Berkas Sertifikat:' : 'Unggah Berkas Baru:' ?></label>
                             <input type="file" name="file_sertifikat" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.webp" style="border-radius: 6px;">
-                            <small class="text-muted" style="font-size: 0.73rem;">Mendukung format .pdf, .webp, .jpg, .png. File gambar otomatis diubah ke dokumen PDF.</small>
+                            <div class="mt-1">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 20 MB</span>
+                                <small class="text-muted" style="font-size: 0.73rem;">Mendukung format .pdf, .webp, .jpg, .png. File gambar otomatis diubah ke dokumen PDF.</small>
+                            </div>
                         </div>
                     </div>
                 </div>

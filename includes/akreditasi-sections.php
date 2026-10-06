@@ -151,8 +151,8 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                             </p>
 
                             <div class="d-flex gap-3 flex-wrap align-items-center">
-                                <a href="#daftar-akreditasi" class="btn-hero-primary" style="background:var(--navy);border:none;padding:0.7rem 1.4rem;font-size:0.9rem;text-decoration:none;">
-                                    Lihat Capaian Prodi &darr;
+                                <a href="<?= SITE_URL ?>/pemeringkatan.php" class="btn-hero-primary" style="background:var(--navy);border:none;padding:0.7rem 1.4rem;font-size:0.9rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                                    Lihat Capaian Prodi &rarr;
                                 </a>
                             </div>
                         </div>

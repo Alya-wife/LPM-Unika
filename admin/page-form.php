@@ -292,7 +292,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <div class="mb-2">
                             <label class="form-label" style="font-weight:600;font-size:0.85rem;">Unggah Gambar Baru</label>
                             <input type="file" name="featured_image_file" class="form-control" accept="image/*" style="border:1.5px solid var(--border);font-size:0.85rem;">
-                            <small class="text-muted">Format: JPG, PNG, atau WebP (Opsional).</small>
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 5 MB</span> Format: JPG, PNG, atau WebP (Opsional).
+                            </div>
                         </div>
                     </div>
                 </div>

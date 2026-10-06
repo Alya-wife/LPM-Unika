@@ -61,4 +61,9 @@ renderAkreditasiSection('akreditasi_institusi');
     </div>
 </section>
 
+<?php
+// Render Modal Dokumen Institusi (SK & Sertifikat)
+renderAkreditasiModals();
+?>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

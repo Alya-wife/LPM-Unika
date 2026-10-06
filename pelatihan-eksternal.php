@@ -146,7 +146,7 @@ require_once __DIR__ . '/includes/navbar.php';
     <div class="container">
 
         <!-- ========================================================================= -->
-        <!-- 1. NARASI INFO PELATIHAN LPM UNIKA (CMS ADMIN)                            -->
+        <!-- 1. PENJELASAN PROGRAM PELATIHAN LPM UNIKA (CMS ADMIN)                     -->
         <!-- ========================================================================= -->
         <div class="row justify-content-center mb-5">
             <div class="col-lg-11 col-xl-10">
@@ -183,37 +183,26 @@ require_once __DIR__ . '/includes/navbar.php';
                         }
                         ?>
                     </div>
-
-
                 </div>
             </div>
         </div>
 
         <!-- ========================================================================= -->
-        <!-- 2. BROSUR TERPAMPANG DI HALAMAN + AKSI UNDUH                               -->
+        <!-- 2. CARD BROSUR PELATIHAN                                                  -->
         <!-- ========================================================================= -->
         <div class="row justify-content-center mb-5">
             <div class="col-lg-11 col-xl-10">
 
-                <div class="text-center mb-4">
-                    <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:clamp(1.4rem, 2.5vw, 1.85rem);margin-bottom:0.4rem;">
-                        Brosur &amp; Silabus Program Pelatihan Mutu
-                    </h3>
-                    <p class="text-muted mx-auto" style="max-width:720px;font-size:0.95rem;">
-                        Brosur resmi dapat langsung Anda telaah pada jendela tampilan di bawah ini atau mengunduh dokumen melalui tombol yang tersedia.
-                    </p>
-
-                    <!-- Nav Selector jika Brosur Aktif Lebih Dari 1 -->
-                    <?php if (count($brosur_list) > 1): ?>
-                    <div class="d-flex justify-content-center gap-2 flex-wrap mt-3" id="brosurTabSelector">
-                        <?php foreach ($brosur_list as $b_idx => $b_item): ?>
-                        <button type="button" class="brosur-tab-btn <?= $b_idx === 0 ? 'active' : '' ?>" onclick="switchBrosur(<?= $b_idx ?>)" id="btnBrosurTab<?= $b_idx ?>">
-                            <i class="bi bi-file-earmark-text me-1"></i> <?= htmlspecialchars($b_item['judul_brosur']) ?> (<?= htmlspecialchars($b_item['tahun']) ?>)
-                        </button>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
+                <!-- Nav Selector jika Brosur Aktif Lebih Dari 1 -->
+                <?php if (count($brosur_list) > 1): ?>
+                <div class="d-flex justify-content-center gap-2 flex-wrap mb-4" id="brosurTabSelector">
+                    <?php foreach ($brosur_list as $b_idx => $b_item): ?>
+                    <button type="button" class="brosur-tab-btn <?= $b_idx === 0 ? 'active' : '' ?>" onclick="switchBrosur(<?= $b_idx ?>)" id="btnBrosurTab<?= $b_idx ?>">
+                        <i class="bi bi-file-earmark-text me-1"></i> <?= htmlspecialchars($b_item['judul_brosur']) ?> (<?= htmlspecialchars($b_item['tahun']) ?>)
+                    </button>
+                    <?php endforeach; ?>
                 </div>
+                <?php endif; ?>
 
                 <?php if (!empty($brosur_list)): ?>
                     <?php foreach ($brosur_list as $idx => $br): 
@@ -274,7 +263,6 @@ require_once __DIR__ . '/includes/navbar.php';
                                     <a href="<?= $f_url ?>" target="_blank" class="btn btn-outline-light fw-semibold px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1" style="font-size:0.9rem;" title="Buka berkas di jendela baru">
                                         <i class="bi bi-box-arrow-up-right"></i> Layar Penuh
                                     </a>
-
                                 </div>
                             </div>
                         </div>
@@ -342,7 +330,7 @@ require_once __DIR__ . '/includes/navbar.php';
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="text-center p-5 bg-white rounded-4 border">
+                    <div class="text-center p-5 bg-white rounded-4 border shadow-sm">
                         <i class="bi bi-file-earmark-text text-muted" style="font-size:3rem;"></i>
                         <h5 class="fw-bold text-navy mt-3">Brosur Pelatihan Segera Dirilis</h5>
                         <p class="text-muted mb-0">Dokumen brosur dan jadwal pelatihan periode terbaru sedang dalam tahap finalisasi administrasi.</p>

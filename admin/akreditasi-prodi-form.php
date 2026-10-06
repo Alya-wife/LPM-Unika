@@ -203,7 +203,10 @@ require_once __DIR__ . '/includes/admin-header.php';
             <div class="col-md-6">
                 <label class="form-label fw-bold">File Surat Keputusan (SK) <span class="badge bg-light text-primary border ms-1" style="font-size:0.75rem;">Otomatis PDF</span></label>
                 <input type="file" name="file_sk" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp">
-                <small class="text-muted d-block mt-1">PDF atau Gambar (JPG, PNG, WebP). Gambar otomatis diubah menjadi dokumen PDF.</small>
+                <div class="mt-1">
+                    <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 20 MB</span>
+                    <small class="text-muted">PDF atau Gambar (JPG, PNG, WebP). Gambar otomatis diubah ke PDF.</small>
+                </div>
                 <?php if (!empty($p['file_sk'])): ?>
                 <div class="mt-2 text-muted small">
                     File SK saat ini: <a href="<?= SITE_URL ?>/uploads/akreditasi_prodi/<?= e($p['file_sk']) ?>" target="_blank" class="fw-bold text-primary"><?= e($p['file_sk']) ?></a>
@@ -213,7 +216,10 @@ require_once __DIR__ . '/includes/admin-header.php';
             <div class="col-md-6 mt-3 mt-md-0">
                 <label class="form-label fw-bold">File Sertifikat <span class="badge bg-light text-primary border ms-1" style="font-size:0.75rem;">Otomatis PDF</span></label>
                 <input type="file" name="file_sertifikat" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp">
-                <small class="text-muted d-block mt-1">PDF atau Gambar (JPG, PNG, WebP). Gambar otomatis diubah menjadi dokumen PDF.</small>
+                <div class="mt-1">
+                    <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 20 MB</span>
+                    <small class="text-muted">PDF atau Gambar (JPG, PNG, WebP). Gambar otomatis diubah ke PDF.</small>
+                </div>
                 <?php if (!empty($p['file_sertifikat'])): ?>
                 <div class="mt-2 text-muted small">
                     File Sertifikat saat ini: <a href="<?= SITE_URL ?>/uploads/akreditasi_prodi/<?= e($p['file_sertifikat']) ?>" target="_blank" class="fw-bold text-success"><?= e($p['file_sertifikat']) ?></a>

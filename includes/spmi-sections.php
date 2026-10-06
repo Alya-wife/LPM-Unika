@@ -5,9 +5,9 @@
  */
 require_once __DIR__ . '/../config/database.php';
 
-function getSpmiData($kategori_filter = '') {
+function getSpmiData($kategori_filter = '', $tahun_filter = '') {
     static $cache = [];
-    $cache_key = 'kat_' . $kategori_filter;
+    $cache_key = 'kat_' . $kategori_filter . '_th_' . $tahun_filter;
     if (isset($cache[$cache_key])) return $cache[$cache_key];
 
     $db = getDB();
@@ -23,12 +23,28 @@ function getSpmiData($kategori_filter = '') {
     $categories_in_db = $db->query("SELECT DISTINCT kategori FROM dokumen")->fetchAll(PDO::FETCH_COLUMN);
     $data['allowed_kategori'] = array_values(array_unique(array_filter(array_merge($categories_dokumen_table, $categories_in_db))));
 
+    // Ambil daftar tahun unik dari dokumen
+    $tahun_list = [];
+    try {
+        $tahun_list = $db->query("SELECT DISTINCT YEAR(created_at) as th FROM dokumen WHERE created_at IS NOT NULL ORDER BY th DESC")->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {}
+    $data['tahun_list'] = $tahun_list;
+
+    $sql = "SELECT * FROM dokumen WHERE 1=1";
+    $params = [];
     if ($kategori_filter && in_array($kategori_filter, $data['allowed_kategori'])) {
-        $stmt = $db->prepare("SELECT * FROM dokumen WHERE kategori = ? ORDER BY created_at DESC");
-        $stmt->execute([$kategori_filter]);
-    } else {
-        $stmt = $db->query("SELECT * FROM dokumen ORDER BY kategori, created_at DESC");
+        $sql .= " AND (kategori = ? OR kategori LIKE ?)";
+        $params[] = $kategori_filter;
+        $params[] = "%$kategori_filter%";
     }
+    if ($tahun_filter !== '' && is_numeric($tahun_filter)) {
+        $sql .= " AND YEAR(created_at) = ?";
+        $params[] = (int)$tahun_filter;
+    }
+    $sql .= " ORDER BY created_at DESC, id DESC";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
     $dokumen_all = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $data['dokumen_all'] = $dokumen_all;
 
@@ -49,8 +65,8 @@ function getSpmiData($kategori_filter = '') {
     return $data;
 }
 
-function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_filter = '') {
-    $data = getSpmiData($kategori_filter);
+function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_filter = '', $tahun_filter = '') {
+    $data = getSpmiData($kategori_filter, $tahun_filter);
     $bg   = !empty($block['bg_color']) ? "background-color: {$block['bg_color']} !important;" : "";
     $tc   = !empty($block['text_color']) ? "color: {$block['text_color']} !important;" : "";
 
@@ -696,6 +712,7 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
         case 'spmi_dokumen':
             $dokumen_all      = $data['dokumen_all'] ?? [];
             $allowed_kategori = $data['allowed_kategori'];
+            $tahun_list       = $data['tahun_list'] ?? [];
             ?>
             <section class="py-5" id="dokumen-spmi" style="<?= $bg ?><?= $tc ?>">
                 <div class="container">
@@ -715,13 +732,28 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             </div>
                         </div>
 
-                        <!-- Real-time Search Box -->
-                        <div style="min-width:240px;max-width:320px;width:100%;">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0" style="border-radius:50px 0 0 50px;border-color:var(--border);">
-                                    <i class="bi bi-search text-muted"></i>
-                                </span>
-                                <input type="text" id="spmiDocSearchInput" class="form-control border-start-0" placeholder="Cari nama dokumen..." style="border-radius:0 50px 50px 0;border-color:var(--border);font-size:0.85rem;box-shadow:none;">
+                        <!-- Filter Tahun & Real-time Search Box -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap" style="max-width:560px;width:100%;justify-content:flex-end;">
+                            <!-- Dropdown Filter Tahun -->
+                            <div style="min-width:140px;">
+                                <select id="spmiDocYearSelect" class="form-select" style="border-radius:50px;border-color:var(--border);font-size:0.85rem;font-weight:600;color:var(--navy);padding:0.45rem 2rem 0.45rem 1rem;background-color:#ffffff;box-shadow:none;cursor:pointer;">
+                                    <option value="">Semua Tahun</option>
+                                    <?php foreach ($tahun_list as $th): ?>
+                                    <option value="<?= $th ?>" <?= (string)$tahun_filter === (string)$th ? 'selected' : '' ?>>
+                                        Tahun <?= $th ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <!-- Search Input -->
+                            <div style="min-width:220px;max-width:320px;flex-grow:1;">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0" style="border-radius:50px 0 0 50px;border-color:var(--border);">
+                                        <i class="bi bi-search text-muted"></i>
+                                    </span>
+                                    <input type="text" id="spmiDocSearchInput" class="form-control border-start-0" placeholder="Cari nama dokumen..." style="border-radius:0 50px 50px 0;border-color:var(--border);font-size:0.85rem;box-shadow:none;">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -792,17 +824,22 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
             <script>
             (function() {
                 var activeCategory = '<?= addslashes($kategori_filter) ?>';
-                var searchTimer = null;
+                var activeYear     = '<?= addslashes($tahun_filter) ?>';
+                var searchTimer    = null;
 
                 function fetchSpmiDocs() {
                     var q = document.getElementById('spmiDocSearchInput') ? document.getElementById('spmiDocSearchInput').value.trim() : '';
+                    var yearSelect = document.getElementById('spmiDocYearSelect');
+                    if (yearSelect) {
+                        activeYear = yearSelect.value;
+                    }
                     var tbody = document.getElementById('spmiDocTableBody');
                     var badge = document.getElementById('spmiDocCountBadge');
                     if (tbody) {
                         tbody.style.opacity = '0.4';
                     }
 
-                    var url = 'spmi.php?ajax=dokumen&kategori=' + encodeURIComponent(activeCategory) + '&q=' + encodeURIComponent(q);
+                    var url = 'spmi.php?ajax=dokumen&kategori=' + encodeURIComponent(activeCategory) + '&tahun=' + encodeURIComponent(activeYear) + '&q=' + encodeURIComponent(q);
                     fetch(url)
                         .then(function(res) { return res.json(); })
                         .then(function(data) {
@@ -830,6 +867,15 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                         fetchSpmiDocs();
                     });
                 });
+
+                // Dropdown tahun change handler
+                var yearSelect = document.getElementById('spmiDocYearSelect');
+                if (yearSelect) {
+                    yearSelect.addEventListener('change', function() {
+                        activeYear = this.value;
+                        fetchSpmiDocs();
+                    });
+                }
 
                 // Debounced search input handler
                 var searchInput = document.getElementById('spmiDocSearchInput');
@@ -920,7 +966,8 @@ function renderSpmiDokumenTableRows($docs) {
 function handleSpmiDokumenAjax() {
     $db = getDB();
     $kategori = trim($_GET['kategori'] ?? '');
-    $q = trim($_GET['q'] ?? '');
+    $tahun    = trim($_GET['tahun'] ?? '');
+    $q        = trim($_GET['q'] ?? '');
 
     $sql = "SELECT * FROM dokumen WHERE 1=1";
     $params = [];
@@ -929,6 +976,11 @@ function handleSpmiDokumenAjax() {
         $sql .= " AND (kategori = ? OR kategori LIKE ?)";
         $params[] = $kategori;
         $params[] = "%$kategori%";
+    }
+
+    if ($tahun !== '' && is_numeric($tahun)) {
+        $sql .= " AND YEAR(created_at) = ?";
+        $params[] = (int)$tahun;
     }
 
     if ($q !== '') {

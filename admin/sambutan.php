@@ -114,9 +114,12 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" style="font-family:var(--font-heading);font-weight:600;color:var(--navy);">
-                                Foto Kepala LPM (Maks 3MB)
+                                Foto Kepala LPM
                             </label>
                             <input type="file" name="sambutan_foto" class="form-control" accept="image/*">
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 3 MB</span> Format: JPG, PNG, atau WebP.
+                            </div>
                             <?php if ($foto && file_exists(__DIR__ . '/../uploads/profil/' . $foto)): ?>
                             <div class="mt-2" style="font-size:0.8rem;color:var(--text-muted);display:flex;align-items:center;gap:10px;">
                                 <span>Foto saat ini:</span>

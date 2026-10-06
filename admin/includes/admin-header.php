@@ -200,7 +200,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
                     <span>• Tentang, Visi &amp; Misi</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/struktur-organisasi.php" class="admin-subnav-link <?= $current_admin === 'struktur-organisasi' ? 'active' : '' ?>">
-                    <span>• Visual Bagan Struktur (Drag &amp; Drop)</span>
+                    <span>• Visual Bagan Struktur</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/tim-list.php" class="admin-subnav-link <?= in_array($current_admin, ['tim-list','tim-form']) ? 'active' : '' ?>">
                     <span>• Struktur Tim LPM &amp; GPM</span>

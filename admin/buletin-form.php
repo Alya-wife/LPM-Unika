@@ -246,6 +246,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <input type="file" name="file_pdf" id="filePdf" class="form-control" accept=".pdf"
                                    style="border:1.5px solid var(--border);padding:0.75rem 1rem;">
                             <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 30 MB</span>
                                 📌 Setelah memilih file, <strong>judul dan sampul akan otomatis terisi</strong> dari PDF.
                             </div>
 

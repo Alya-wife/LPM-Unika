@@ -106,7 +106,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $existing_photos = array_values(array_diff($existing_photos, $_POST['delete_photos']));
         }
 
-        if (!$error && !empty($_FILES['foto_kegiatan']['name'][0])) {
+        // Cek jika ada foto hasil crop / edit (Base64)
+        $has_cropped = false;
+        if (!empty($_POST['cropped_photos']) && is_array($_POST['cropped_photos'])) {
+            foreach ($_POST['cropped_photos'] as $c_data) {
+                if (preg_match('/^data:image\/(\w+);base64,/', $c_data, $c_match)) {
+                    $raw = base64_decode(substr($c_data, strpos($c_data, ',') + 1));
+                    if ($raw !== false) {
+                        $c_name = 'dok_crop_' . time() . '_' . uniqid() . '.webp';
+                        if (file_put_contents($upload_dir . $c_name, $raw)) {
+                            $existing_photos[] = 'ami/siklus4/' . $c_name;
+                            $has_cropped = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Cegah upload ganda: jika sudah ada foto hasil crop, jangan proses ulang $_FILES foto_kegiatan
+        if (!$error && !$has_cropped && !empty($_FILES['foto_kegiatan']['name'][0])) {
             $count = count($_FILES['foto_kegiatan']['name']);
             for ($i = 0; $i < $count; $i++) {
                 if ($_FILES['foto_kegiatan']['error'][$i] === UPLOAD_ERR_OK) {
@@ -246,8 +264,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
                                 <span><i class="bi bi-envelope-paper text-warning me-1"></i> Undangan</span>
                             </label>
-                            <input type="file" name="file_undangan" class="form-control" accept=".pdf,.doc,.docx">
-                            <div class="form-text">PDF / DOC / DOCX</div>
+                            <input type="file" name="file_undangan" class="form-control check-filesize" accept=".pdf,.doc,.docx" data-max-mb="20">
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border"><i class="bi bi-shield-check text-success me-1"></i>Maks 20 MB</span> PDF / DOC / DOCX
+                            </div>
 
                             <?php if (!empty($data['file_undangan'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
@@ -265,8 +285,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
                                 <span><i class="bi bi-card-checklist text-success me-1"></i> Daftar Hadir</span>
                             </label>
-                            <input type="file" name="file_daftar_hadir" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                            <div class="form-text">PDF / Word / Excel</div>
+                            <input type="file" name="file_daftar_hadir" class="form-control check-filesize" accept=".pdf,.doc,.docx,.xls,.xlsx" data-max-mb="20">
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border"><i class="bi bi-shield-check text-success me-1"></i>Maks 20 MB</span> PDF / Word / Excel
+                            </div>
 
                             <?php if (!empty($data['file_daftar_hadir'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
@@ -284,8 +306,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
                                 <span><i class="bi bi-file-earmark-check text-primary me-1"></i> Berita Acara</span>
                             </label>
-                            <input type="file" name="file_berita_acara" class="form-control" accept=".pdf,.doc,.docx">
-                            <div class="form-text">PDF / DOC / DOCX</div>
+                            <input type="file" name="file_berita_acara" class="form-control check-filesize" accept=".pdf,.doc,.docx" data-max-mb="20">
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border"><i class="bi bi-shield-check text-success me-1"></i>Maks 20 MB</span> PDF / DOC / DOCX
+                            </div>
 
                             <?php if (!empty($data['file_berita_acara'])): ?>
                             <div class="mt-2 p-2 bg-light rounded d-flex align-items-center justify-content-between">
@@ -298,14 +322,31 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                     </div>
 
-                    <!-- 4. Upload Foto Dokumentasi (Multiple) -->
+                    <!-- 4. Upload Foto Dokumentasi (Multiple + Cropper Support) -->
                     <div class="col-12">
                         <div class="p-3 border rounded bg-white">
-                            <label class="form-label fw-bold small mb-1">
-                                <i class="bi bi-images text-purple me-1"></i> Unggah Foto-Foto Kegiatan Audit Lapangan
-                            </label>
-                            <input type="file" name="foto_kegiatan[]" class="form-control" accept="image/*" multiple>
-                            <div class="form-text">Anda dapat memilih beberapa foto sekaligus (JPG, PNG, WebP). Seluruh foto otomatis dikonversi ke WebP kualitas tinggi.</div>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <label class="form-label fw-bold small mb-0">
+                                    <i class="bi bi-images text-purple me-1"></i> Unggah Foto-Foto Kegiatan Audit Lapangan
+                                </label>
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold d-none" id="btnOpenCropperS4" style="border-radius:8px;">
+                                    <i class="bi bi-crop me-1"></i> Edit &amp; Crop Foto Pilihan
+                                </button>
+                            </div>
+                            
+                            <input type="file" name="foto_kegiatan[]" id="fotoKegiatanInput" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
+                            <div class="form-text mt-1">
+                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 10 MB per foto</span>
+                                Mendukung format JPG, PNG, dan WebP. Anda dapat memilih beberapa foto sekaligus. Gambar otomatis dikonversi ke WebP kualitas HD terkompresi.
+                            </div>
+
+                            <!-- Kontainer Hasil Foto Tambahan dari Editor Crop -->
+                            <div id="croppedPhotosContainer" class="mt-3 d-none">
+                                <div class="small fw-bold text-success mb-2">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Foto Hasil Edit Siap Disimpan:
+                                </div>
+                                <div class="row g-2" id="croppedPhotosGrid"></div>
+                            </div>
 
                             <?php if (!empty($current_photos)): ?>
                             <div class="mt-3">
@@ -342,6 +383,77 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
+<!-- Modal Cropper S4 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<div class="modal fade" id="modalCropS4" tabindex="-1" aria-labelledby="modalCropS4Label" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropS4Label">Editor Gambar AMI: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small style="color:rgba(255,255,255,0.85);">Sesuaikan framing kartu foto dokumentasi audit lapangan.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgS4" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHS4">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVS4">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftS4">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightS4">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInS4">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutS4">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropS4">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-s4 fw-semibold" data-ratio="1.777778">16:9 Card</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-s4 fw-semibold" data-ratio="1.333333">4:3 Galeri</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-s4 fw-semibold" data-ratio="1">1:1 Persegi</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-s4 fw-semibold" data-ratio="NaN">Bebas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropS4" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
 var fakultasProdiMap = <?= json_encode($fakultas_prodi_map) ?>;
 var selectedProdi = <?= json_encode($cur_prodi) ?>;
@@ -377,9 +489,108 @@ function handleFakultasChange() {
     }
 }
 
-// Inisialisasi saat halaman dibuka
+// Validasi ukuran file dokumen
+document.querySelectorAll('.check-filesize').forEach(function(input) {
+    input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            var maxMb = parseFloat(this.getAttribute('data-max-mb')) || 20;
+            var sizeMb = this.files[0].size / (1024 * 1024);
+            if (sizeMb > maxMb) {
+                alert('Peringatan: Ukuran berkas (' + sizeMb.toFixed(2) + ' MB) melebihi batas maksimal ' + maxMb + ' MB. Silakan unggah dokumen yang lebih kecil.');
+                this.value = '';
+            }
+        }
+    });
+});
+
+// Cropper untuk foto kegiatan Siklus 4
 document.addEventListener('DOMContentLoaded', function() {
     handleFakultasChange();
+
+    var fotoInput        = document.getElementById('fotoKegiatanInput');
+    var btnOpenCropper   = document.getElementById('btnOpenCropperS4');
+    var modalEl          = document.getElementById('modalCropS4');
+    var cropperSourceImg = document.getElementById('cropperSourceImgS4');
+    var btnApplyCrop     = document.getElementById('btnApplyCropS4');
+    var containerGrid    = document.getElementById('croppedPhotosGrid');
+    var containerWrap    = document.getElementById('croppedPhotosContainer');
+
+    if (!fotoInput || !modalEl) return;
+
+    var bsModal = new bootstrap.Modal(modalEl);
+    var cropper = null;
+    var scaleX = 1;
+    var scaleY = 1;
+    var currentRatio = 16 / 9;
+
+    function initCropper() {
+        if (cropper) cropper.destroy();
+        scaleX = 1;
+        scaleY = 1;
+        cropper = new Cropper(cropperSourceImg, {
+            aspectRatio: currentRatio,
+            viewMode: 2,
+            autoCropArea: 0.95,
+            responsive: true,
+            guides: true
+        });
+    }
+
+    fotoInput.addEventListener('change', function(e) {
+        if (this.files && this.files.length > 0) {
+            var file = this.files[0];
+            if (file.type.match(/^image\//)) {
+                var reader = new FileReader();
+                reader.onload = function(evt) {
+                    cropperSourceImg.src = evt.target.result;
+                    if (btnOpenCropper) btnOpenCropper.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    btnOpenCropper?.addEventListener('click', function() {
+        if (cropperSourceImg.src) bsModal.show();
+    });
+
+    modalEl.addEventListener('shown.bs.modal', function() { initCropper(); });
+    modalEl.addEventListener('hidden.bs.modal', function() { if (cropper) { cropper.destroy(); cropper = null; } });
+
+    document.getElementById('btnRotateLeftS4')?.addEventListener('click', function() { if (cropper) cropper.rotate(-90); });
+    document.getElementById('btnRotateRightS4')?.addEventListener('click', function() { if (cropper) cropper.rotate(90); });
+    document.getElementById('btnFlipHS4')?.addEventListener('click', function() { if (cropper) { scaleX = -scaleX; cropper.scaleX(scaleX); } });
+    document.getElementById('btnFlipVS4')?.addEventListener('click', function() { if (cropper) { scaleY = -scaleY; cropper.scaleY(scaleY); } });
+    document.getElementById('btnZoomInS4')?.addEventListener('click', function() { if (cropper) cropper.zoom(0.1); });
+    document.getElementById('btnZoomOutS4')?.addEventListener('click', function() { if (cropper) cropper.zoom(-0.1); });
+    document.getElementById('btnResetCropS4')?.addEventListener('click', function() { if (cropper) { cropper.reset(); scaleX = 1; scaleY = 1; } });
+
+    document.querySelectorAll('.ratio-btn-s4').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ratio-btn-s4').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var val = parseFloat(this.getAttribute('data-ratio'));
+            currentRatio = isNaN(val) ? NaN : val;
+            if (cropper) cropper.setAspectRatio(currentRatio);
+        });
+    });
+
+    btnApplyCrop?.addEventListener('click', function() {
+        if (!cropper) return;
+        var canvas = cropper.getCroppedCanvas({ maxWidth: 1920, maxHeight: 1200, imageSmoothingQuality: 'high' });
+        if (canvas) {
+            var dataUrl = canvas.toDataURL('image/webp', 0.88);
+            var col = document.createElement('div');
+            col.className = 'col-6 col-sm-4 col-md-3';
+            col.innerHTML = '<div class="card p-1 border position-relative shadow-sm"><img src="' + dataUrl + '" style="height:100px;object-fit:cover;border-radius:4px;"><input type="hidden" name="cropped_photos[]" value="' + dataUrl + '"><button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-1 p-1" style="line-height:1;border-radius:50%;" onclick="this.closest(\'.col-6\').remove()">&times;</button></div>';
+            containerGrid.appendChild(col);
+            containerWrap.classList.remove('d-none');
+            // Kosongkan file input asli agar gambar tidak terkirim ganda
+            fotoInput.value = '';
+            if (btnOpenCropper) btnOpenCropper.classList.add('d-none');
+            bsModal.hide();
+        }
+    });
 });
 </script>
 

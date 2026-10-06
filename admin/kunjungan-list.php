@@ -638,6 +638,7 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                                                 <input type="file" name="file_balasan" class="form-control" accept=".pdf,application/pdf" style="font-size:0.85rem;border:1.5px solid #86EFAC;background:#fff;">
                                                 <div class="form-text" style="font-size:0.75rem;color:#15803D;">
+                                                    <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 15 MB</span>
                                                     <i class="bi bi-info-circle me-1"></i> Unggah surat resmi persetujuan/jawaban kunjungan berkop LPM (PDF). Tautan unduh surat resmi ini akan otomatis disertakan dalam email konfirmasi ke instansi tamu.
                                                 </div>
                                             </div>

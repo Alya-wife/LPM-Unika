@@ -227,6 +227,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <div class="col">
                                     <input type="file" name="logo" id="inputLogoLembaga" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp" onchange="previewLogoImage(this)">
                                     <div class="form-text mt-1" style="font-size:0.78rem;color:#64748B;">
+                                        <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 5 MB</span>
                                         Pilih file logo resmi lembaga. Disarankan menggunakan format <strong>PNG transparan</strong> agar serasi dengan kartu akreditasi di website.
                                     </div>
                                     <?php if (!empty($d['logo']) && file_exists(__DIR__ . '/../uploads/akreditasi/' . $d['logo'])): ?>

@@ -96,6 +96,9 @@ require_once __DIR__ . '/includes/admin-header.php';
         <div class="mb-4">
             <label class="form-label fw-bold">Upload File Dokumen PDF <?= $id == 0 ? '<span class="text-danger">*</span>' : '' ?></label>
             <input type="file" name="file_pdf" class="form-control" accept=".pdf" <?= $id == 0 && empty($d['file_pdf']) ? 'required' : '' ?>>
+            <div class="form-text mt-1">
+                <span class="badge bg-warning-subtle text-dark border"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 30 MB</span> Format berkas: PDF
+            </div>
             <?php if ($d['file_pdf']): ?>
             <div class="mt-2 text-muted small">
                 File PDF saat ini: <a href="<?= SITE_URL ?>/uploads/spmi_kemendikti/<?= e($d['file_pdf']) ?>" target="_blank" class="fw-bold text-primary">Lihat File PDF</a>

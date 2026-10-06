@@ -80,11 +80,42 @@ try {
                     </div>
                 </li>
 
-                <!-- 3. SPMI -->
-                <li class="nav-item">
-                    <a class="nav-link <?= $current_page === 'spmi' ? 'active' : '' ?>" href="<?= SITE_URL ?>/spmi.php">
+                <!-- 3. SPMI (Whimsical Dropdown) -->
+                <li class="nav-item dropdown nav-hover-dropdown">
+                    <a class="nav-link dropdown-toggle <?= $current_page === 'spmi' ? 'active' : '' ?>" href="<?= SITE_URL ?>/spmi.php" id="navbarSpmi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         SPMI
                     </a>
+                    <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarSpmi" style="min-width:280px;">
+                        <div class="whimsical-category-label">
+                            <i class="bi bi-diagram-3-fill"></i> Sistem Penjaminan Mutu
+                        </div>
+                        <div class="whimsical-grid" style="grid-template-columns: 1fr;">
+                            <a href="<?= SITE_URL ?>/spmi.php?view=mengenal" class="whimsical-item <?= ($current_page === 'spmi' && (($_GET['view'] ?? '') === 'mengenal' || (empty($_GET['view']) && !isset($_GET['kategori']) && !isset($_GET['tahun'])))) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Mengenal SPMI</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/spmi.php?view=ppepp" class="whimsical-item <?= ($current_page === 'spmi' && ($_GET['view'] ?? '') === 'ppepp') ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Siklus PPEPP</div>
+                                </div>
+                            </a>
+                            <a href="<?= SITE_URL ?>/spmi.php?view=dokumen" class="whimsical-item <?= ($current_page === 'spmi' && (($_GET['view'] ?? '') === 'dokumen' || isset($_GET['kategori']) || isset($_GET['tahun']))) ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap">
+                                    <i class="bi bi-file-earmark-check-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Dokumen SPMI</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </li>
 
                 <!-- 4. AMI (Whimsical Dropdown) -->

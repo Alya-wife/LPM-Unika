@@ -418,6 +418,9 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                                 $akt_label  = !empty($stg['aktor_label']) ? $stg['aktor_label'] : 'PENANGGUNG JAWAB:';
                                 $btn_text   = !empty($stg['tombol_teks']) ? $stg['tombol_teks'] : 'Dokumen Terkait';
                                 $btn_url    = !empty($stg['tombol_url']) ? $stg['tombol_url'] : '#dokumen-spmi';
+                                if ($btn_url === '#dokumen-spmi') {
+                                    $btn_url = SITE_URL . '/spmi.php?view=dokumen#dokumen-spmi';
+                                }
                                 $foot_text  = !empty($stg['footer_teks']) ? $stg['footer_teks'] : 'Standar Mutu UNIKA Soegijapranata';
                                 ?>
                                 <div class="ppepp-detail-card <?= $idx === 0 ? 'd-block' : 'd-none' ?>" id="ppepp-detail-<?= $idx ?>" style="background:#ffffff;border:1px solid var(--border);border-left:5px solid <?= htmlspecialchars($card_color) ?>;border-radius:var(--radius-md);padding:1.3rem 1.45rem;box-shadow:0 8px 26px rgba(10,25,47,0.06);animation:ppeppFadeIn 0.3s ease;">

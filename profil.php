@@ -51,19 +51,16 @@ require_once __DIR__ . '/includes/profil-sections.php';
     <div class="container">
         <div class="d-flex justify-content-center flex-wrap gap-2">
             <a href="<?= SITE_URL ?>/profil.php?view=sejarah"
-                class="btn <?= $view === 'sejarah' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-                style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-clock-history me-1"></i> Profil &amp; Sejarah LPM
+                class="nav-pill-lpm <?= $view === 'sejarah' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-clock-history"></i> Profil &amp; Sejarah LPM
             </a>
             <a href="<?= SITE_URL ?>/profil.php?view=visi-misi"
-                class="btn <?= $view === 'visi-misi' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-                style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-compass me-1"></i> Visi dan Misi
+                class="nav-pill-lpm <?= $view === 'visi-misi' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-compass"></i> Visi dan Misi
             </a>
             <a href="<?= SITE_URL ?>/profil.php?view=struktur"
-                class="btn <?= $view === 'struktur' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-                style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-diagram-3 me-1"></i> Struktur Organisasi
+                class="nav-pill-lpm <?= $view === 'struktur' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-diagram-3"></i> Struktur Organisasi
             </a>
         </div>
     </div>

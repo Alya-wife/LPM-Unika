@@ -73,19 +73,16 @@ $spmi_banner_sub = getPengaturan('spmi_banner_subtitle', '');
     <div class="container">
         <div class="d-flex justify-content-center flex-wrap gap-2">
             <a href="<?= SITE_URL ?>/spmi.php?view=mengenal"
-               class="btn <?= $view === 'mengenal' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-               style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-info-circle-fill me-1"></i> Mengenal SPMI
+               class="nav-pill-lpm <?= $view === 'mengenal' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-info-circle-fill"></i> Mengenal SPMI
             </a>
             <a href="<?= SITE_URL ?>/spmi.php?view=ppepp"
-               class="btn <?= $view === 'ppepp' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-               style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-arrow-repeat me-1"></i> Siklus PPEPP
+               class="nav-pill-lpm <?= $view === 'ppepp' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-arrow-repeat"></i> Siklus PPEPP
             </a>
             <a href="<?= SITE_URL ?>/spmi.php?view=dokumen"
-               class="btn <?= $view === 'dokumen' ? 'btn-primary' : 'btn-outline-secondary' ?> rounded-pill px-4 py-2"
-               style="font-size:0.875rem;font-weight:700;transition:all 0.2s;">
-                <i class="bi bi-file-earmark-check-fill me-1"></i> Dokumen SPMI
+               class="nav-pill-lpm <?= $view === 'dokumen' ? 'active' : 'inactive' ?>">
+                <i class="bi bi-file-earmark-check-fill"></i> Dokumen SPMI
             </a>
         </div>
     </div>

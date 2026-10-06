@@ -118,10 +118,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 5. Desktop Navbar Dropdown Mutual Exclusivity & Clean Hover Coordination
+    // 5. Desktop Navbar Dropdown Mutual Exclusivity & Click Navigation
     const navHoverDropdowns = document.querySelectorAll('#main-navbar .nav-hover-dropdown');
     if (navHoverDropdowns.length > 0) {
         navHoverDropdowns.forEach(item => {
+            const toggleLink = item.querySelector(':scope > a.nav-link');
+
+            // Allow clicking top-level nav links on desktop to navigate to the page
+            if (toggleLink) {
+                toggleLink.addEventListener('click', (e) => {
+                    if (window.innerWidth >= 1200) {
+                        const href = toggleLink.getAttribute('href');
+                        if (href && href !== '#' && !href.startsWith('javascript:')) {
+                            window.location.href = href;
+                        }
+                    }
+                });
+            }
+
             item.addEventListener('mouseenter', () => {
                 if (window.innerWidth >= 1200) {
                     navHoverDropdowns.forEach(sibling => {
@@ -135,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             const menu = sibling.querySelector('.dropdown-menu');
                             if (menu) {
                                 menu.classList.remove('show');
+                                menu.style.display = 'none';
+                                setTimeout(() => {
+                                    menu.style.display = '';
+                                }, 60);
                             }
                         }
                     });

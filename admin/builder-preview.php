@@ -274,6 +274,31 @@ $theme_bg      = getPengaturan('theme_bg_main', '#F8F9FA');
         .builder-block-wrap.selected .builder-block-tag {
             display: inline-block;
         }
+        /* Penanda seksi draf di kanvas builder */
+        .builder-block-wrap.is-draft {
+            position: relative;
+            outline: 2px dashed #F59E0B !important;
+            outline-offset: -2px;
+            opacity: 0.88;
+        }
+        .builder-block-draft-badge {
+            position: absolute;
+            top: 8px;
+            left: 14px;
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #F59E0B;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 4px;
+            z-index: 101;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
     </style>
 </head>
 <body>
@@ -294,8 +319,12 @@ $theme_bg      = getPengaturan('theme_bg_main', '#F8F9FA');
                 $btype = $b['type'] ?? 'rich_text';
                 $btitle = $b['title'] ?? getBlockTypeName($btype);
                 $bid = $b['id'] ?? ('block_' . $idx);
+                $isDraft = (($b['status'] ?? '') === 'draft') || (isset($b['is_visible']) && !$b['is_visible']);
                 ?>
-                <div class="builder-block-wrap <?= $idx === 0 ? 'selected' : '' ?>" id="wrap_<?= htmlspecialchars($bid) ?>" data-id="<?= htmlspecialchars($bid) ?>" data-type="<?= htmlspecialchars($btype) ?>" data-index="<?= $idx ?>" onclick="onBlockClicked(<?= $idx ?>)">
+                <div class="builder-block-wrap <?= $idx === 0 ? 'selected' : '' ?> <?= $isDraft ? 'is-draft' : '' ?>" id="wrap_<?= htmlspecialchars($bid) ?>" data-id="<?= htmlspecialchars($bid) ?>" data-type="<?= htmlspecialchars($btype) ?>" data-index="<?= $idx ?>" onclick="onBlockClicked(<?= $idx ?>)">
+                    <?php if ($isDraft): ?>
+                    <span class="builder-block-draft-badge"><i class="bi bi-eye-slash-fill"></i> DRAF (DISEMBUNYIKAN)</span>
+                    <?php endif; ?>
                     <span class="builder-block-tag"><?= htmlspecialchars($btitle) ?></span>
                     <?php
                     $is_generic = in_array($btype, ['hero', 'text_image', 'cards_grid', 'cta', 'accordion', 'hyperlink', 'rich_text']);
@@ -359,6 +388,14 @@ window.addEventListener('message', function(event) {
     }
 });
 
+// Helper cek status draft blok
+function isBlockDraft(b) {
+    if (!b) return false;
+    if (b.status === 'draft') return true;
+    if (b.is_visible === false) return true;
+    return false;
+}
+
 // Reorder & update styles for modular page blocks without erasing real HTML
 function reorderAndStyleModularBlocks() {
     let wrapper = document.getElementById('blocksRenderWrapper');
@@ -388,28 +425,48 @@ function reorderAndStyleModularBlocks() {
                    wrapper.querySelector(`[data-type="${b.type}"]`);
 
         const isGeneric = genericBlockTypes.includes(b.type);
+        const isDraft = isBlockDraft(b);
 
         if (!wrap && isGeneric) {
             // Blok generic baru ditambahkan secara dinamis
             wrap = document.createElement('div');
-            wrap.className = 'builder-block-wrap' + (idx === selectedIndex ? ' selected' : '');
+            wrap.className = 'builder-block-wrap' + (idx === selectedIndex ? ' selected' : '') + (isDraft ? ' is-draft' : '');
             wrap.id = 'wrap_' + (b.id || ('block_' + idx));
             wrap.setAttribute('data-id', b.id || ('block_' + idx));
             wrap.setAttribute('data-type', b.type);
             wrap.setAttribute('data-index', idx);
             wrap.onclick = function() { onBlockClicked(idx); };
-            wrap.innerHTML = `<span class="builder-block-tag">${getBlockTypeName(b.type)}</span>` + renderBlockInnerHtml(b, idx);
+            wrap.innerHTML = (isDraft ? '<span class="builder-block-draft-badge"><i class="bi bi-eye-slash-fill"></i> DRAF (DISEMBUNYIKAN)</span>' : '') +
+                             `<span class="builder-block-tag">${getBlockTypeName(b.type)}</span>` + 
+                             renderBlockInnerHtml(b, idx);
             wrapper.appendChild(wrap);
         } else if (wrap) {
             wrap.setAttribute('data-index', idx);
             wrap.onclick = function() { onBlockClicked(idx); };
 
+            // Update status draft kelas & badge
+            if (isDraft) {
+                wrap.classList.add('is-draft');
+                if (!wrap.querySelector('.builder-block-draft-badge')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'builder-block-draft-badge';
+                    badge.innerHTML = '<i class="bi bi-eye-slash-fill"></i> DRAF (DISEMBUNYIKAN)';
+                    wrap.insertBefore(badge, wrap.firstChild);
+                }
+            } else {
+                wrap.classList.remove('is-draft');
+                const badge = wrap.querySelector('.builder-block-draft-badge');
+                if (badge) badge.remove();
+            }
+
             if (isGeneric) {
                 // Selalu render ulang inner HTML agar perubahan warna, teks, link, susunan, tombol langsung realtime!
-                wrap.innerHTML = `<span class="builder-block-tag">${getBlockTypeName(b.type)}</span>` + renderBlockInnerHtml(b, idx);
+                wrap.innerHTML = (isDraft ? '<span class="builder-block-draft-badge"><i class="bi bi-eye-slash-fill"></i> DRAF (DISEMBUNYIKAN)</span>' : '') +
+                                 `<span class="builder-block-tag">${getBlockTypeName(b.type)}</span>` + 
+                                 renderBlockInnerHtml(b, idx);
             } else {
-                // Update live visibility & colors untuk modular blocks
-                wrap.style.display = (b.is_visible === false) ? 'none' : '';
+                // Di kanvas builder admin tetap bisa melihat & mengedit blok draf
+                wrap.style.display = '';
                 const sec = wrap.querySelector('section, .stats-bar, .page-banner');
                 if (sec) {
                     if (b.bg_color) sec.style.setProperty('background-color', b.bg_color, 'important');
@@ -445,8 +502,12 @@ function renderBlocksLocally() {
         const type = b.type || 'rich_text';
         const isSel = (index === selectedIndex) ? 'selected' : '';
         const bid = b.id || ('block_' + index);
+        const isDraft = isBlockDraft(b);
 
-        html += `<div class="builder-block-wrap ${isSel}" id="wrap_${bid}" data-id="${bid}" data-type="${type}" data-index="${index}" onclick="onBlockClicked(${index})">`;
+        html += `<div class="builder-block-wrap ${isSel} ${isDraft ? 'is-draft' : ''}" id="wrap_${bid}" data-id="${bid}" data-type="${type}" data-index="${index}" onclick="onBlockClicked(${index})">`;
+        if (isDraft) {
+            html += `<span class="builder-block-draft-badge"><i class="bi bi-eye-slash-fill"></i> DRAF (DISEMBUNYIKAN)</span>`;
+        }
         html += `<span class="builder-block-tag">${getBlockTypeName(type)}</span>`;
         html += renderBlockInnerHtml(b, index);
         html += `</div>`;

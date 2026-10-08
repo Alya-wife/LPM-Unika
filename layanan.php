@@ -199,7 +199,7 @@ try {
 
 if (!empty($layanan_blocks) && is_array($layanan_blocks)) {
     foreach ($layanan_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         if (($block['type'] ?? '') === 'layanan_cards') continue; // Hilangkan kotak atas sesuai permintaan
         renderLayananSection($block['type'], $block, false, $params);
     }

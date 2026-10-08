@@ -44,7 +44,7 @@ try {
 
 if (!empty($akreditasi_blocks) && is_array($akreditasi_blocks)) {
     foreach ($akreditasi_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         if ($block['type'] === 'akreditasi_faq') continue;
         renderAkreditasiSection($block['type'], $block);
     }

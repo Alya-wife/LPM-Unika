@@ -226,7 +226,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-check-label" for="show_in_nav" style="font-weight:700;color:var(--navy);font-size:0.88rem;cursor:pointer;">
                                 Sematkan di Navbar Website
                             </label>
-                            <small class="text-muted d-block mt-1">Otomatis muncul pada menu dropdown "Halaman" di navbar depan website.</small>
+                            <small class="text-muted d-block mt-1">Otomatis tampil pada navigasi depan website (hanya saat status halaman Terbit/Live).</small>
                         </div>
 
                         <!-- Kategori -->

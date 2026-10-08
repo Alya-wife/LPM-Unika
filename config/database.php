@@ -528,11 +528,119 @@ function getPageBlocks(string $slug): array {
     return [];
 }
 
+// Helper: Ambil seluruh data halaman dari tabel pages untuk keperluan routing status publikasi & navbar
+function getPagesRegistry(bool $refresh = false): array {
+    static $registry = null;
+    if ($registry !== null && !$refresh) {
+        return $registry;
+    }
+    $registry = [
+        'by_slug' => [],
+        'by_url'  => []
+    ];
+    try {
+        $db = getDB();
+        $stmt = $db->query("SELECT id, judul, slug, custom_url, status, show_in_nav, nav_position, nav_label FROM pages");
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $registry['by_slug'][$r['slug']] = $r;
+            if (!empty($r['custom_url'])) {
+                $cleanUrl = ltrim($r['custom_url'], '/');
+                $registry['by_url'][$cleanUrl] = $r;
+                $registry['by_url'][basename($cleanUrl, '.php')] = $r;
+            }
+        }
+    } catch (Exception $e) {}
+    return $registry;
+}
+
+// Helper: Peta relasi halaman turunan (sub-page) ke halaman induk utama
+function getSubpageParentMap(): array {
+    return [
+        'siklus-ami.php'           => 'ami.php',
+        'kalender-ami.php'         => 'ami.php',
+        'profil-sejarah.php'       => 'profil.php',
+        'visi-misi.php'            => 'profil.php',
+        'struktur-organisasi.php'  => 'profil.php',
+        'akreditasi-institusi.php' => 'akreditasi.php',
+        'lembaga-akreditasi.php'   => 'akreditasi.php',
+        'pemeringkatan.php'        => 'akreditasi.php',
+        'penghargaan.php'          => 'akreditasi.php',
+        'akreditasi-prodi.php'     => 'akreditasi.php',
+        'berita-detail.php'        => 'berita.php',
+        'pelatihan.php'            => 'layanan.php',
+        'pelatihan-eksternal.php'  => 'layanan.php',
+        'kunjungan.php'            => 'layanan.php',
+        'survei-kepuasan.php'      => 'layanan.php',
+        'feedback-kunjungan.php'   => 'layanan.php',
+        'kritik-saran.php'         => 'layanan.php',
+        'layanan-internal.php'     => 'layanan.php',
+        'faq.php'                  => 'knowledge.php',
+        'glosarium.php'            => 'knowledge.php',
+        'kalender-mutu.php'        => 'knowledge.php',
+        'buletin.php'              => 'knowledge.php',
+    ];
+}
+
+// Helper: Temukan data record halaman pada tabel pages berdasarkan nama file script atau slug
+function findPageRecord(string $identifier): ?array {
+    $reg = getPagesRegistry();
+    $subMap = getSubpageParentMap();
+    $clean = ltrim($identifier, '/');
+
+    // 1. Cek langsung by custom_url
+    if (isset($reg['by_url'][$clean])) {
+        return $reg['by_url'][$clean];
+    }
+    // 2. Cek langsung by slug
+    if (isset($reg['by_slug'][$clean])) {
+        return $reg['by_slug'][$clean];
+    }
+
+    $noExt = basename($clean, '.php');
+    if (isset($reg['by_url'][$noExt])) {
+        return $reg['by_url'][$noExt];
+    }
+    if (isset($reg['by_slug'][$noExt])) {
+        return $reg['by_slug'][$noExt];
+    }
+
+    // 3. Cek pemetaan sub-page ke parent
+    if (isset($subMap[$clean])) {
+        $parent = $subMap[$clean];
+        if (isset($reg['by_url'][$parent])) {
+            return $reg['by_url'][$parent];
+        }
+        $parentNoExt = basename($parent, '.php');
+        if (isset($reg['by_slug'][$parentNoExt])) {
+            return $reg['by_slug'][$parentNoExt];
+        }
+    }
+
+    return null;
+}
+
+// Helper: Cek apakah menu navigasi halaman aktif dan layak ditampilkan di navbar
+function isPageNavVisible(string $identifier): bool {
+    $rec = findPageRecord($identifier);
+    if (!$rec) {
+        // Jika tidak tercatat di tabel pages, default tetap tampil
+        return true;
+    }
+    $isPublished = ($rec['status'] ?? 'publish') === 'publish';
+    $showInNav   = !empty($rec['show_in_nav']);
+    return ($isPublished && $showInNav);
+}
+
 // Helper: Kompilasi dan render array blok menjadi HTML interaktif
 function renderPageBlocks(array $blocks): string {
     if (empty($blocks)) return '';
     $html = '';
     foreach ($blocks as $idx => $b) {
+        // Abaikan seksi yang berstatus draf atau disembunyikan
+        $isBlockDraft = ((isset($b['status']) && $b['status'] === 'draft') || (isset($b['is_visible']) && !$b['is_visible']));
+        if ($isBlockDraft) {
+            continue;
+        }
         $type = $b['type'] ?? 'rich_text';
         $bg   = !empty($b['bg_color']) ? 'background:' . htmlspecialchars($b['bg_color']) . ';' : '';
         $tc   = !empty($b['text_color']) ? 'color:' . htmlspecialchars($b['text_color']) . ';' : '';

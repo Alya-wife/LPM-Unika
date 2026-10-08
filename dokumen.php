@@ -219,6 +219,7 @@ $sections_to_render = [];
 
 if (!empty($saved_blocks) && is_array($saved_blocks)) {
     foreach ($saved_blocks as $blk) {
+        if ((isset($blk['status']) && $blk['status'] === 'draft') || (isset($blk['is_visible']) && !$blk['is_visible'])) continue;
         $type = $blk['type'] ?? '';
         if ($type) {
             $sections_to_render[] = [

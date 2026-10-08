@@ -69,7 +69,7 @@ try {
 
 if (!empty($kontak_blocks) && is_array($kontak_blocks)) {
     foreach ($kontak_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         renderKontakSection($block['type'], $block, false, $form_data);
     }
 } else {

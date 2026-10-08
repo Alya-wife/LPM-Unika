@@ -43,7 +43,7 @@ try {
 
 if (!empty($mutu_blocks) && is_array($mutu_blocks)) {
     foreach ($mutu_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         renderMutuDataSection($block['type'], $block, false);
     }
 } else {

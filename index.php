@@ -78,7 +78,7 @@ try {
 
 if (!empty($beranda_blocks) && is_array($beranda_blocks)) {
     foreach ($beranda_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         if (($block['type'] ?? '') === 'beranda_quick_links') continue; // Dihapus sesuai permintaan pengguna
         renderBerandaSection($block['type'], $block);
     }

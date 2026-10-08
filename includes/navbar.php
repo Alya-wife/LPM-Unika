@@ -6,8 +6,8 @@ $nav_main_pages = [];
 $nav_dropdown_pages = [];
 try {
     $db_nav = getDB();
-    $nav_main_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND (nav_position = 'main' OR nav_position IS NULL OR nav_position = '') AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
-    $nav_dropdown_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND nav_position = 'dropdown' AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
+    $nav_main_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND (custom_url IS NULL OR custom_url = '') AND (nav_position = 'main' OR nav_position IS NULL OR nav_position = '') AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
+    $nav_dropdown_pages = $db_nav->query("SELECT id, judul, slug, nav_label FROM pages WHERE show_in_nav = 1 AND (custom_url IS NULL OR custom_url = '') AND nav_position = 'dropdown' AND status = 'publish' ORDER BY urutan ASC, judul ASC")->fetchAll();
 } catch (Exception $e) {
     $nav_main_pages = [];
     $nav_dropdown_pages = [];
@@ -36,13 +36,16 @@ try {
             <ul class="navbar-nav ms-auto align-items-xl-center">
                 
                 <!-- 1. Beranda -->
+                <?php if (isPageNavVisible('beranda')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= $current_page === 'index' ? 'active' : '' ?>" href="<?= SITE_URL ?>/">
                         Beranda
                     </a>
                 </li>
+                <?php endif; ?>
 
                 <!-- 2. Profil (Whimsical Dropdown) -->
+                <?php if (isPageNavVisible('profil')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
                     <a class="nav-link dropdown-toggle <?= in_array($current_page, ['profil', 'profil-sejarah', 'visi-misi', 'struktur-organisasi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/profil.php" id="navbarProfil" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Profil
@@ -79,8 +82,10 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
                 <!-- 3. SPMI (Whimsical Dropdown) -->
+                <?php if (isPageNavVisible('spmi')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
                     <a class="nav-link dropdown-toggle <?= $current_page === 'spmi' ? 'active' : '' ?>" href="<?= SITE_URL ?>/spmi.php" id="navbarSpmi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         SPMI
@@ -117,10 +122,12 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
                 <!-- 4. AMI (Whimsical Dropdown) -->
+                <?php if (isPageNavVisible('ami')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
-                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['ami', 'siklus-ami']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/ami.php" id="navbarAmi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['ami', 'siklus-ami', 'kalender-ami']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/ami.php" id="navbarAmi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         AMI
                     </a>
                     <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarAmi" style="min-width:300px;">
@@ -147,8 +154,10 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
                 <!-- 5. Akreditasi (Whimsical Dropdown) -->
+                <?php if (isPageNavVisible('akreditasi')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
                     <a class="nav-link dropdown-toggle <?= in_array($current_page, ['akreditasi', 'akreditasi-institusi', 'lembaga-akreditasi', 'penghargaan', 'akreditasi-prodi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/akreditasi.php" id="navbarAkreditasi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Akreditasi
@@ -193,8 +202,10 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
                 <!-- 6. FAQ & Knowledge (Whimsical Dropdown) -->
+                <?php if (isPageNavVisible('knowledge')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
                     <a class="nav-link dropdown-toggle <?= in_array($current_page, ['faq', 'glosarium', 'kalender-mutu', 'buletin', 'knowledge']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/faq.php" id="navbarFAQ" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         FAQ
@@ -239,13 +250,16 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
                 <!-- 7. Kegiatan -->
+                <?php if (isPageNavVisible('berita')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= in_array($current_page, ['berita', 'berita-detail']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/berita.php">
                         Kegiatan
                     </a>
                 </li>
+                <?php endif; ?>
 
                 <!-- Direct Main Navbar Pages -->
                 <?php foreach ($nav_main_pages as $nmp): ?>
@@ -275,6 +289,7 @@ try {
                 <?php endif; ?>
 
                 <!-- 8. Layanan & Feedback (Whimsical Dropdown CTA) -->
+                <?php if (isPageNavVisible('layanan')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
                     <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'survei-kepuasan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14" style="margin-right:4px;vertical-align:-1px;">
@@ -317,8 +332,25 @@ try {
                         </div>
                     </div>
                 </li>
+                <?php endif; ?>
 
             </ul>
         </div>
     </div>
 </nav>
+
+<?php if (!empty($GLOBALS['lpm_admin_draft_preview'])): ?>
+<!-- Admin Draft Notice Banner -->
+<div style="background:#FEF3C7;border-bottom:1.5px solid #FDE68A;padding:0.65rem 1rem;font-size:0.85rem;color:#92400E;text-align:center;position:relative;z-index:999;">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+            <strong>Mode Pratinjau Admin:</strong> Halaman <em><?= e($GLOBALS['lpm_admin_draft_preview']['judul']) ?></em> ini berstatus <strong>DRAF (Disembunyikan)</strong> dan tidak dapat diakses oleh publik umum.
+        </div>
+        <a href="<?= SITE_URL ?>/admin/page-list.php" class="btn btn-sm btn-warning text-dark fw-bold px-3 py-1" style="font-size:0.78rem;border-radius:6px;text-decoration:none;">
+            Kelola Halaman &rarr;
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+

@@ -109,7 +109,7 @@ if (!empty($spmi_blocks) && is_array($spmi_blocks)) {
     $allowed_types = $view_block_map[$view] ?? [];
     $rendered_any = false;
     foreach ($spmi_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         if (in_array($block['type'], $allowed_types)) {
             renderSpmiSection($block['type'], $block, false, $kategori_filter, $tahun_filter);
             $rendered_any = true;

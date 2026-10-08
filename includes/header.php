@@ -78,3 +78,59 @@
     <?= isset($extra_css) ? $extra_css : '' ?>
 </head>
 <body>
+<?php
+// Guard Akses Halaman: Jika berstatus Draf dan diakses non-admin, tampilkan layar peninjauan & blokir akses
+if (function_exists('findPageRecord')) {
+    $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
+    $isAdminDir = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false);
+    $isApiDir   = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/api/') !== false);
+    
+    if (!$isAdminDir && !$isApiDir && !in_array($scriptName, ['page.php', 'auth-google.php'])) {
+        $pageRec = findPageRecord($scriptName);
+        if ($pageRec) {
+            $isDraft = ($pageRec['status'] ?? 'publish') === 'draft';
+            $isAdmin = !empty($_SESSION['admin_id']);
+            
+            if ($isDraft) {
+                if (!$isAdmin) {
+                    // Blokir pengunjung umum, tampilkan layar peninjauan draf
+                    require_once __DIR__ . '/navbar.php';
+                    ?>
+                    <div class="page-banner">
+                        <div class="container position-relative">
+                            <h1 class="page-banner-title">Halaman Dalam Peninjauan</h1>
+                            <div class="breadcrumb-lpm">
+                                <a href="<?= SITE_URL ?>/">Beranda</a>
+                                <span>/</span>
+                                <span class="current">Draft</span>
+                            </div>
+                        </div>
+                    </div>
+                    <section class="py-5 text-center">
+                        <div class="container">
+                            <div style="max-width:550px;margin:3rem auto;padding:2.5rem;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+                                <div style="width:70px;height:70px;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+                                    <i class="bi bi-clock-history text-warning fs-1"></i>
+                                </div>
+                                <h3 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);margin-bottom:0.75rem;">Halaman Belum Diterbitkan</h3>
+                                <p style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.5rem;">
+                                    Halaman <strong><?= e($pageRec['judul']) ?></strong> saat ini masih berstatus <strong>Draf (Disembunyikan)</strong> dan sedang dalam tahap penyusunan oleh Administrator LPM UNIKA.
+                                </p>
+                                <a href="<?= SITE_URL ?>/" class="btn-hero-primary" style="display:inline-flex;padding:0.65rem 1.8rem;">
+                                    Kembali ke Beranda
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+                    <?php
+                    require_once __DIR__ . '/footer.php';
+                    exit;
+                } else {
+                    // Admin yang sedang login: Izinkan pratinjau dengan banner indikator
+                    $GLOBALS['lpm_admin_draft_preview'] = $pageRec;
+                }
+            }
+        }
+    }
+}
+?>

@@ -39,7 +39,7 @@ try {
 
 if (!empty($kc_blocks) && is_array($kc_blocks)) {
     foreach ($kc_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         renderKnowledgeSection($block['type'], $block, false);
     }
 } else {

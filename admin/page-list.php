@@ -253,23 +253,17 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </a>
                     </td>
                     <td>
-                        <?php if ($is_core): ?>
-                            <span class="badge bg-light text-muted border" style="font-size:0.75rem;">
-                                Navigasi Utama
-                            </span>
-                        <?php else: ?>
-                            <a href="page-list.php?toggle_nav=<?= $p['id'] ?>" title="Klik untuk aktifkan/nonaktifkan pin navbar" style="text-decoration:none;">
-                                <?php if ($is_in_nav): ?>
-                                    <span class="badge" style="background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;font-size:0.75rem;cursor:pointer;">
-                                        <i class="bi bi-pin-angle-fill me-1"></i>Tampil di Nav
-                                    </span>
-                                <?php else: ?>
-                                    <span class="badge" style="background:#F1F5F9;color:#64748B;font-size:0.75rem;cursor:pointer;">
-                                        – Tidak di Nav
-                                    </span>
-                                <?php endif; ?>
-                            </a>
-                        <?php endif; ?>
+                        <a href="page-list.php?toggle_nav=<?= $p['id'] ?>" title="Klik untuk aktifkan/nonaktifkan penempatan navbar" style="text-decoration:none;">
+                            <?php if ($is_in_nav): ?>
+                                <span class="badge" style="background:#EFF6FF;color:#1E3A8A;border:1px solid #BFDBFE;font-size:0.75rem;cursor:pointer;">
+                                    <i class="bi bi-pin-angle-fill me-1"></i>Tampil di Nav
+                                </span>
+                            <?php else: ?>
+                                <span class="badge" style="background:#F1F5F9;color:#64748B;font-size:0.75rem;cursor:pointer;">
+                                    – Tidak di Nav
+                                </span>
+                            <?php endif; ?>
+                        </a>
                     </td>
                     <td>
                         <span style="font-size:0.75rem;color:var(--text-muted);background:#f8fafc;padding:0.2rem 0.5rem;border-radius:4px;border:1px solid var(--border);">

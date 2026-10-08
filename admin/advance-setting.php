@@ -333,6 +333,20 @@ if (empty($initial_blocks)) {
             border-color: var(--builder-primary);
             background: #EFF6FF;
         }
+        /* Tampilan Seksi Berstatus Draf */
+        .section-tree-item.is-draft {
+            background: #FFFDF5;
+            border-color: #FCD34D;
+            border-left: 3.5px solid #F59E0B;
+        }
+        .section-tree-item.is-draft:hover {
+            background: #FEF9C3;
+            border-color: #FBBF24;
+        }
+        .section-tree-item.is-draft.active {
+            border-color: #F59E0B;
+            background: #FEF3C7;
+        }
         /* Hold and Drag styling */
         .section-tree-item.dragging {
             opacity: 0.45;
@@ -441,6 +455,9 @@ if (empty($initial_blocks)) {
             <button class="btn btn-sm btn-dark dropdown-toggle d-flex align-items-center gap-2 border-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius:6px;font-weight:700;font-size:0.85rem;">
                 <i class="bi bi-file-earmark-text text-primary"></i>
                 <span id="topbarPageTitle"><?= htmlspecialchars($current_page_data['judul']) ?></span>
+                <span id="topbarPageStatusBadge" class="badge <?= ($current_page_data['status'] ?? 'publish') === 'draft' ? 'bg-warning text-dark' : 'bg-success' ?>" style="font-size:0.68rem;padding:0.25rem 0.5rem;">
+                    <?= ($current_page_data['status'] ?? 'publish') === 'draft' ? 'Draf' : 'Live' ?>
+                </span>
             </button>
             <ul class="dropdown-menu shadow-lg" style="min-width:260px;max-height:350px;overflow-y:auto;font-size:0.85rem;">
                 <li><h6 class="dropdown-header text-uppercase" style="font-size:0.7rem;letter-spacing:0.5px;">Pilih Halaman Yang Diedit</h6></li>
@@ -492,7 +509,7 @@ if (empty($initial_blocks)) {
         <button type="button" id="savePublishBtn" class="btn btn-sm btn-primary px-3 d-inline-flex align-items-center gap-1" style="background:var(--builder-primary);border:none;font-weight:700;border-radius:6px;font-size:0.85rem;">
             <span id="saveBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
             <i class="bi bi-check2-circle" id="saveBtnIcon"></i>
-            <span id="saveBtnText">Simpan &amp; Publikasikan</span>
+            <span id="saveBtnText"><?= ($current_page_data['status'] ?? 'publish') === 'draft' ? 'Simpan sebagai Draf' : 'Simpan &amp; Publikasikan' ?></span>
         </button>
     </div>
 </header>
@@ -549,6 +566,23 @@ if (empty($initial_blocks)) {
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switchTab('tab-sections')" title="Kembali ke susunan seksi">
                         <i class="bi bi-arrow-left"></i>
                     </button>
+                </div>
+
+                <!-- Kontrol Status Penerbitan Seksi -->
+                <div class="mb-3 p-3 rounded-3" style="background:#F8FAFC;border:1.5px solid #E2E8F0;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span style="font-size:0.75rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">
+                            <i class="bi bi-toggle2-on me-1 text-primary"></i> Status Seksi Ini
+                        </span>
+                        <span id="activeBlockStatusBadge" class="badge bg-success" style="font-size:0.7rem;">Live</span>
+                    </div>
+                    <select id="activeBlockStatusSelect" class="builder-input" onchange="updateActiveBlockStatus(this.value)">
+                        <option value="publish">Publikasikan (Tampil di Website)</option>
+                        <option value="draft">Draf (Sembunyikan dari Publik)</option>
+                    </select>
+                    <small id="activeBlockStatusHint" class="text-muted d-block mt-2" style="font-size:0.73rem;line-height:1.4;">
+                        Seksi ini sedang <strong>Diterbitkan</strong> dan dapat dilihat oleh pengunjung umum website.
+                    </small>
                 </div>
 
                 <!-- Kontrol Tampilan & Warna -->
@@ -836,6 +870,14 @@ function switchTab(tabId) {
 // Drag & Drop State
 let draggedIndex = null;
 
+// Helper cek status draft seksi
+function isBlockDraft(b) {
+    if (!b) return false;
+    if (b.status === 'draft') return true;
+    if (b.is_visible === false) return true;
+    return false;
+}
+
 // Render the tree list of sections in Tab 1
 function renderSectionTree() {
     const list = document.getElementById('sectionTreeList');
@@ -849,9 +891,19 @@ function renderSectionTree() {
     let html = '';
     blocks.forEach((b, idx) => {
         const isAct = (idx === activeIndex) ? 'active' : '';
+        const isDraft = isBlockDraft(b);
+        const draftClass = isDraft ? 'is-draft' : '';
         const title = b.title || b.badge || getBlockTypeName(b.type);
+        const statusBtn = isDraft
+            ? `<button type="button" class="btn btn-xs py-1 px-2 text-warning-emphasis fw-bold" style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:4px;font-size:0.72rem;" title="Status: Draf (Klik untuk Publikasikan seksi ini)" onclick="toggleBlockStatus(${idx}, event)">
+                <i class="bi bi-eye-slash-fill me-1"></i>Draf
+               </button>`
+            : `<button type="button" class="btn btn-xs py-1 px-2 text-success fw-bold" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:4px;font-size:0.72rem;" title="Status: Live (Klik untuk jadikan Draf)" onclick="toggleBlockStatus(${idx}, event)">
+                <i class="bi bi-check-circle-fill me-1"></i>Live
+               </button>`;
+
         html += `
-        <div class="section-tree-item ${isAct}" 
+        <div class="section-tree-item ${isAct} ${draftClass}" 
              draggable="true" 
              data-index="${idx}"
              ondragstart="handleDragStart(event, ${idx})"
@@ -866,12 +918,13 @@ function renderSectionTree() {
                     <i class="bi bi-grip-vertical"></i>
                 </span>
                 <span class="text-muted fw-bold" style="font-size:0.75rem;width:18px;">#${idx + 1}</span>
-                <i class="bi ${getBlockTypeIcon(b.type)} text-primary" style="font-size:0.9rem;"></i>
-                <span style="font-size:0.82rem;font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:145px;" title="${escapeHtml(title)}">
-                    ${escapeHtml(title)}
+                <i class="bi ${getBlockTypeIcon(b.type)} ${isDraft ? 'text-warning' : 'text-primary'}" style="font-size:0.9rem;"></i>
+                <span style="font-size:0.82rem;font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:130px;" title="${escapeHtml(title)}">
+                    ${escapeHtml(title)} ${isDraft ? '<small class="text-warning fw-bold">(Draf)</small>' : ''}
                 </span>
             </div>
             <div class="d-flex align-items-center gap-1" onclick="event.stopPropagation()">
+                ${statusBtn}
                 <button type="button" class="btn btn-xs py-1 px-2 text-primary" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:4px;font-size:0.75rem;font-weight:600;" title="Edit Gaya & Konten Seksi Ini" onclick="selectBlock(${idx}, true)">
                     <i class="bi bi-pencil-square me-1"></i> Edit
                 </button>
@@ -882,6 +935,39 @@ function renderSectionTree() {
         </div>`;
     });
     list.innerHTML = html;
+}
+
+// Toggle status publish/draft per seksi
+function toggleBlockStatus(idx, e) {
+    if (e) e.stopPropagation();
+    if (idx < 0 || idx >= blocks.length) return;
+    const b = blocks[idx];
+    const wasDraft = isBlockDraft(b);
+    const newStatus = wasDraft ? 'publish' : 'draft';
+    b.status = newStatus;
+    b.is_visible = (newStatus === 'publish');
+    renderSectionTree();
+    if (activeIndex === idx) {
+        openBlockEditor(idx);
+    }
+    sendUpdateToIframe();
+    showToast(newStatus === 'draft' 
+        ? `Seksi #${idx + 1} dijadikan Draf (Disembunyikan dari publik)` 
+        : `Seksi #${idx + 1} Diterbitkan (Ditampilkan ke publik)`);
+}
+
+// Update status seksi dari panel editor (Tab 2)
+function updateActiveBlockStatus(val) {
+    if (activeIndex < 0 || !blocks[activeIndex]) return;
+    const b = blocks[activeIndex];
+    b.status = val;
+    b.is_visible = (val === 'publish');
+    renderSectionTree();
+    openBlockEditor(activeIndex);
+    sendUpdateToIframe();
+    showToast(val === 'draft' 
+        ? `Seksi #${activeIndex + 1} dijadikan Draf (Disembunyikan dari publik)` 
+        : `Seksi #${activeIndex + 1} Diterbitkan (Ditampilkan ke publik)`);
 }
 
 // Drag & Drop Handlers (Hold and Drag)
@@ -967,6 +1053,25 @@ function openBlockEditor(idx) {
 
     document.getElementById('activeBlockTypeBadge').innerText = getBlockTypeName(b.type);
     document.getElementById('activeBlockIndexLabel').innerText = `Seksi #${idx + 1}: ${b.title || getBlockTypeName(b.type)}`;
+
+    // Set status seksi (Publish vs Draft)
+    const isDraft = isBlockDraft(b);
+    const statusSelect = document.getElementById('activeBlockStatusSelect');
+    const statusBadge  = document.getElementById('activeBlockStatusBadge');
+    const statusHint   = document.getElementById('activeBlockStatusHint');
+
+    if (statusSelect && statusBadge && statusHint) {
+        statusSelect.value = isDraft ? 'draft' : 'publish';
+        if (isDraft) {
+            statusBadge.className = 'badge bg-warning text-dark';
+            statusBadge.innerText = 'Draf (Disembunyikan)';
+            statusHint.innerHTML = '<i class="bi bi-eye-slash me-1 text-warning"></i> Seksi ini berstatus <strong>Draf</strong> dan tidak akan muncul di website publik.';
+        } else {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.innerText = 'Live (Terbit)';
+            statusHint.innerHTML = '<i class="bi bi-check-circle me-1 text-success"></i> Seksi ini sedang <strong>Diterbitkan</strong> dan dapat dilihat oleh pengunjung umum website.';
+        }
+    }
 
     // Set colors & appearance
     const bg = b.bg_color || (b.type === 'hero' ? '#0A192F' : (b.type === 'cta' ? '#6A1B9A' : '#FFFFFF'));
@@ -2165,7 +2270,7 @@ document.getElementById('savePublishBtn').addEventListener('click', function() {
     btn.disabled = true;
     spinner.classList.remove('d-none');
     icon.classList.add('d-none');
-    text.innerText = 'Menyimpan...';
+    text.innerText = (payload.status === 'draft') ? 'Menyimpan Draf...' : 'Menyimpan...';
 
     fetch('builder-save.php', {
         method: 'POST',
@@ -2177,14 +2282,16 @@ document.getElementById('savePublishBtn').addEventListener('click', function() {
         btn.disabled = false;
         spinner.classList.add('d-none');
         icon.classList.remove('d-none');
-        text.innerText = 'Simpan & Publikasikan';
+        updatePageStatusUI(payload.status);
 
         if (data.success) {
             currentPageId = data.page_id;
             document.getElementById('topbarPageTitle').innerText = title;
-            document.getElementById('livePageBtn').href = data.url;
+            if (data.url) {
+                document.getElementById('livePageBtn').href = data.url;
+            }
 
-            showToast(data.message || 'Halaman berhasil disimpan dan dipublikasikan!');
+            showToast(data.message || (payload.status === 'draft' ? 'Halaman berhasil disimpan sebagai Draf!' : 'Halaman berhasil disimpan dan dipublikasikan!'));
         } else {
             alert('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan'));
         }
@@ -2193,9 +2300,29 @@ document.getElementById('savePublishBtn').addEventListener('click', function() {
         btn.disabled = false;
         spinner.classList.add('d-none');
         icon.classList.remove('d-none');
-        text.innerText = 'Simpan & Publikasikan';
+        updatePageStatusUI(payload.status);
         alert('Koneksi terputus atau terjadi kesalahan: ' + err);
     });
+});
+
+// Update UI status penerbitan halaman (Topbar dan Tombol Simpan)
+function updatePageStatusUI(status) {
+    const isDraft = (status === 'draft');
+    const saveBtnText = document.getElementById('saveBtnText');
+    const badge = document.getElementById('topbarPageStatusBadge');
+
+    if (saveBtnText) {
+        saveBtnText.innerText = isDraft ? 'Simpan sebagai Draf' : 'Simpan & Publikasikan';
+    }
+    if (badge) {
+        badge.className = isDraft ? 'badge bg-warning text-dark' : 'badge bg-success';
+        badge.innerText = isDraft ? 'Draf' : 'Live';
+    }
+}
+
+// Pantau perubahan pilihan status halaman di Tab Pengaturan
+document.getElementById('pageStatusInput').addEventListener('change', function() {
+    updatePageStatusUI(this.value);
 });
 
 function showToast(msg) {

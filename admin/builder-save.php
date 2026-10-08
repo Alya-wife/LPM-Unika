@@ -78,12 +78,26 @@ try {
         $saved_id = (int)$db->lastInsertId();
     }
 
+    $saveMessage = ($status === 'draft')
+        ? 'Halaman berhasil disimpan sebagai Draf (Disembunyikan dari publik).'
+        : 'Halaman berhasil disimpan dan dipublikasikan.';
+
+    $stmt_info = $db->prepare("SELECT custom_url, slug FROM pages WHERE id = ?");
+    $stmt_info->execute([$saved_id]);
+    $page_info = $stmt_info->fetch();
+
+    $live_url = SITE_URL . '/page.php?slug=' . $slug;
+    if (!empty($page_info['custom_url'])) {
+        $live_url = SITE_URL . '/' . ($page_info['custom_url'] === 'index.php' ? '' : ltrim($page_info['custom_url'], '/'));
+    }
+
     echo json_encode([
         'success' => true,
-        'message' => 'Halaman berhasil disimpan dan dipublikasikan.',
+        'message' => $saveMessage,
         'page_id' => $saved_id,
         'slug'    => $slug,
-        'url'     => SITE_URL . '/page.php?slug=' . $slug
+        'status'  => $status,
+        'url'     => $live_url
     ]);
 } catch (Exception $e) {
     echo json_encode([

@@ -396,7 +396,7 @@ try {
 
 if (!empty($berita_blocks) && is_array($berita_blocks)) {
     foreach ($berita_blocks as $block) {
-        if (isset($block['is_visible']) && !$block['is_visible']) continue;
+        if ((isset($block['status']) && $block['status'] === 'draft') || (isset($block['is_visible']) && !$block['is_visible'])) continue;
         renderBeritaSection($block['type'], $block, false, $params);
     }
 } else {

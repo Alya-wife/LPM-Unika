@@ -11,6 +11,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
     <title><?= isset($admin_page_title) ? e($admin_page_title) . ' – Admin LPM UNIKA' : 'Admin LPM UNIKA' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css?v=<?= time() ?>">
     <style>
     /* Disable smooth scroll in admin panel to prevent jarring jump animations */

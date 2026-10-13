@@ -51,8 +51,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logo = null;
         }
 
-        // Handle Logo Upload
-        if (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        // Handle Logo Upload (Support Cropped Base64 & Direct File Upload)
+        $cropped_logo = trim($_POST['cropped_logo_data'] ?? '');
+        if (!empty($cropped_logo) && preg_match('/^data:image\/(\w+);base64,/', $cropped_logo)) {
+            $raw = base64_decode(substr($cropped_logo, strpos($cropped_logo, ',') + 1));
+            if ($raw !== false) {
+                $clean_kode = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $kode)) ?: 'lembaga';
+                $new_logo = 'logo_' . $clean_kode . '_' . time() . '.webp';
+                if (file_put_contents($upload_dir . $new_logo, $raw)) {
+                    if ($logo && file_exists($upload_dir . $logo)) @unlink($upload_dir . $logo);
+                    $logo = $new_logo;
+                } else {
+                    $error = 'Gagal menyimpan file logo hasil crop.';
+                }
+            }
+        } elseif (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'])) {
                 $clean_kode = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $kode)) ?: 'lembaga';
@@ -225,38 +238,33 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                                 <!-- Input & Keterangan -->
                                 <div class="col">
-                                    <input type="file" name="logo" id="inputLogoLembaga" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp" onchange="previewLogoImage(this)">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <input type="file" name="logo" id="inputLogoLembaga" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+                                        <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditLogoLembaga" style="white-space:nowrap;padding:0.6rem 0.9rem;border-radius:8px;">
+                                            <i class="bi bi-crop text-warning"></i> Edit / Crop
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="cropped_logo_data" id="croppedLogoData">
                                     <div class="form-text mt-1" style="font-size:0.78rem;color:#64748B;">
                                         <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 5 MB</span>
-                                        Pilih file logo resmi lembaga. Disarankan menggunakan format <strong>PNG transparan</strong> agar serasi dengan kartu akreditasi di website.
+                                        Pilih file logo resmi lembaga. Disarankan format <strong>PNG transparan</strong> atau gunakan editor crop agar logo pas di tengah.
                                     </div>
                                     <?php if (!empty($d['logo']) && file_exists(__DIR__ . '/../uploads/akreditasi/' . $d['logo'])): ?>
-                                    <div class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" name="hapus_logo" value="1" id="checkHapusLogo">
-                                        <label class="form-check-label small text-danger" for="checkHapusLogo">
-                                            Hapus logo saat ini (kembalikan ke teks inisial)
-                                        </label>
+                                    <div class="d-flex align-items-center gap-3 mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.75rem;height:26px;" onclick="editExistingLogoLembaga('<?= SITE_URL ?>/uploads/akreditasi/<?= e($d['logo']) ?>')">
+                                            <i class="bi bi-crop text-warning me-1"></i>Edit Logo Tersimpan
+                                        </button>
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input" type="checkbox" name="hapus_logo" value="1" id="checkHapusLogo">
+                                            <label class="form-check-label small text-danger" for="checkHapusLogo">
+                                                Hapus logo saat ini
+                                            </label>
+                                        </div>
                                     </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-
-                        <script>
-                        function previewLogoImage(input) {
-                            var img = document.getElementById('logoPreviewImg');
-                            var placeholder = document.getElementById('logoPreviewPlaceholder');
-                            if (input.files && input.files[0]) {
-                                var reader = new FileReader();
-                                reader.onload = function(e) {
-                                    img.src = e.target.result;
-                                    img.style.display = 'block';
-                                    if (placeholder) placeholder.style.display = 'none';
-                                }
-                                reader.readAsDataURL(input.files[0]);
-                            }
-                        }
-                        </script>
                     </div>
 
                     <div class="border-top mt-4 pt-3 d-flex justify-content-end gap-2">
@@ -270,6 +278,198 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </form>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal Cropper Universal Lembaga Akreditasi -->
+<div class="modal fade" id="modalCropLembaga" tabindex="-1" aria-labelledby="modalCropLembagaLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropLembagaLabel">Editor Logo: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small style="color:rgba(255,255,255,0.85);">Sesuaikan framing dan proporsi logo lembaga akreditasi.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgLembaga" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHLembaga">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVLembaga">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftLembaga">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightLembaga">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInLembaga">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutLembaga">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropLembaga">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-lembaga fw-semibold" data-ratio="1">1:1 Persegi (Logo)</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-lembaga fw-semibold" data-ratio="1.333333">4:3 Galeri</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-lembaga fw-semibold" data-ratio="1.777778">16:9 Banner</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-lembaga fw-semibold" data-ratio="NaN">Bebas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropLembaga" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cropperLembaga = null;
+let scaleXLembaga = 1;
+let scaleYLembaga = 1;
+let currentRatioLembaga = 1;
+
+const modalCropLembagaEl  = document.getElementById('modalCropLembaga');
+const bsModalLembaga      = new bootstrap.Modal(modalCropLembagaEl);
+const sourceImgLembaga    = document.getElementById('cropperSourceImgLembaga');
+const fileInputLembaga    = document.getElementById('inputLogoLembaga');
+const btnEditLembaga      = document.getElementById('btnEditLogoLembaga');
+const logoPreviewImg      = document.getElementById('logoPreviewImg');
+const logoPlaceholder     = document.getElementById('logoPreviewPlaceholder');
+const hiddenCropLembaga   = document.getElementById('croppedLogoData');
+const applyBtnLembaga     = document.getElementById('btnApplyCropLembaga');
+
+function initCropperLembaga() {
+    if (cropperLembaga) cropperLembaga.destroy();
+    scaleXLembaga = 1;
+    scaleYLembaga = 1;
+    cropperLembaga = new Cropper(sourceImgLembaga, {
+        aspectRatio: currentRatioLembaga,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true,
+        guides: true,
+        checkCrossOrigin: false
+    });
+}
+
+modalCropLembagaEl.addEventListener('shown.bs.modal', function() { initCropperLembaga(); });
+modalCropLembagaEl.addEventListener('hidden.bs.modal', function() {
+    if (cropperLembaga) {
+        cropperLembaga.destroy();
+        cropperLembaga = null;
+    }
+});
+
+// Controls
+document.getElementById('btnRotateLeftLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(-90); });
+document.getElementById('btnRotateRightLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(90); });
+document.getElementById('btnFlipHLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleXLembaga = -scaleXLembaga; cropperLembaga.scaleX(scaleXLembaga); } });
+document.getElementById('btnFlipVLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleYLembaga = -scaleYLembaga; cropperLembaga.scaleY(scaleYLembaga); } });
+document.getElementById('btnZoomInLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(0.1); });
+document.getElementById('btnZoomOutLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(-0.1); });
+document.getElementById('btnResetCropLembaga')?.addEventListener('click', function() { if (cropperLembaga) { cropperLembaga.reset(); scaleXLembaga = 1; scaleYLembaga = 1; } });
+
+document.querySelectorAll('.ratio-btn-lembaga').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ratio-btn-lembaga').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        const val = parseFloat(this.getAttribute('data-ratio'));
+        currentRatioLembaga = isNaN(val) ? NaN : val;
+        if (cropperLembaga) cropperLembaga.setAspectRatio(currentRatioLembaga);
+    });
+});
+
+fileInputLembaga?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        // Jika SVG, tidak perlu di-crop (vektor)
+        if (file.name.toLowerCase().endsWith('.svg')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                logoPreviewImg.src = e.target.result;
+                logoPreviewImg.style.display = 'block';
+                if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                btnEditLembaga.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                sourceImgLembaga.src = e.target.result;
+                logoPreviewImg.src = e.target.result;
+                logoPreviewImg.style.display = 'block';
+                if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                btnEditLembaga.classList.remove('d-none');
+                btnEditLembaga.classList.add('d-inline-flex');
+                hiddenCropLembaga.value = '';
+                bsModalLembaga.show();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+btnEditLembaga?.addEventListener('click', function() {
+    if (sourceImgLembaga.src) {
+        bsModalLembaga.show();
+    }
+});
+
+window.editExistingLogoLembaga = function(imgUrl) {
+    sourceImgLembaga.src = imgUrl;
+    bsModalLembaga.show();
+};
+
+applyBtnLembaga?.addEventListener('click', function() {
+    if (!cropperLembaga) return;
+    const canvas = cropperLembaga.getCroppedCanvas({
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageSmoothingQuality: 'high'
+    });
+    if (canvas) {
+        const dataUrl = canvas.toDataURL('image/webp', 0.9);
+        hiddenCropLembaga.value = dataUrl;
+        logoPreviewImg.src = dataUrl;
+        logoPreviewImg.style.display = 'block';
+        if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+        btnEditLembaga.classList.remove('d-none');
+        btnEditLembaga.classList.add('d-inline-flex');
+        bsModalLembaga.hide();
+    }
+});
+</script>
     </div>
 </div>
 

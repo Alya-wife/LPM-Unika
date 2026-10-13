@@ -86,9 +86,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
         $allowed = ['jpg','jpeg','png','gif','webp'];
 
-        // 1. Handle Gambar Utama
+        // 1. Handle Gambar Utama (Support Cropped Base64 & Direct Upload)
         $gambar_filename = $is_edit ? ($berita['gambar'] ?? null) : null;
-        if (!empty($_FILES['gambar']['name'])) {
+        $cropped_cover = trim($_POST['cropped_cover_data'] ?? '');
+
+        if (!empty($cropped_cover) && preg_match('/^data:image\/(\w+);base64,/', $cropped_cover)) {
+            $raw_cover = base64_decode(substr($cropped_cover, strpos($cropped_cover, ',') + 1));
+            if ($raw_cover !== false) {
+                $c_name = 'cover_' . time() . '_' . uniqid() . '.webp';
+                if (file_put_contents($upload_dir . $c_name, $raw_cover)) {
+                    if ($is_edit && !empty($berita['gambar']) && file_exists($upload_dir . $berita['gambar'])) {
+                        @unlink($upload_dir . $berita['gambar']);
+                    }
+                    $gambar_filename = $c_name;
+                } else {
+                    $error = 'Gagal menyimpan gambar cover hasil penyesuaian ke server.';
+                }
+            }
+        } elseif (!empty($_FILES['gambar']['name'])) {
             $ext = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
             if (!in_array($ext, $allowed)) {
                 $error = 'Format file gambar utama tidak didukung. Gunakan JPG, PNG, atau WEBP.';
@@ -107,8 +122,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // 2. Handle Multi-Upload Slider Images
+        // 2. Handle Multi-Upload Slider Images (Support Cropped 1-per-1 & Direct Upload)
         $new_slider_files = [];
+
+        // 2a. Foto slider hasil crop / edit (Base64)
+        if (!empty($_POST['cropped_slider_photos']) && is_array($_POST['cropped_slider_photos'])) {
+            foreach ($_POST['cropped_slider_photos'] as $c_slide) {
+                if (!empty($c_slide) && preg_match('/^data:image\/(\w+);base64,/', $c_slide)) {
+                    $raw_slide = base64_decode(substr($c_slide, strpos($c_slide, ',') + 1));
+                    if ($raw_slide !== false) {
+                        $s_name = 'slide_' . time() . '_' . uniqid() . '.webp';
+                        if (file_put_contents($upload_dir . $s_name, $raw_slide)) {
+                            $new_slider_files[] = $s_name;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2b. Foto slider asli yang tidak dicrop
         if (!$error && !empty($_FILES['gambar_slider']['name'][0])) {
             $total_files = count($_FILES['gambar_slider']['name']);
             for ($i = 0; $i < $total_files; $i++) {
@@ -127,6 +159,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $saved_slide = convertAndSaveWebP($_FILES['gambar_slider']['tmp_name'][$i], $upload_dir, 'slide_');
                         if ($saved_slide) {
                             $new_slider_files[] = $saved_slide;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2c. Update foto slider lama yang diedit via modal cropper
+        if (!empty($_POST['cropped_existing_slide']) && is_array($_POST['cropped_existing_slide'])) {
+            foreach ($_POST['cropped_existing_slide'] as $slide_id => $b64) {
+                $slide_id = (int)$slide_id;
+                if ($slide_id > 0 && !empty($b64) && preg_match('/^data:image\/(\w+);base64,/', $b64)) {
+                    $raw = base64_decode(substr($b64, strpos($b64, ',') + 1));
+                    if ($raw !== false) {
+                        $new_fname = 'slide_' . time() . '_' . uniqid() . '.webp';
+                        if (file_put_contents($upload_dir . $new_fname, $raw)) {
+                            $old_img = $db->query("SELECT gambar FROM berita_gambar WHERE id = {$slide_id}")->fetchColumn();
+                            if ($old_img && file_exists($upload_dir . $old_img)) @unlink($upload_dir . $old_img);
+                            $db->prepare("UPDATE berita_gambar SET gambar = ? WHERE id = ?")->execute([$new_fname, $slide_id]);
                         }
                     }
                 }
@@ -282,17 +332,28 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="gambar">
                                 Gambar Utama / Sampul (Cover)
                             </label>
-                            <input type="file" id="gambar" name="gambar" class="form-control"
-                                style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 1rem;"
-                                accept="image/*">
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="file" id="gambar" name="gambar" class="form-control"
+                                    style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 1rem;"
+                                    accept="image/*">
+                                <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditCover" style="white-space:nowrap;padding:0.6rem 0.9rem;border-radius:8px;">
+                                    <i class="bi bi-crop text-warning"></i> Edit / Crop
+                                </button>
+                            </div>
+                            <input type="hidden" name="cropped_cover_data" id="croppedCoverData">
                             <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;">
                                 Digunakan sebagai thumbnail di card dan slide cover. (Maks 5MB)
                             </div>
                             <!-- Live Preview Gambar Utama yang Baru Dipilih -->
                             <div id="coverLivePreview" style="display:none;margin-top:0.5rem;">
-                                <span class="badge bg-secondary mb-1" style="font-size:0.65rem;">Preview Cover Baru:</span>
-                                <div>
-                                    <img id="coverPreviewImg" src="" alt="" style="height:60px;border-radius:6px;border:1.5px solid var(--purple);object-fit:cover;">
+                                <div class="d-flex align-items-center gap-3 p-2 bg-light rounded border">
+                                    <img id="coverPreviewImg" src="" alt="Preview Cover" style="height:65px;border-radius:6px;border:1.5px solid var(--purple);object-fit:cover;">
+                                    <div>
+                                        <span class="badge bg-secondary mb-1" style="font-size:0.65rem;">Preview Cover Baru</span>
+                                        <div id="coverCroppedBadge" class="d-none small text-success fw-bold">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Telah Disesuaikan / Diedit
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -325,7 +386,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                         </div>
 
-                        <!-- Upload Multi-Gambar untuk Slider Kegiatan (Bisa Satu per Satu & Bertahap) -->
+                        <!-- Upload Multi-Gambar untuk Slider Kegiatan (Bisa Satu per Satu & Bertahap & Diedit 1 per 1) -->
                         <div class="col-12" style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;padding:1.4rem;margin-top:0.5rem;">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                 <div>
@@ -336,7 +397,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                         Foto Tambahan untuk Slider Kegiatan
                                     </label>
                                     <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
-                                        Bisa memilih <strong>satu per satu secara bertahap</strong> (pilih foto A, lalu klik tambah lagi untuk foto B, dst).
+                                        Pilih foto satu per satu atau sekaligus. Tiap foto memiliki tombol <strong>Edit / Crop</strong> untuk menyesuaikan framing satu per satu.
                                     </div>
                                 </div>
                                 
@@ -352,8 +413,10 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                             <!-- Input picker hidden (untuk trigger dialog file) -->
                             <input type="file" id="sliderPickerInput" accept="image/*" multiple style="display:none;">
-                            <!-- Input asli yang akan dikirim ke server -->
+                            <!-- Input asli yang akan dikirim ke server untuk uncropped files -->
                             <input type="file" id="realSliderInput" name="gambar_slider[]" multiple style="display:none;">
+                            <!-- Hidden inputs container for cropped photos -->
+                            <div id="croppedSliderInputsContainer"></div>
 
                             <!-- Container Preview Foto yang Baru Dipilih (Staged) -->
                             <div id="stagedPhotosWrapper" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid #E2E8F0;">
@@ -384,11 +447,14 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <div class="d-flex flex-wrap gap-3 align-items-start">
                                 <!-- Foto Utama -->
                                 <?php if (!empty($berita['gambar'])): ?>
-                                <div style="position:relative;width:130px;background:#fff;border:2px solid #8B5CF6;border-radius:8px;padding:6px;box-shadow:0 2px 4px rgba(0,0,0,0.06);">
+                                <div style="position:relative;width:140px;background:#fff;border:2px solid #8B5CF6;border-radius:8px;padding:6px;box-shadow:0 2px 4px rgba(0,0,0,0.06);">
                                     <span class="badge" style="position:absolute;top:-8px;left:8px;background:#8B5CF6;color:#fff;font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:4px;">Cover Utama</span>
-                                    <img src="<?= SITE_URL ?>/uploads/berita/<?= e($berita['gambar']) ?>" alt="" style="width:100%;height:85px;object-fit:cover;border-radius:6px;display:block;">
-                                    <div class="mt-2 text-center">
-                                        <a href="berita-form.php?id=<?= $berita['id'] ?>&delete_cover=1" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7rem;padding:2px 4px;" onclick="return confirm('Hapus foto utama ini?')">
+                                    <img id="existingCoverImg" src="<?= SITE_URL ?>/uploads/berita/<?= e($berita['gambar']) ?>" alt="" style="width:100%;height:85px;object-fit:cover;border-radius:6px;display:block;">
+                                    <div class="mt-2 d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary w-50 py-1" style="font-size:0.7rem;" onclick="editExistingCover('<?= SITE_URL ?>/uploads/berita/<?= e($berita['gambar']) ?>')">
+                                            Edit
+                                        </button>
+                                        <a href="berita-form.php?id=<?= $berita['id'] ?>&delete_cover=1" class="btn btn-sm btn-outline-danger w-50 py-1" style="font-size:0.7rem;" onclick="return confirm('Hapus foto utama ini?')">
                                             Hapus
                                         </a>
                                     </div>
@@ -397,11 +463,14 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                                 <!-- Foto Tambahan Slider -->
                                 <?php foreach ($gambar_tambahan as $idx => $gt): ?>
-                                <div style="position:relative;width:130px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:6px;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+                                <div style="position:relative;width:140px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:6px;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
                                     <span class="badge bg-light text-dark" style="position:absolute;top:-8px;left:8px;border:1px solid #CBD5E1;font-size:0.65rem;font-weight:600;padding:2px 6px;border-radius:4px;">Slide #<?= $idx + 2 ?></span>
-                                    <img src="<?= SITE_URL ?>/uploads/berita/<?= e($gt['gambar']) ?>" alt="" style="width:100%;height:85px;object-fit:cover;border-radius:6px;display:block;">
-                                    <div class="mt-2 text-center">
-                                        <a href="berita-form.php?id=<?= $berita['id'] ?>&delete_img=<?= $gt['id'] ?>" class="btn btn-sm btn-outline-danger w-100" style="font-size:0.7rem;padding:2px 4px;" onclick="return confirm('Hapus foto slide ini?')">
+                                    <img id="existingSlideImg_<?= $gt['id'] ?>" src="<?= SITE_URL ?>/uploads/berita/<?= e($gt['gambar']) ?>" alt="" style="width:100%;height:85px;object-fit:cover;border-radius:6px;display:block;">
+                                    <div class="mt-2 d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary w-50 py-1" style="font-size:0.7rem;" onclick="editExistingSlide(<?= $gt['id'] ?>, '<?= SITE_URL ?>/uploads/berita/<?= e($gt['gambar']) ?>')">
+                                            Edit
+                                        </button>
+                                        <a href="berita-form.php?id=<?= $berita['id'] ?>&delete_img=<?= $gt['id'] ?>" class="btn btn-sm btn-outline-danger w-50 py-1" style="font-size:0.7rem;" onclick="return confirm('Hapus foto slide ini?')">
                                             Hapus
                                         </a>
                                     </div>
@@ -444,6 +513,75 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
+<!-- Modal Cropper Universal Berita (Cover & Multi-Slider) -->
+<div class="modal fade" id="modalCropBerita" tabindex="-1" aria-labelledby="modalCropBeritaLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropBeritaLabel">Editor Gambar: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small id="modalCropBeritaSubtitle" style="color:rgba(255,255,255,0.85);">Sesuaikan framing foto dokumentasi berita atau kegiatan.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgBerita" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHBerita">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVBerita">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftBerita">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightBerita">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInBerita">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutBerita">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropBerita">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-berita fw-semibold" data-ratio="1.777778">16:9 Card</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-berita fw-semibold" data-ratio="1.333333">4:3 Galeri</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-berita fw-semibold" data-ratio="1">1:1 Persegi</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-berita fw-semibold" data-ratio="NaN">Bebas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropBerita" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function updateTAPreview(dateStr) {
     if (!dateStr) return;
@@ -451,7 +589,7 @@ function updateTAPreview(dateStr) {
     if (isNaN(d.getTime())) return;
     
     const year = d.getFullYear();
-    const month = d.getMonth() + 1; // 1-12
+    const month = d.getMonth() + 1;
     let ta = '';
     if (month >= 9) {
         ta = year + '/' + (year + 1);
@@ -464,34 +602,137 @@ function updateTAPreview(dateStr) {
     }
 }
 
-// Live Preview Cover Image
-const coverInput = document.getElementById('gambar');
-const coverLivePreview = document.getElementById('coverLivePreview');
-const coverPreviewImg = document.getElementById('coverPreviewImg');
+// -------------------------------------------------------------
+// SISTEM EDITOR CROPPER UNIVERSAL BERITA (COVER & MULTI-SLIDER)
+// -------------------------------------------------------------
+let cropperInstance = null;
+let scaleX = 1;
+let scaleY = 1;
+let currentRatio = 16 / 9;
+let cropMode = null; // 'cover', 'existing_cover', 'slider_item', 'existing_slide'
+let activeSliderItemId = null;
+let activeExistingSlideId = null;
+
+const cropModalEl          = document.getElementById('modalCropBerita');
+const bsCropModal          = new bootstrap.Modal(cropModalEl);
+const cropperSourceImg     = document.getElementById('cropperSourceImgBerita');
+const modalSubtitle        = document.getElementById('modalCropBeritaSubtitle');
+const btnApplyCrop         = document.getElementById('btnApplyCropBerita');
+
+function initCropper() {
+    if (cropperInstance) cropperInstance.destroy();
+    scaleX = 1;
+    scaleY = 1;
+    cropperInstance = new Cropper(cropperSourceImg, {
+        aspectRatio: currentRatio,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true,
+        guides: true,
+        checkCrossOrigin: false
+    });
+}
+
+cropModalEl.addEventListener('shown.bs.modal', function() { initCropper(); });
+cropModalEl.addEventListener('hidden.bs.modal', function() {
+    if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+    }
+});
+
+// Kontrol Toolbar Modal
+document.getElementById('btnRotateLeftBerita')?.addEventListener('click', function() { if (cropperInstance) cropperInstance.rotate(-90); });
+document.getElementById('btnRotateRightBerita')?.addEventListener('click', function() { if (cropperInstance) cropperInstance.rotate(90); });
+document.getElementById('btnFlipHBerita')?.addEventListener('click', function() { if (cropperInstance) { scaleX = -scaleX; cropperInstance.scaleX(scaleX); } });
+document.getElementById('btnFlipVBerita')?.addEventListener('click', function() { if (cropperInstance) { scaleY = -scaleY; cropperInstance.scaleY(scaleY); } });
+document.getElementById('btnZoomInBerita')?.addEventListener('click', function() { if (cropperInstance) cropperInstance.zoom(0.1); });
+document.getElementById('btnZoomOutBerita')?.addEventListener('click', function() { if (cropperInstance) cropperInstance.zoom(-0.1); });
+document.getElementById('btnResetCropBerita')?.addEventListener('click', function() { if (cropperInstance) { cropperInstance.reset(); scaleX = 1; scaleY = 1; } });
+
+document.querySelectorAll('.ratio-btn-berita').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ratio-btn-berita').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        const val = parseFloat(this.getAttribute('data-ratio'));
+        currentRatio = isNaN(val) ? NaN : val;
+        if (cropperInstance) cropperInstance.setAspectRatio(currentRatio);
+    });
+});
+
+// 1. Logika Cover / Gambar Utama
+const coverInput         = document.getElementById('gambar');
+const btnEditCover       = document.getElementById('btnEditCover');
+const coverLivePreview   = document.getElementById('coverLivePreview');
+const coverPreviewImg    = document.getElementById('coverPreviewImg');
+const coverCroppedBadge  = document.getElementById('coverCroppedBadge');
+const hiddenCoverData    = document.getElementById('croppedCoverData');
+
 if (coverInput) {
     coverInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
-            coverPreviewImg.src = URL.createObjectURL(this.files[0]);
-            coverLivePreview.style.display = 'block';
-        } else {
-            coverLivePreview.style.display = 'none';
+            const file = this.files[0];
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    coverPreviewImg.src = e.target.result;
+                    coverLivePreview.style.display = 'block';
+                    btnEditCover.classList.remove('d-none');
+                    btnEditCover.classList.add('d-inline-flex');
+                    hiddenCoverData.value = '';
+                    if (coverCroppedBadge) coverCroppedBadge.classList.add('d-none');
+
+                    // Langsung buka modal cropper untuk kenyamanan admin
+                    cropMode = 'cover';
+                    modalSubtitle.textContent = 'Sesuaikan framing gambar sampul (cover) berita/kegiatan.';
+                    cropperSourceImg.src = e.target.result;
+                    bsCropModal.show();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    btnEditCover?.addEventListener('click', function() {
+        if (coverPreviewImg.src) {
+            cropMode = 'cover';
+            modalSubtitle.textContent = 'Sesuaikan framing gambar sampul (cover) berita/kegiatan.';
+            cropperSourceImg.src = coverPreviewImg.src;
+            bsCropModal.show();
         }
     });
 }
 
-// Staging Multi-Foto Slider (Bisa Satu per Satu & Bertahap)
-const stagedFiles = new DataTransfer();
-const pickerInput = document.getElementById('sliderPickerInput');
-const realInput   = document.getElementById('realSliderInput');
-const btnPick     = document.getElementById('btnPickSliderImages');
-const stagedGrid  = document.getElementById('stagedPhotosGrid');
-const stagedWrap  = document.getElementById('stagedPhotosWrapper');
-const stagedEmpty = document.getElementById('stagedEmptyPrompt');
-const stagedCount = document.getElementById('stagedCount');
+window.editExistingCover = function(imgUrl) {
+    cropMode = 'existing_cover';
+    modalSubtitle.textContent = 'Sesuaikan framing foto cover utama tersimpan.';
+    cropperSourceImg.src = imgUrl;
+    bsCropModal.show();
+};
+
+window.editExistingSlide = function(slideId, imgUrl) {
+    cropMode = 'existing_slide';
+    activeExistingSlideId = slideId;
+    modalSubtitle.textContent = 'Sesuaikan framing foto slide tersimpan #' + slideId + '.';
+    cropperSourceImg.src = imgUrl;
+    bsCropModal.show();
+};
+
+// 2. Logika Multi-Foto Slider (Diedit Satu per Satu)
+let sliderItems = []; // Array of { id, file, croppedData, previewUrl, name, size }
+
+const pickerInput       = document.getElementById('sliderPickerInput');
+const realInput         = document.getElementById('realSliderInput');
+const btnPick           = document.getElementById('btnPickSliderImages');
+const stagedGrid        = document.getElementById('stagedPhotosGrid');
+const stagedWrap        = document.getElementById('stagedPhotosWrapper');
+const stagedEmpty       = document.getElementById('stagedEmptyPrompt');
+const stagedCount       = document.getElementById('stagedCount');
+const croppedInputsWrap = document.getElementById('croppedSliderInputsContainer');
 
 if (btnPick && pickerInput) {
     btnPick.addEventListener('click', function() {
-        pickerInput.value = ''; // reset agar file yang sama bisa dipilih ulang jika diinginkan
+        pickerInput.value = '';
         pickerInput.click();
     });
 
@@ -500,7 +741,15 @@ if (btnPick && pickerInput) {
             for (let i = 0; i < this.files.length; i++) {
                 const file = this.files[i];
                 if (file.type.startsWith('image/')) {
-                    stagedFiles.items.add(file);
+                    const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                    sliderItems.push({
+                        id: itemId,
+                        file: file,
+                        croppedData: null,
+                        previewUrl: URL.createObjectURL(file),
+                        name: file.name,
+                        size: file.size
+                    });
                 }
             }
             renderStagedPhotos();
@@ -509,12 +758,9 @@ if (btnPick && pickerInput) {
 }
 
 function renderStagedPhotos() {
-    if (!realInput) return;
-    realInput.files = stagedFiles.files;
-    const count = stagedFiles.files.length;
-    
+    const count = sliderItems.length;
     if (stagedCount) stagedCount.textContent = count;
-    
+
     if (count > 0) {
         stagedWrap.style.display = 'block';
         stagedEmpty.style.display = 'none';
@@ -522,57 +768,131 @@ function renderStagedPhotos() {
         stagedWrap.style.display = 'none';
         stagedEmpty.style.display = 'block';
     }
-    
+
     stagedGrid.innerHTML = '';
-    
-    for (let i = 0; i < stagedFiles.files.length; i++) {
-        const file = stagedFiles.files[i];
+    croppedInputsWrap.innerHTML = '';
+
+    const dt = new DataTransfer();
+
+    sliderItems.forEach((item, index) => {
+        // Jika belum dicrop, file dikirim lewat realInput
+        if (!item.croppedData && item.file) {
+            dt.items.add(item.file);
+        } else if (item.croppedData) {
+            // Jika sudah dicrop, kirim lewat hidden input array cropped_slider_photos[]
+            const hInput = document.createElement('input');
+            hInput.type = 'hidden';
+            hInput.name = 'cropped_slider_photos[]';
+            hInput.value = item.croppedData;
+            croppedInputsWrap.appendChild(hInput);
+        }
+
         const card = document.createElement('div');
-        card.style.cssText = 'position:relative;width:125px;background:#fff;border:1.5px solid #CBD5E1;border-radius:8px;padding:6px;box-shadow:0 2px 5px rgba(0,0,0,0.06);transition:all 0.2s;';
-        
-        const imgUrl = URL.createObjectURL(file);
-        const sizeKb = Math.round(file.size / 1024);
-        const fileName = file.name.length > 14 ? file.name.substring(0, 11) + '...' : file.name;
-        
+        card.className = 'card p-2 border position-relative shadow-sm';
+        card.style.cssText = 'width:145px;background:#fff;border-radius:10px;transition:all 0.2s;';
+
+        const sizeKb = Math.round(item.size / 1024);
+        const fileName = item.name.length > 13 ? item.name.substring(0, 10) + '...' : item.name;
+
         card.innerHTML = `
-            <div style="width:100%;height:80px;border-radius:5px;overflow:hidden;background:#F1F5F9;">
-                <img src="${imgUrl}" alt="${file.name}" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div style="width:100%;height:95px;border-radius:6px;overflow:hidden;background:#F1F5F9;position:relative;">
+                <img src="${item.previewUrl}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;display:block;">
+                ${item.croppedData ? '<span class="badge bg-success position-absolute top-0 start-0 m-1" style="font-size:0.65rem;box-shadow:0 1px 3px rgba(0,0,0,0.2);"><i class="bi bi-check2"></i> Diedit</span>' : ''}
             </div>
-            <div style="font-size:0.72rem;font-weight:600;color:var(--navy);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${file.name}">
+            <div style="font-size:0.72rem;font-weight:600;color:var(--navy);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.name}">
                 ${fileName}
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
                 <span style="font-size:0.65rem;color:#64748B;">${sizeKb} KB</span>
-                <button type="button" class="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center" 
-                        style="width:22px;height:22px;border-radius:50%;font-size:0.75rem;line-height:1;" 
-                        title="Batal pilih foto ini" 
-                        onclick="removeStagedPhoto(${i})">
+                <span class="badge bg-light text-dark border" style="font-size:0.65rem;">#${index + 1}</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-1 border-top gap-1">
+                <button type="button" class="btn btn-xs btn-outline-primary flex-fill py-1 fw-bold d-flex align-items-center justify-content-center gap-1" style="font-size:0.72rem;border-radius:6px;" onclick="openCropSliderItem('${item.id}')">
+                    <i class="bi bi-crop text-warning"></i> Edit
+                </button>
+                <button type="button" class="btn btn-xs btn-outline-danger p-0 d-flex align-items-center justify-content-center" style="width:26px;height:26px;border-radius:6px;font-size:0.85rem;" title="Hapus foto ini" onclick="removeSliderItem('${item.id}')">
                     &times;
                 </button>
             </div>
         `;
         stagedGrid.appendChild(card);
+    });
+
+    if (realInput) {
+        realInput.files = dt.files;
     }
 }
 
-window.removeStagedPhoto = function(index) {
-    const newDt = new DataTransfer();
-    for (let i = 0; i < stagedFiles.files.length; i++) {
-        if (i !== index) {
-            newDt.items.add(stagedFiles.files[i]);
-        }
-    }
-    stagedFiles.items.clear();
-    for (let i = 0; i < newDt.files.length; i++) {
-        stagedFiles.items.add(newDt.files[i]);
-    }
+window.openCropSliderItem = function(itemId) {
+    const item = sliderItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    cropMode = 'slider_item';
+    activeSliderItemId = itemId;
+    modalSubtitle.textContent = 'Sesuaikan framing foto slide: "' + item.name + '".';
+    cropperSourceImg.src = item.previewUrl;
+    bsCropModal.show();
+};
+
+window.removeSliderItem = function(itemId) {
+    sliderItems = sliderItems.filter(i => i.id !== itemId);
     renderStagedPhotos();
 };
 
 window.clearAllStagedPhotos = function() {
-    stagedFiles.items.clear();
+    sliderItems = [];
     renderStagedPhotos();
 };
+
+// 3. Tombol Terapkan Penyesuaian Hasil Cropper
+btnApplyCrop?.addEventListener('click', function() {
+    if (!cropperInstance) return;
+
+    const canvas = cropperInstance.getCroppedCanvas({
+        maxWidth: 1920,
+        maxHeight: 1200,
+        imageSmoothingQuality: 'high'
+    });
+
+    if (canvas) {
+        const dataUrl = canvas.toDataURL('image/webp', 0.88);
+
+        if (cropMode === 'cover') {
+            hiddenCoverData.value = dataUrl;
+            coverPreviewImg.src = dataUrl;
+            coverLivePreview.style.display = 'block';
+            if (coverCroppedBadge) coverCroppedBadge.classList.remove('d-none');
+        } else if (cropMode === 'existing_cover') {
+            hiddenCoverData.value = dataUrl;
+            const existingCover = document.getElementById('existingCoverImg');
+            if (existingCover) existingCover.src = dataUrl;
+        } else if (cropMode === 'slider_item') {
+            const item = sliderItems.find(i => i.id === activeSliderItemId);
+            if (item) {
+                item.croppedData = dataUrl;
+                item.previewUrl = dataUrl;
+                item.file = null; // Agar tidak dikirim ganda sebagai raw file
+                renderStagedPhotos();
+            }
+        } else if (cropMode === 'existing_slide') {
+            const existingSlide = document.getElementById('existingSlideImg_' + activeExistingSlideId);
+            if (existingSlide) existingSlide.src = dataUrl;
+            
+            // Tambahkan hidden input untuk menyimpan perubahan slide tersimpan
+            let existInput = document.getElementById('input_existing_slide_' + activeExistingSlideId);
+            if (!existInput) {
+                existInput = document.createElement('input');
+                existInput.type = 'hidden';
+                existInput.id = 'input_existing_slide_' + activeExistingSlideId;
+                existInput.name = 'cropped_existing_slide[' + activeExistingSlideId + ']';
+                document.querySelector('form').appendChild(existInput);
+            }
+            existInput.value = dataUrl;
+        }
+
+        bsCropModal.hide();
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

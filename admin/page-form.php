@@ -43,17 +43,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $featured_image = $is_edit ? ($page['featured_image'] ?? '') : '';
 
-            // Handle image upload jika ada
-            if (!empty($_FILES['featured_image_file']['name'])) {
+            // Handle image upload jika ada (Support Cropped Base64 & Direct File Upload)
+            $cropped_image = trim($_POST['cropped_image_data'] ?? '');
+            if (!empty($cropped_image) && preg_match('/^data:image\/(\w+);base64,/', $cropped_image)) {
+                $raw = base64_decode(substr($cropped_image, strpos($cropped_image, ',') + 1));
+                if ($raw !== false) {
+                    $fname = 'page_' . time() . '_' . rand(100,999) . '.webp';
+                    $dest  = UPLOAD_PATH . $fname;
+                    if (file_put_contents($dest, $raw)) {
+                        $featured_image = $fname;
+                    } else {
+                        $error = 'Gagal menyimpan gambar halaman hasil penyesuaian.';
+                    }
+                }
+            } elseif (!empty($_FILES['featured_image_file']['name'])) {
                 $allowed = ['jpg','jpeg','png','webp','gif'];
                 $ext = strtolower(pathinfo($_FILES['featured_image_file']['name'], PATHINFO_EXTENSION));
                 if (!in_array($ext, $allowed)) {
                     $error = 'Format gambar tidak valid. Gunakan format JPG, PNG, atau WebP.';
                 } else {
-                    $fname = 'page_' . time() . '_' . rand(100,999) . '.' . $ext;
-                    $dest  = UPLOAD_PATH . $fname;
-                    if (move_uploaded_file($_FILES['featured_image_file']['tmp_name'], $dest)) {
-                        $featured_image = $fname;
+                    $saved_name = convertAndSaveWebP($_FILES['featured_image_file']['tmp_name'], UPLOAD_PATH, 'page_');
+                    if ($saved_name) {
+                        $featured_image = $saved_name;
+                    } else {
+                        $fname = 'page_' . time() . '_' . rand(100,999) . '.' . $ext;
+                        $dest  = UPLOAD_PATH . $fname;
+                        if (move_uploaded_file($_FILES['featured_image_file']['tmp_name'], $dest)) {
+                            $featured_image = $fname;
+                        }
                     }
                 }
             } elseif (isset($_POST['remove_image']) && $_POST['remove_image'] == '1') {
@@ -279,21 +296,39 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                         <?php if ($is_edit && !empty($page['featured_image'])): ?>
                         <div class="mb-3 text-center">
-                            <img src="<?= UPLOAD_URL . e($page['featured_image']) ?>" alt="Featured Image" class="img-fluid rounded-3 border" style="max-height:160px;object-fit:cover;width:100%;">
-                            <div class="form-check mt-2 text-start">
-                                <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="removeImg">
-                                <label class="form-check-label text-danger" for="removeImg" style="font-size:0.8rem;cursor:pointer;">
-                                    Hapus gambar ini
-                                </label>
+                            <img id="existingPageImg" src="<?= UPLOAD_URL . e($page['featured_image']) ?>" alt="Featured Image" class="img-fluid rounded-3 border" style="max-height:160px;object-fit:cover;width:100%;">
+                            <div class="d-flex align-items-center justify-content-between mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="editExistingPageImg('<?= UPLOAD_URL . e($page['featured_image']) ?>')">
+                                    <i class="bi bi-crop text-warning me-1"></i> Edit / Crop
+                                </button>
+                                <div class="form-check text-start m-0">
+                                    <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="removeImg">
+                                    <label class="form-check-label text-danger" for="removeImg" style="font-size:0.8rem;cursor:pointer;">
+                                        Hapus gambar ini
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <?php endif; ?>
 
                         <div class="mb-2">
                             <label class="form-label" style="font-weight:600;font-size:0.85rem;">Unggah Gambar Baru</label>
-                            <input type="file" name="featured_image_file" class="form-control" accept="image/*" style="border:1.5px solid var(--border);font-size:0.85rem;">
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="file" id="pageImgInput" name="featured_image_file" class="form-control" accept="image/*" style="border:1.5px solid var(--border);font-size:0.85rem;">
+                                <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditPageImg" style="white-space:nowrap;padding:0.55rem 0.85rem;border-radius:8px;">
+                                    <i class="bi bi-crop text-warning"></i> Crop
+                                </button>
+                            </div>
+                            <input type="hidden" name="cropped_image_data" id="croppedImageDataPage">
                             <div class="form-text mt-1">
                                 <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 5 MB</span> Format: JPG, PNG, atau WebP (Opsional).
+                            </div>
+                            <!-- Live Preview Gambar Baru -->
+                            <div id="livePreviewPageWrap" class="mt-2 d-none">
+                                <div class="p-2 bg-light rounded border text-center">
+                                    <img id="livePreviewPageImg" src="" alt="Preview" style="max-height:130px;width:100%;object-fit:cover;border-radius:6px;">
+                                    <div class="small fw-bold text-success mt-1"><i class="bi bi-check-circle-fill me-1"></i>Gambar siap disimpan</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -302,5 +337,189 @@ require_once __DIR__ . '/includes/admin-header.php';
         </form>
     </div>
 </div>
+
+<!-- Modal Cropper Universal Page -->
+<div class="modal fade" id="modalCropPage" tabindex="-1" aria-labelledby="modalCropPageLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropPageLabel">Editor Gambar Halaman: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small style="color:rgba(255,255,255,0.85);">Sesuaikan framing gambar sampul halaman web.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgPage" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHPage">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVPage">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftPage">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightPage">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInPage">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutPage">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropPage">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-page fw-semibold" data-ratio="1.777778">16:9 Banner</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-page fw-semibold" data-ratio="1.333333">4:3 Galeri</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-page fw-semibold" data-ratio="1">1:1 Persegi</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-page fw-semibold" data-ratio="NaN">Bebas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropPage" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cropperPage = null;
+let scaleXPage = 1;
+let scaleYPage = 1;
+let currentRatioPage = 16 / 9;
+let isExistingPageEdit = false;
+
+const modalCropPageEl  = document.getElementById('modalCropPage');
+const bsModalPage      = new bootstrap.Modal(modalCropPageEl);
+const sourceImgPage    = document.getElementById('cropperSourceImgPage');
+const fileInputPage    = document.getElementById('pageImgInput');
+const btnEditPage      = document.getElementById('btnEditPageImg');
+const livePreviewWrapPage = document.getElementById('livePreviewPageWrap');
+const livePreviewImgPage  = document.getElementById('livePreviewPageImg');
+const hiddenCropPage   = document.getElementById('croppedImageDataPage');
+const applyBtnPage     = document.getElementById('btnApplyCropPage');
+
+function initCropperPage() {
+    if (cropperPage) cropperPage.destroy();
+    scaleXPage = 1;
+    scaleYPage = 1;
+    cropperPage = new Cropper(sourceImgPage, {
+        aspectRatio: currentRatioPage,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true,
+        guides: true,
+        checkCrossOrigin: false
+    });
+}
+
+modalCropPageEl.addEventListener('shown.bs.modal', function() { initCropperPage(); });
+modalCropPageEl.addEventListener('hidden.bs.modal', function() {
+    if (cropperPage) {
+        cropperPage.destroy();
+        cropperPage = null;
+    }
+});
+
+// Controls
+document.getElementById('btnRotateLeftPage')?.addEventListener('click', function() { if (cropperPage) cropperPage.rotate(-90); });
+document.getElementById('btnRotateRightPage')?.addEventListener('click', function() { if (cropperPage) cropperPage.rotate(90); });
+document.getElementById('btnFlipHPage')?.addEventListener('click', function() { if (cropperPage) { scaleXPage = -scaleXPage; cropperPage.scaleX(scaleXPage); } });
+document.getElementById('btnFlipVPage')?.addEventListener('click', function() { if (cropperPage) { scaleYPage = -scaleYPage; cropperPage.scaleY(scaleYPage); } });
+document.getElementById('btnZoomInPage')?.addEventListener('click', function() { if (cropperPage) cropperPage.zoom(0.1); });
+document.getElementById('btnZoomOutPage')?.addEventListener('click', function() { if (cropperPage) cropperPage.zoom(-0.1); });
+document.getElementById('btnResetCropPage')?.addEventListener('click', function() { if (cropperPage) { cropperPage.reset(); scaleXPage = 1; scaleYPage = 1; } });
+
+document.querySelectorAll('.ratio-btn-page').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ratio-btn-page').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        const val = parseFloat(this.getAttribute('data-ratio'));
+        currentRatioPage = isNaN(val) ? NaN : val;
+        if (cropperPage) cropperPage.setAspectRatio(currentRatioPage);
+    });
+});
+
+fileInputPage?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                isExistingPageEdit = false;
+                sourceImgPage.src = e.target.result;
+                livePreviewImgPage.src = e.target.result;
+                livePreviewWrapPage.classList.remove('d-none');
+                btnEditPage.classList.remove('d-none');
+                btnEditPage.classList.add('d-inline-flex');
+                hiddenCropPage.value = '';
+                bsModalPage.show();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+btnEditPage?.addEventListener('click', function() {
+    if (sourceImgPage.src) {
+        bsModalPage.show();
+    }
+});
+
+window.editExistingPageImg = function(imgUrl) {
+    isExistingPageEdit = true;
+    sourceImgPage.src = imgUrl;
+    bsModalPage.show();
+};
+
+applyBtnPage?.addEventListener('click', function() {
+    if (!cropperPage) return;
+    const canvas = cropperPage.getCroppedCanvas({
+        maxWidth: 1920,
+        maxHeight: 1200,
+        imageSmoothingQuality: 'high'
+    });
+    if (canvas) {
+        const dataUrl = canvas.toDataURL('image/webp', 0.88);
+        hiddenCropPage.value = dataUrl;
+        livePreviewImgPage.src = dataUrl;
+        livePreviewWrapPage.classList.remove('d-none');
+        btnEditPage.classList.remove('d-none');
+        btnEditPage.classList.add('d-inline-flex');
+
+        const existingImg = document.getElementById('existingPageImg');
+        if (existingImg && isExistingPageEdit) {
+            existingImg.src = dataUrl;
+        }
+
+        bsModalPage.hide();
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

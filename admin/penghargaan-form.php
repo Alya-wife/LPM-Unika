@@ -24,8 +24,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_path = $p['file_path'];
     $is_pdf = $p['is_pdf'];
     
-    // File Upload handling
-    if (isset($_FILES['file_penghargaan']) && $_FILES['file_penghargaan']['error'] === UPLOAD_ERR_OK) {
+    // File Upload handling (Support Cropped Base64 & Direct File Upload)
+    $cropped_file = trim($_POST['cropped_file_data'] ?? '');
+    if (!empty($cropped_file) && preg_match('/^data:image\/(\w+);base64,/', $cropped_file)) {
+        $raw = base64_decode(substr($cropped_file, strpos($cropped_file, ',') + 1));
+        if ($raw !== false) {
+            $upload_dir = __DIR__ . '/../uploads/penghargaan/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            $new_name = 'award_' . time() . '_' . uniqid() . '.webp';
+            if (file_put_contents($upload_dir . $new_name, $raw)) {
+                if ($file_path && file_exists($upload_dir . $file_path)) {
+                    @unlink($upload_dir . $file_path);
+                    $old_thumb = $upload_dir . 'thumb_' . pathinfo($file_path, PATHINFO_FILENAME) . '.jpg';
+                    if (file_exists($old_thumb)) @unlink($old_thumb);
+                }
+                $file_path = $new_name;
+                $is_pdf = 0;
+            }
+        }
+    } elseif (isset($_FILES['file_penghargaan']) && $_FILES['file_penghargaan']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = __DIR__ . '/../uploads/penghargaan/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0777, true);
@@ -139,9 +156,15 @@ require_once __DIR__ . '/includes/admin-header.php';
 
         <div class="mb-4">
             <label class="form-label fw-bold">Upload File (Sertifikat / Bukti) <?= $id > 0 ? '' : '<span class="text-danger">*</span>' ?></label>
-            <p class="text-muted small mb-2">Format yang diizinkan: JPG, PNG, atau PDF. Maksimal 5MB. File PDF akan secara otomatis dibuatkan pratinjau foto sertifikatnya.</p>
-            <input type="file" name="file_penghargaan" id="inputPenghargaanFile" class="form-control" accept=".jpg,.jpeg,.png,.pdf" <?= $id > 0 ? '' : 'required' ?>>
+            <p class="text-muted small mb-2">Format yang diizinkan: JPG, PNG, WebP, atau PDF. Maksimal 5MB. File PDF akan secara otomatis dibuatkan pratinjau foto sertifikatnya, dan berkas gambar dapat disesuaikan framingnya menggunakan editor crop.</p>
+            <div class="d-flex gap-2 align-items-center">
+                <input type="file" name="file_penghargaan" id="inputPenghargaanFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf" <?= $id > 0 ? '' : 'required' ?>>
+                <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditImagePenghargaan" style="white-space:nowrap;padding:0.6rem 0.9rem;border-radius:8px;">
+                    <i class="bi bi-crop text-warning"></i> Edit / Crop
+                </button>
+            </div>
             <input type="hidden" name="pdf_cover_base64" id="pdfCoverBase64">
+            <input type="hidden" name="cropped_file_data" id="croppedFileDataPenghargaan">
             
             <!-- Live Preview Container for newly selected file -->
             <div id="livePreviewContainer" class="mt-3 p-3 bg-light rounded d-none" style="border: 2px dashed var(--purple);">
@@ -159,7 +182,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <?php if ($p_preview): ?>
                         <div style="position:relative;">
                             <a href="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p['file_path']) ?>" target="_blank" title="Klik untuk membuka dokumen asli">
-                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_preview) ?>" alt="Pratinjau Sertifikat" class="img-thumbnail shadow-sm" style="max-height: 180px; max-width: 260px; object-fit: contain; background: #fff;">
+                                <img id="existingPenghargaanImg" src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_preview) ?>" alt="Pratinjau Sertifikat" class="img-thumbnail shadow-sm" style="max-height: 180px; max-width: 260px; object-fit: contain; background: #fff;">
                             </a>
                             <?php if ($p['is_pdf']): ?>
                                 <span class="badge bg-danger" style="position:absolute;bottom:6px;right:6px;font-size:0.65rem;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Sampul Hal. 1</span>
@@ -176,9 +199,14 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <?php else: ?>
                             <span class="badge bg-success mb-2"><i class="bi bi-file-earmark-image me-1"></i> Berkas Gambar</span>
                             <div class="small text-muted mb-2">Nama berkas: <strong><?= e($p['file_path']) ?></strong></div>
-                            <a href="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-zoom-in me-1"></i> Lihat Gambar Penuh
-                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1" onclick="editExistingPenghargaanImg('<?= SITE_URL ?>/uploads/penghargaan/<?= e($p['file_path']) ?>')">
+                                    <i class="bi bi-crop text-warning me-1"></i> Edit / Crop Gambar
+                                </button>
+                                <a href="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary py-1">
+                                    <i class="bi bi-zoom-in me-1"></i> Lihat Gambar Penuh
+                                </a>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -194,12 +222,135 @@ require_once __DIR__ . '/includes/admin-header.php';
     </form>
 </div>
 
+<!-- Modal Cropper Universal Penghargaan -->
+<div class="modal fade" id="modalCropPenghargaan" tabindex="-1" aria-labelledby="modalCropPenghargaanLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropPenghargaanLabel">Editor Gambar Penghargaan: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small style="color:rgba(255,255,255,0.85);">Sesuaikan framing foto atau sertifikat penghargaan.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgPenghargaan" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHPenghargaan">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVPenghargaan">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftPenghargaan">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightPenghargaan">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInPenghargaan">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutPenghargaan">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropPenghargaan">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-penghargaan fw-semibold" data-ratio="1.333333">4:3 Galeri</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-penghargaan fw-semibold" data-ratio="1.777778">16:9 Banner</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-penghargaan fw-semibold" data-ratio="1">1:1 Persegi</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-penghargaan fw-semibold" data-ratio="NaN">Bebas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropPenghargaan" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- PDF.js library for instant client-side rendering of PDF pages -->
 <script src="<?= SITE_URL ?>/assets/js/pdf.min.js"></script>
 <script>
 if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= SITE_URL ?>/assets/js/pdf.worker.min.js';
 }
+
+let cropperPenghargaan = null;
+let scaleXPenghargaan = 1;
+let scaleYPenghargaan = 1;
+let currentRatioPenghargaan = 4 / 3;
+let isExistingPenghargaanEdit = false;
+
+const modalCropPenghargaanEl  = document.getElementById('modalCropPenghargaan');
+const bsModalPenghargaan      = new bootstrap.Modal(modalCropPenghargaanEl);
+const sourceImgPenghargaan    = document.getElementById('cropperSourceImgPenghargaan');
+const btnEditPenghargaan      = document.getElementById('btnEditImagePenghargaan');
+const hiddenCropPenghargaan   = document.getElementById('croppedFileDataPenghargaan');
+const applyBtnPenghargaan     = document.getElementById('btnApplyCropPenghargaan');
+
+function initCropperPenghargaan() {
+    if (cropperPenghargaan) cropperPenghargaan.destroy();
+    scaleXPenghargaan = 1;
+    scaleYPenghargaan = 1;
+    cropperPenghargaan = new Cropper(sourceImgPenghargaan, {
+        aspectRatio: currentRatioPenghargaan,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true,
+        guides: true,
+        checkCrossOrigin: false
+    });
+}
+
+modalCropPenghargaanEl.addEventListener('shown.bs.modal', function() { initCropperPenghargaan(); });
+modalCropPenghargaanEl.addEventListener('hidden.bs.modal', function() {
+    if (cropperPenghargaan) {
+        cropperPenghargaan.destroy();
+        cropperPenghargaan = null;
+    }
+});
+
+// Controls
+document.getElementById('btnRotateLeftPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) cropperPenghargaan.rotate(-90); });
+document.getElementById('btnRotateRightPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) cropperPenghargaan.rotate(90); });
+document.getElementById('btnFlipHPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) { scaleXPenghargaan = -scaleXPenghargaan; cropperPenghargaan.scaleX(scaleXPenghargaan); } });
+document.getElementById('btnFlipVPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) { scaleYPenghargaan = -scaleYPenghargaan; cropperPenghargaan.scaleY(scaleYPenghargaan); } });
+document.getElementById('btnZoomInPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) cropperPenghargaan.zoom(0.1); });
+document.getElementById('btnZoomOutPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) cropperPenghargaan.zoom(-0.1); });
+document.getElementById('btnResetCropPenghargaan')?.addEventListener('click', function() { if (cropperPenghargaan) { cropperPenghargaan.reset(); scaleXPenghargaan = 1; scaleYPenghargaan = 1; } });
+
+document.querySelectorAll('.ratio-btn-penghargaan').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ratio-btn-penghargaan').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        const val = parseFloat(this.getAttribute('data-ratio'));
+        currentRatioPenghargaan = isNaN(val) ? NaN : val;
+        if (cropperPenghargaan) cropperPenghargaan.setAspectRatio(currentRatioPenghargaan);
+    });
+});
 
 document.getElementById('inputPenghargaanFile').addEventListener('change', function(e) {
     var file = this.files[0];
@@ -211,6 +362,8 @@ document.getElementById('inputPenghargaanFile').addEventListener('change', funct
     content.innerHTML = '';
     container.classList.remove('d-none');
     hiddenBase64.value = '';
+    hiddenCropPenghargaan.value = '';
+    btnEditPenghargaan.classList.add('d-none');
     
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
         content.innerHTML = '<div class="text-muted small py-2"><div class="spinner-border spinner-border-sm text-purple me-2"></div>Membaca file PDF dan mengekstrak sampul halaman pertama...</div>';
@@ -240,7 +393,6 @@ document.getElementById('inputPenghargaanFile').addEventListener('change', funct
                         wrap.className = 'd-flex align-items-center gap-3 flex-wrap';
                         wrap.appendChild(canvas);
                         
-                        // Extract base64 image of page 1 to send with form
                         try {
                             hiddenBase64.value = canvas.toDataURL('image/jpeg', 0.92);
                         } catch (err) {}
@@ -250,7 +402,7 @@ document.getElementById('inputPenghargaanFile').addEventListener('change', funct
                                          '<span class="badge bg-success mb-1"><i class="bi bi-check2-circle"></i> Sampul Hal. 1 Terbaca</span>' +
                                          '<div class="small text-navy fw-bold mt-1">' + file.name + '</div>' +
                                          '<div class="small text-muted">Ukuran berkas: ' + (file.size/1024).toFixed(1) + ' KB</div>' +
-                                         '<div class="text-success small fw-semibold mt-1"><i class="bi bi-image me-1"></i> Halaman pertama ini akan otomatis dijadikan gambar sampul penghargaan.</div>';
+                                         '<div class="text-success small fw-semibold mt-1"><i class="bi bi-image me-1"></i> Halaman pertama ini otomatis dijadikan gambar sampul penghargaan.</div>';
                         wrap.appendChild(info);
                         content.appendChild(wrap);
                     });
@@ -263,9 +415,51 @@ document.getElementById('inputPenghargaanFile').addEventListener('change', funct
     } else if (file.type.startsWith('image/')) {
         var reader = new FileReader();
         reader.onload = function(evt) {
-            content.innerHTML = '<div class="d-flex align-items-center gap-3 flex-wrap"><img src="' + evt.target.result + '" class="img-thumbnail shadow-sm" style="max-height:200px;max-width:300px;object-fit:contain;"><div class="small text-muted"><span class="badge bg-success mb-1">Gambar Terpilih</span><div class="fw-bold text-navy">' + file.name + '</div><div>(' + (file.size/1024).toFixed(1) + ' KB)</div></div></div>';
+            isExistingPenghargaanEdit = false;
+            sourceImgPenghargaan.src = evt.target.result;
+            btnEditPenghargaan.classList.remove('d-none');
+            btnEditPenghargaan.classList.add('d-inline-flex');
+            
+            content.innerHTML = '<div class="d-flex align-items-center gap-3 flex-wrap"><img id="livePenghargaanImgPreview" src="' + evt.target.result + '" class="img-thumbnail shadow-sm" style="max-height:200px;max-width:300px;object-fit:contain;"><div class="small text-muted"><span class="badge bg-success mb-1"><i class="bi bi-image me-1"></i>Gambar Terpilih</span><div class="fw-bold text-navy">' + file.name + '</div><div>(' + (file.size/1024).toFixed(1) + ' KB)</div><div class="mt-2"><button type="button" class="btn btn-sm btn-dark" onclick="bsModalPenghargaan.show()"><i class="bi bi-crop text-warning me-1"></i>Buka Editor Crop</button></div></div></div>';
+            
+            bsModalPenghargaan.show();
         };
         reader.readAsDataURL(file);
+    }
+});
+
+btnEditPenghargaan?.addEventListener('click', function() {
+    if (sourceImgPenghargaan.src) {
+        bsModalPenghargaan.show();
+    }
+});
+
+window.editExistingPenghargaanImg = function(imgUrl) {
+    isExistingPenghargaanEdit = true;
+    sourceImgPenghargaan.src = imgUrl;
+    bsModalPenghargaan.show();
+};
+
+applyBtnPenghargaan?.addEventListener('click', function() {
+    if (!cropperPenghargaan) return;
+    const canvas = cropperPenghargaan.getCroppedCanvas({
+        maxWidth: 1920,
+        maxHeight: 1200,
+        imageSmoothingQuality: 'high'
+    });
+    if (canvas) {
+        const dataUrl = canvas.toDataURL('image/webp', 0.88);
+        hiddenCropPenghargaan.value = dataUrl;
+
+        var liveImg = document.getElementById('livePenghargaanImgPreview');
+        if (liveImg) liveImg.src = dataUrl;
+
+        var existImg = document.getElementById('existingPenghargaanImg');
+        if (existImg && isExistingPenghargaanEdit) existImg.src = dataUrl;
+
+        btnEditPenghargaan.classList.remove('d-none');
+        btnEditPenghargaan.classList.add('d-inline-flex');
+        bsModalPenghargaan.hide();
     }
 });
 </script>

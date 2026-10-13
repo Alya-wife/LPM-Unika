@@ -233,7 +233,7 @@ require_once __DIR__ . '/includes/navbar.php';
                     <!-- Thumbnail Image -->
                     <div style="position:relative;height:185px;background:#F1F5F9;overflow:hidden;">
                         <?php if ($b['gambar'] && file_exists(__DIR__ . '/uploads/berita/' . $b['gambar'])): ?>
-                            <img src="<?= SITE_URL ?>/uploads/berita/<?= e($b['gambar']) ?>" alt="<?= e($b['judul']) ?>" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <img src="<?= SITE_URL ?>/uploads/berita/<?= e($b['gambar']) ?>" alt="<?= e($b['judul']) ?>" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" loading="lazy">
                         <?php else: ?>
                             <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #0A192F 0%, #1565C0 100%);color:#fff;">
                                 <i class="bi bi-newspaper" style="font-size:2.5rem;opacity:0.4;"></i>

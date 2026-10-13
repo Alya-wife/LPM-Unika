@@ -346,7 +346,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                 <!-- Logo / Emblema Container -->
                                 <div style="width:80px;height:80px;margin:0 auto 1rem;border-radius:14px;background:#ffffff;display:flex;align-items:center;justify-content:center;border:1.5px solid <?= htmlspecialchars($lem_warna) ?>;overflow:hidden;padding:8px;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.05);">
                                     <?php if (!empty($lem['logo']) && file_exists(__DIR__ . '/../uploads/akreditasi/' . $lem['logo'])): ?>
-                                        <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= htmlspecialchars($lem['logo']) ?>" alt="<?= htmlspecialchars($lem_kode) ?>" style="max-width:100%;max-height:100%;object-fit:contain;">
+                                        <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= htmlspecialchars($lem['logo']) ?>" alt="<?= htmlspecialchars($lem_kode) ?>" style="max-width:100%;max-height:100%;object-fit:contain;" loading="lazy">
                                     <?php else: ?>
                                         <div style="font-family:var(--font-heading);font-weight:900;color:<?= htmlspecialchars($lem_warna) ?>;font-size:<?= strlen($lem_kode) > 7 ? '0.75rem' : '0.9rem' ?>;line-height:1.1;text-align:center;">
                                             <?= htmlspecialchars($lem_kode) ?>

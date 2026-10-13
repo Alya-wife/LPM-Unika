@@ -286,7 +286,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <!-- Gambar Terpampang Langsung -->
                                 <div class="text-center p-3 p-md-4 bg-light">
                                     <a href="<?= $f_url ?>" target="_blank" title="Klik untuk memperbesar gambar">
-                                        <img src="<?= $f_url ?>" class="img-poster-view img-fluid" alt="<?= htmlspecialchars($br['judul_brosur']) ?>">
+                                        <img src="<?= $f_url ?>" class="img-poster-view img-fluid" alt="<?= htmlspecialchars($br['judul_brosur']) ?>" loading="lazy">
                                     </a>
                                     <div class="mt-3 text-muted small">
                                         <i class="bi bi-zoom-in me-1"></i> Klik pada poster untuk membuka resolusi penuh di tab baru.

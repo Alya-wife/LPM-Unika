@@ -85,10 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $kategori_list = $db->query("SELECT id, nama_kategori, slug FROM kategori_berita ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-$count_stmt = $db->prepare("SELECT COUNT(*) FROM berita WHERE CONVERT(tipe USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
+$counts_raw = $db->query("SELECT LOWER(TRIM(tipe)) as kat, COUNT(*) as total FROM berita GROUP BY LOWER(TRIM(tipe))")->fetchAll(PDO::FETCH_KEY_PAIR);
 foreach ($kategori_list as &$k) {
-    $count_stmt->execute([$k['nama_kategori']]);
-    $k['total_berita'] = (int)$count_stmt->fetchColumn();
+    $k_key = strtolower(trim($k['nama_kategori']));
+    $k['total_berita'] = (int)($counts_raw[$k_key] ?? 0);
 }
 unset($k);
 

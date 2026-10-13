@@ -59,13 +59,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Navbar Sticky Shadow Effect (Keeps background solid, only toggles shadow)
     const navbar = document.getElementById('main-navbar');
     if (navbar) {
+        let isTicking = false;
         window.addEventListener('scroll', () => {
-            if (window.scrollY > 20) {
-                navbar.classList.add('navbar-scrolled');
-            } else {
-                navbar.classList.remove('navbar-scrolled');
+            if (!isTicking) {
+                window.requestAnimationFrame(() => {
+                    if (window.scrollY > 20) {
+                        navbar.classList.add('navbar-scrolled');
+                    } else {
+                        navbar.classList.remove('navbar-scrolled');
+                    }
+                    isTicking = false;
+                });
+                isTicking = true;
             }
-        });
+        }, { passive: true });
     }
 
     // 4. File Upload Preview (Admin)

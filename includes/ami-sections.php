@@ -261,7 +261,7 @@ function renderAmiSection($type, $block = [], $is_builder = false, $selected_tah
                             <div class="card-lpm" style="flex:0 0 320px;max-width:320px;scroll-snap-align:start;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#fff;display:flex;flex-direction:column;">
                                 <div style="position:relative;height:185px;background:#F1F5F9;overflow:hidden;">
                                     <?php if ($b['gambar'] && file_exists(__DIR__ . '/../uploads/berita/' . $b['gambar'])): ?>
-                                        <img src="<?= SITE_URL ?>/uploads/berita/<?= htmlspecialchars($b['gambar']) ?>" alt="<?= htmlspecialchars($b['judul']) ?>" style="width:100%;height:100%;object-fit:cover;">
+                                        <img src="<?= SITE_URL ?>/uploads/berita/<?= htmlspecialchars($b['gambar']) ?>" alt="<?= htmlspecialchars($b['judul']) ?>" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
                                     <?php else: ?>
                                         <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #0A192F 0%, #1565C0 100%);color:#fff;">
                                             <i class="bi bi-newspaper" style="font-size:2.5rem;opacity:0.4;"></i>

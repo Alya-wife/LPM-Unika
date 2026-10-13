@@ -154,7 +154,7 @@ if (($berita['status'] ?? 'published') === 'draft' && $is_admin): ?>
                              style="width:68px;height:48px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid <?= $idx === 0 ? '#8B5CF6' : 'rgba(255,255,255,0.2)' ?>;opacity:<?= $idx === 0 ? '1' : '0.6' ?>;transition:all 0.2s;"
                              onmouseover="this.style.opacity='1'" 
                              onmouseout="if(!this.classList.contains('active')) this.style.opacity='0.6'">
-                            <img src="<?= SITE_URL ?>/uploads/berita/<?= e($img_name) ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
+                            <img src="<?= SITE_URL ?>/uploads/berita/<?= e($img_name) ?>" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
                         </div>
                         <?php endforeach; ?>
                     </div>
@@ -212,7 +212,7 @@ if (($berita['status'] ?? 'published') === 'draft' && $is_admin): ?>
                     <a href="berita-detail.php?slug=<?= e($r['slug']) ?>" class="d-flex gap-3 mb-3 text-decoration-none" style="padding:0.875rem;background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition);" onmouseover="this.style.borderColor='rgba(106,27,154,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
                         <div style="flex-shrink:0;width:60px;height:60px;border-radius:8px;background:linear-gradient(135deg,var(--navy-mid),var(--purple-dark));display:flex;align-items:center;justify-content:center;overflow:hidden;">
                             <?php if ($r['gambar'] && file_exists(__DIR__ . '/uploads/berita/' . $r['gambar'])): ?>
-                                <img src="<?= SITE_URL ?>/uploads/berita/<?= e($r['gambar']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
+                                <img src="<?= SITE_URL ?>/uploads/berita/<?= e($r['gambar']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
                             <?php else: ?>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="rgba(255,255,255,0.5)" width="26" height="26">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />

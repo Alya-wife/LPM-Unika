@@ -87,12 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $kategori_list = $db->query("SELECT * FROM kategori_page ORDER BY urutan ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-$count_stmt = $db->prepare("SELECT COUNT(*) FROM pages WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci");
 $total_all_pages = (int)$db->query("SELECT COUNT(*) FROM pages")->fetchColumn();
+$counts_raw      = $db->query("SELECT LOWER(TRIM(kategori)) as kat, COUNT(*) as total FROM pages GROUP BY LOWER(TRIM(kategori))")->fetchAll(PDO::FETCH_KEY_PAIR);
 
 foreach ($kategori_list as &$k) {
-    $count_stmt->execute([$k['nama_kategori']]);
-    $k['total_page'] = (int)$count_stmt->fetchColumn();
+    $k_key = strtolower(trim($k['nama_kategori']));
+    $k['total_page'] = (int)($counts_raw[$k_key] ?? 0);
 }
 unset($k);
 

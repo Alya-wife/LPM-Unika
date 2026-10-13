@@ -748,7 +748,7 @@ try {
                             <?php foreach ($s1_opening as $idx => $op): ?>
                             <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
                                 <div class="ami-gallery-item" style="height:250px;border-radius:0;" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?> (<?= $idx + 1 ?>/<?= count($s1_opening) ?>)', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
-                                    <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
+                                    <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>" loading="lazy">
                                     <div class="ami-gallery-overlay">
                                         <?php if (!empty($op['tanggal_kegiatan'])): ?>
                                         <span class="badge bg-warning text-dark align-self-start mb-2" style="font-size:0.7rem;">
@@ -775,7 +775,7 @@ try {
                         <?php foreach ($s1_opening as $idx => $op): ?>
                         <div class="col-4">
                             <div class="ami-gallery-item" style="height:70px;border-radius:8px;" onclick="bootstrap.Carousel.getOrCreateInstance(document.getElementById('carouselS1Opening')).to(<?= $idx ?>);openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?>', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
-                                <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
+                                <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>" loading="lazy">
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -784,7 +784,7 @@ try {
                     <!-- Single Opening Photo -->
                     <?php $op = $s1_opening[0]; ?>
                     <div class="ami-gallery-item" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>', '<?= e($op['judul']) ?>', '<?= !empty($op['tanggal_kegiatan']) ? formatTanggal($op['tanggal_kegiatan']) : '' ?>')">
-                        <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>">
+                        <img src="<?= SITE_URL ?>/uploads/<?= e($op['foto']) ?>" alt="<?= e($op['judul']) ?>" loading="lazy">
                         <div class="ami-gallery-overlay">
                             <?php if (!empty($op['tanggal_kegiatan'])): ?>
                             <span class="badge bg-warning text-dark align-self-start mb-2" style="font-size:0.7rem;">
@@ -1008,7 +1008,7 @@ try {
                                         <?php foreach ($photos as $pidx => $p): ?>
                                         <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
                                             <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($item['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($item['fakultas'])) ?>')">
-                                                <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($item['judul']) ?>" class="d-block w-100">
+                                                <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($item['judul']) ?>" class="d-block w-100" loading="lazy">
                                                 <div class="ami-card-cover-overlay">
                                                     <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
                                                 </div>
@@ -1030,7 +1030,7 @@ try {
                                 </div>
                                 <?php else: ?>
                                 <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['fakultas'])) ?>')">
-                                    <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi Audit Lapangan">
+                                    <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi Audit Lapangan" loading="lazy">
                                     <div class="ami-card-cover-overlay">
                                         <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
                                     </div>
@@ -1188,7 +1188,7 @@ try {
                                     <?php foreach ($photos as $pidx => $p): ?>
                                     <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
                                         <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($rtm['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
-                                            <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($rtm['judul']) ?>" class="d-block w-100">
+                                            <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($rtm['judul']) ?>" class="d-block w-100" loading="lazy">
                                             <div class="ami-card-cover-overlay">
                                                 <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
                                             </div>
@@ -1210,7 +1210,7 @@ try {
                             </div>
                             <?php else: ?>
                             <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($rtm['judul'])) ?>', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
-                                <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi RTM">
+                                <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi RTM" loading="lazy">
                                 <div class="ami-card-cover-overlay">
                                     <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
                                 </div>

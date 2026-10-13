@@ -195,7 +195,7 @@ $has_builder_blocks = !empty($page_blocks);
                     <!-- Featured Image jika tersedia -->
                     <?php if (!empty($page['featured_image'])): ?>
                     <div class="mb-4 text-center">
-                        <img src="<?= UPLOAD_URL . e($page['featured_image']) ?>" alt="<?= e($page['judul']) ?>" class="img-fluid rounded-3 shadow-sm" style="max-height:420px;width:100%;object-fit:cover;border:1px solid var(--border);">
+                        <img src="<?= UPLOAD_URL . e($page['featured_image']) ?>" alt="<?= e($page['judul']) ?>" class="img-fluid rounded-3 shadow-sm" style="max-height:420px;width:100%;object-fit:cover;border:1px solid var(--border);" loading="lazy">
                     </div>
                     <?php endif; ?>
 

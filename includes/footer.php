@@ -5,7 +5,7 @@
             <div class="col-lg-6">
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <div class="brand-logo-wrap">
-                        <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA Soegijapranata" class="brand-logo-img">
+                        <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA Soegijapranata" class="brand-logo-img" loading="lazy">
                     </div>
                     <div>
                         <div class="footer-brand-title"><?= e(getPengaturan('site_title', 'LPM UNIKA')) ?></div>

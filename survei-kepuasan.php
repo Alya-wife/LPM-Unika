@@ -516,7 +516,7 @@ require_once __DIR__ . '/includes/navbar.php';
             <!-- Header Card Sesuai Gambar -->
             <div class="survei-header-card">
                 <div class="survei-logo-wrap">
-                    <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA Soegijapranata">
+                    <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA Soegijapranata" loading="lazy">
                 </div>
                 <div class="survei-main-title">Survei Kepuasan Pelayanan</div>
                 <div class="survei-main-subtitle">Lembaga Penjaminan Mutu</div>

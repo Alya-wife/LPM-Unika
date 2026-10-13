@@ -352,13 +352,13 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                                             $p_img = getOrGeneratePdfPreview($p->file_path, 'penghargaan');
                                                             if ($p_img):
                                                             ?>
-                                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_img) ?>" class="card-img-top object-fit-cover" style="height: 200px;" alt="<?= e($p->judul) ?>">
+                                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_img) ?>" class="card-img-top object-fit-cover" style="height: 200px;" alt="<?= e($p->judul) ?>" loading="lazy">
                                                             <?php elseif ($p->is_pdf): ?>
                                                                 <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
                                                                     <i class="bi bi-file-earmark-pdf-fill text-danger display-1"></i>
                                                                 </div>
                                                             <?php else: ?>
-                                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p->file_path) ?>" class="card-img-top object-fit-cover" style="height: 200px;" alt="<?= e($p->judul) ?>">
+                                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p->file_path) ?>" class="card-img-top object-fit-cover" style="height: 200px;" alt="<?= e($p->judul) ?>" loading="lazy">
                                                             <?php endif; ?>
                                                             <div class="card-body p-4 d-flex flex-column">
                                                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -397,13 +397,13 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                             $p_img = getOrGeneratePdfPreview($p->file_path, 'penghargaan');
                                             if ($p_img):
                                             ?>
-                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_img) ?>" class="card-img-top object-fit-cover" style="height: 180px;" alt="<?= e($p->judul) ?>">
+                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p_img) ?>" class="card-img-top object-fit-cover" style="height: 180px;" alt="<?= e($p->judul) ?>" loading="lazy">
                                             <?php elseif ($p->is_pdf): ?>
                                                 <div class="bg-light d-flex align-items-center justify-content-center border-bottom" style="height: 180px;">
                                                     <i class="bi bi-file-earmark-pdf-fill text-danger display-1"></i>
                                                 </div>
                                             <?php else: ?>
-                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p->file_path) ?>" class="card-img-top object-fit-cover" style="height: 180px;" alt="<?= e($p->judul) ?>">
+                                                <img src="<?= SITE_URL ?>/uploads/penghargaan/<?= e($p->file_path) ?>" class="card-img-top object-fit-cover" style="height: 180px;" alt="<?= e($p->judul) ?>" loading="lazy">
                                             <?php endif; ?>
                                             <div class="card-body p-3 d-flex flex-column">
                                                 <span class="badge bg-purple-light text-purple rounded-pill mb-2 align-self-start"><?= e($p->tahun) ?></span>
@@ -462,7 +462,7 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                 <?php $akred_preview = getOrGeneratePdfPreview($akred_file, 'akreditasi'); ?>
                                 <a href="uploads/akreditasi/<?= e($akred_file) ?>" target="_blank" class="d-block position-relative shadow-lg rounded-4 overflow-hidden cert-hover-card" style="border: 5px solid white; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease;" onmouseover="this.style.transform='rotate(0deg) scale(1.03)'" onmouseout="this.style.transform='rotate(2deg) scale(1)'">
                                     <?php if ($akred_preview): ?>
-                                        <img src="uploads/akreditasi/<?= e($akred_preview) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid" style="object-fit: cover; width: 100%; max-height: 380px;">
+                                        <img src="uploads/akreditasi/<?= e($akred_preview) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid" style="object-fit: cover; width: 100%; max-height: 380px;" loading="lazy">
                                     <?php else: ?>
                                         <div class="bg-light p-4 text-center">
                                             <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
@@ -515,7 +515,7 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                     <a href="berita-detail.php?slug=<?= e($b['slug']) ?>" class="card-lpm d-block text-decoration-none">
                                         <div class="card-img-wrap">
                                             <?php if ($b['gambar'] && file_exists(__DIR__ . '/../uploads/berita/' . $b['gambar'])): ?>
-                                                <img src="<?= SITE_URL ?>/uploads/berita/<?= e($b['gambar']) ?>" alt="<?= e($b['judul']) ?>">
+                                                <img src="<?= SITE_URL ?>/uploads/berita/<?= e($b['gambar']) ?>" alt="<?= e($b['judul']) ?>" loading="lazy">
                                             <?php else: ?>
                                                 <div style="width:100%;height:100%;background:linear-gradient(135deg,var(--navy-mid),var(--purple-dark));display:flex;align-items:center;justify-content:center;min-height:200px;">
                                                     <i class="bi bi-image text-white-50 fs-1"></i>

@@ -61,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $ba_name = 'ba_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_berita_acara']['tmp_name'], $upload_dir . $ba_name)) {
+                    if ($is_edit && !empty($data['file_berita_acara'])) {
+                        deleteUploadedFile($data['file_berita_acara']);
+                    }
                     $file_berita_acara = 'ami/siklus4/' . $ba_name;
                 }
             }
@@ -75,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $dh_name = 'dh_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_daftar_hadir']['tmp_name'], $upload_dir . $dh_name)) {
+                    if ($is_edit && !empty($data['file_daftar_hadir'])) {
+                        deleteUploadedFile($data['file_daftar_hadir']);
+                    }
                     $file_daftar_hadir = 'ami/siklus4/' . $dh_name;
                 }
             }
@@ -89,6 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $und_name = 'undangan_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_undangan']['tmp_name'], $upload_dir . $und_name)) {
+                    if ($is_edit && !empty($data['file_undangan'])) {
+                        deleteUploadedFile($data['file_undangan']);
+                    }
                     $file_undangan = 'ami/siklus4/' . $und_name;
                 }
             }
@@ -103,6 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Cek jika ada foto yang dihapus melalui checkbox
         if (isset($_POST['delete_photos']) && is_array($_POST['delete_photos'])) {
+            foreach ($_POST['delete_photos'] as $dp) {
+                deleteUploadedFile($dp);
+            }
             $existing_photos = array_values(array_diff($existing_photos, $_POST['delete_photos']));
         }
 

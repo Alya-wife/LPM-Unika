@@ -64,8 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $filename = 'tim_' . uniqid() . '.' . ($ext === 'jpeg' ? 'jpg' : $ext);
                     if (file_put_contents($dir . $filename, $decoded)) {
                         if ($is_edit && !empty($person['foto'])) {
-                            $old_path = $dir . $person['foto'];
-                            if (file_exists($old_path)) @unlink($old_path);
+                            deleteUploadedFile($person['foto'], 'tim');
                         }
                         $foto = $filename;
                     } else {
@@ -82,11 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Format foto tidak didukung. Gunakan JPG, PNG, atau WEBP.';
             } elseif ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
                 $error = 'Ukuran foto maksimal 5MB.';
+            } else {
                 $saved_foto = convertAndSaveWebP($_FILES['foto']['tmp_name'], $dir, 'tim_');
                 if ($saved_foto) {
                     if ($is_edit && !empty($person['foto'])) {
-                        $old_path = $dir . $person['foto'];
-                        if (file_exists($old_path)) @unlink($old_path);
+                        deleteUploadedFile($person['foto'], 'tim');
                     }
                     $foto = $saved_foto;
                 } else {

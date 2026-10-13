@@ -55,6 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $new_name = $jenis . '_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_dokumen']['tmp_name'], $upload_dir . $new_name)) {
+                    if ($is_edit && !empty($data['file_dokumen'])) {
+                        deleteUploadedFile($data['file_dokumen']);
+                    }
                     $file_dokumen = 'ami/siklus4/' . $new_name;
                     $bytes = $_FILES['file_dokumen']['size'];
                     if ($bytes >= 1048576) {

@@ -247,9 +247,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $new_filename = 'brosur_lpm_' . time() . '_' . rand(100, 999) . '.' . $ext;
                 if (move_uploaded_file($file_tmp, $upload_dir . $new_filename)) {
-                    // Hapus file lama jika ada dan merupakan file yang diupload sistem
-                    if (!empty($file_brosur) && file_exists($upload_dir . $file_brosur) && strpos($file_brosur, 'brosur_lpm_') === 0) {
-                        @unlink($upload_dir . $file_brosur);
+                    // Hapus file lama jika ada
+                    if (!empty($file_brosur) && $file_brosur !== $new_filename) {
+                        deleteUploadedFile($file_brosur, 'layanan');
                     }
                     $file_brosur = $new_filename;
                 }
@@ -286,8 +286,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cur = $db->prepare("SELECT file_brosur FROM layanan_brosur WHERE id = ?");
             $cur->execute([$id]);
             $fn = $cur->fetchColumn();
-            if ($fn && file_exists(__DIR__ . '/../uploads/layanan/' . $fn) && strpos($fn, 'brosur_lpm_') === 0) {
-                @unlink(__DIR__ . '/../uploads/layanan/' . $fn);
+            if ($fn) {
+                deleteUploadedFile($fn, 'layanan');
             }
             $stmt = $db->prepare("DELETE FROM layanan_brosur WHERE id = ?");
             $stmt->execute([$id]);

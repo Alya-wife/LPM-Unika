@@ -9,8 +9,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row = $db->prepare("SELECT file_path FROM dokumen WHERE id = ?");
     $row->execute([$id]);
     $row = $row->fetch();
-    if ($row && $row['file_path'] && file_exists(__DIR__ . '/../uploads/dokumen/' . $row['file_path'])) {
-        unlink(__DIR__ . '/../uploads/dokumen/' . $row['file_path']);
+    if ($row && !empty($row['file_path'])) {
+        deleteUploadedFile($row['file_path'], 'dokumen');
     }
     $db->prepare("DELETE FROM dokumen WHERE id = ?")->execute([$id]);
     $_SESSION['flash'] = 'Dokumen berhasil dihapus.';

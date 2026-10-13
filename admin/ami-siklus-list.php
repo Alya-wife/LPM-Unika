@@ -26,6 +26,8 @@ if ($selected_periode === '' || !in_array($selected_periode, array_column($perio
 // 2. Handle Actions (Delete items)
 if (isset($_GET['delete_kegiatan']) && is_numeric($_GET['delete_kegiatan'])) {
     $del_id = (int)$_GET['delete_kegiatan'];
+    $file = $db->query("SELECT file_dokumen FROM ami_siklus1_kegiatan WHERE id = {$del_id}")->fetchColumn();
+    if ($file) deleteUploadedFile($file);
     $db->prepare("DELETE FROM ami_siklus1_kegiatan WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Dokumen kegiatan Siklus 1 berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus1&periode=" . urlencode($selected_periode));
@@ -33,6 +35,8 @@ if (isset($_GET['delete_kegiatan']) && is_numeric($_GET['delete_kegiatan'])) {
 
 if (isset($_GET['delete_opening']) && is_numeric($_GET['delete_opening'])) {
     $del_id = (int)$_GET['delete_opening'];
+    $foto = $db->query("SELECT foto FROM ami_siklus1_opening WHERE id = {$del_id}")->fetchColumn();
+    if ($foto) deleteUploadedFile($foto);
     $db->prepare("DELETE FROM ami_siklus1_opening WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Foto opening meeting Siklus 1 berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus1&periode=" . urlencode($selected_periode));
@@ -40,6 +44,8 @@ if (isset($_GET['delete_opening']) && is_numeric($_GET['delete_opening'])) {
 
 if (isset($_GET['delete_dok4']) && is_numeric($_GET['delete_dok4'])) {
     $del_id = (int)$_GET['delete_dok4'];
+    $file = $db->query("SELECT file_dokumen FROM ami_siklus4_dokumen WHERE id = {$del_id}")->fetchColumn();
+    if ($file) deleteUploadedFile($file);
     $db->prepare("DELETE FROM ami_siklus4_dokumen WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Dokumen Siklus 4 berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus4&periode=" . urlencode($selected_periode));
@@ -47,6 +53,13 @@ if (isset($_GET['delete_dok4']) && is_numeric($_GET['delete_dok4'])) {
 
 if (isset($_GET['delete_dokt4']) && is_numeric($_GET['delete_dokt4'])) {
     $del_id = (int)$_GET['delete_dokt4'];
+    $row = $db->query("SELECT file_undangan, file_daftar_hadir, file_berita_acara, foto_kegiatan FROM ami_siklus4_dokumentasi WHERE id = {$del_id}")->fetch();
+    if ($row) {
+        if (!empty($row['file_undangan'])) deleteUploadedFile($row['file_undangan']);
+        if (!empty($row['file_daftar_hadir'])) deleteUploadedFile($row['file_daftar_hadir']);
+        if (!empty($row['file_berita_acara'])) deleteUploadedFile($row['file_berita_acara']);
+        if (!empty($row['foto_kegiatan'])) deleteUploadedFile($row['foto_kegiatan']);
+    }
     $db->prepare("DELETE FROM ami_siklus4_dokumentasi WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Dokumentasi audit lapangan Siklus 4 berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus4&periode=" . urlencode($selected_periode));
@@ -54,6 +67,13 @@ if (isset($_GET['delete_dokt4']) && is_numeric($_GET['delete_dokt4'])) {
 
 if (isset($_GET['delete_rtm5']) && is_numeric($_GET['delete_rtm5'])) {
     $del_id = (int)$_GET['delete_rtm5'];
+    $row = $db->query("SELECT file_undangan, file_daftar_hadir, file_notulensi, foto_kegiatan FROM ami_siklus5_rtm WHERE id = {$del_id}")->fetch();
+    if ($row) {
+        if (!empty($row['file_undangan'])) deleteUploadedFile($row['file_undangan']);
+        if (!empty($row['file_daftar_hadir'])) deleteUploadedFile($row['file_daftar_hadir']);
+        if (!empty($row['file_notulensi'])) deleteUploadedFile($row['file_notulensi']);
+        if (!empty($row['foto_kegiatan'])) deleteUploadedFile($row['foto_kegiatan']);
+    }
     $db->prepare("DELETE FROM ami_siklus5_rtm WHERE id = ?")->execute([$del_id]);
     $_SESSION['flash'] = 'Data Rapat Tinjauan Manajemen (Siklus 5) berhasil dihapus.';
     redirect("ami-siklus-list.php?tab=siklus5&periode=" . urlencode($selected_periode));

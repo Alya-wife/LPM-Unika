@@ -10,11 +10,9 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row->execute([(int)$_GET['delete']]);
     $item = $row->fetch();
     if ($item) {
-        // Remove files
-        $pdf_path = __DIR__ . '/../uploads/buletin/' . $item['file_path'];
-        if ($item['file_path'] && file_exists($pdf_path)) unlink($pdf_path);
-        $cover_path = __DIR__ . '/../uploads/buletin/covers/' . $item['cover_path'];
-        if ($item['cover_path'] && file_exists($cover_path)) unlink($cover_path);
+        // Remove files & generated covers
+        if (!empty($item['file_path'])) deleteUploadedFile($item['file_path'], 'buletin');
+        if (!empty($item['cover_path'])) deleteUploadedFile($item['cover_path'], 'buletin/covers');
         $db->prepare("DELETE FROM buletin WHERE id = ?")->execute([(int)$_GET['delete']]);
         $_SESSION['flash'] = 'Buletin berhasil dihapus.';
     }

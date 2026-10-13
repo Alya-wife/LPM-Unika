@@ -6,6 +6,12 @@ $db = getDB();
 // Handle Delete
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
+    try {
+        $row = $db->query("SELECT file_path FROM akreditasi WHERE id = {$id}")->fetch();
+        if ($row && !empty($row['file_path'])) {
+            deleteUploadedFile($row['file_path'], 'penghargaan');
+        }
+    } catch (Exception $e) {}
     $db->prepare("DELETE FROM akreditasi WHERE id = ?")->execute([$id]);
     $_SESSION['flash'] = 'Data capaian akreditasi berhasil dihapus.';
     redirect(SITE_URL . '/admin/akreditasi-list.php');

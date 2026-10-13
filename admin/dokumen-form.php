@@ -36,8 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $upload_dir = __DIR__ . '/../uploads/dokumen/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-                $file_path = uniqid('dok_') . '.' . $ext;
-                move_uploaded_file($_FILES['file_doc']['tmp_name'], $upload_dir . $file_path);
+                $new_file = uniqid('dok_') . '.' . $ext;
+                if (move_uploaded_file($_FILES['file_doc']['tmp_name'], $upload_dir . $new_file)) {
+                    if ($is_edit && !empty($dok['file_path'])) {
+                        deleteUploadedFile($dok['file_path'], 'dokumen');
+                    }
+                    $file_path = $new_file;
+                }
             }
         } elseif (!$is_edit) {
             $error = 'File dokumen wajib diupload.';

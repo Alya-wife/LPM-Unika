@@ -78,8 +78,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row = $db->prepare("SELECT file_path FROM penghargaan WHERE id = ?");
     $row->execute([$id]);
     $row = $row->fetch();
-    if ($row && $row['file_path'] && file_exists(__DIR__ . '/../uploads/penghargaan/' . $row['file_path'])) {
-        unlink(__DIR__ . '/../uploads/penghargaan/' . $row['file_path']);
+    if ($row && !empty($row['file_path'])) {
+        deleteUploadedFile($row['file_path'], 'penghargaan');
     }
     $db->prepare("DELETE FROM penghargaan WHERE id = ?")->execute([$id]);
     $_SESSION['flash'] = 'Penghargaan berhasil dihapus.';

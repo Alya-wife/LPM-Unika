@@ -26,10 +26,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $item = $stmt->fetch();
     if ($item) {
         if (!empty($item['file_sertifikat'])) {
-            $f1 = __DIR__ . '/../uploads/pemeringkatan/' . $item['file_sertifikat'];
-            $f2 = __DIR__ . '/../uploads/akreditasi/' . $item['file_sertifikat'];
-            if (file_exists($f1)) @unlink($f1);
-            if (file_exists($f2)) @unlink($f2);
+            deleteUploadedFile($item['file_sertifikat'], 'pemeringkatan');
+            deleteUploadedFile($item['file_sertifikat'], 'akreditasi');
         }
         $db->prepare("DELETE FROM pemeringkatan WHERE id = ?")->execute([$id]);
         $_SESSION['flash'] = 'Data pemeringkatan berhasil dihapus.';

@@ -49,10 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Handle delete existing certificate
     if (!empty($_POST['hapus_sertifikat']) && $file_sertifikat !== '') {
-        $f1 = __DIR__ . '/../uploads/pemeringkatan/' . $file_sertifikat;
-        $f2 = __DIR__ . '/../uploads/akreditasi/' . $file_sertifikat;
-        if (file_exists($f1)) @unlink($f1);
-        if (file_exists($f2)) @unlink($f2);
+        deleteUploadedFile($file_sertifikat, 'pemeringkatan');
+        deleteUploadedFile($file_sertifikat, 'akreditasi');
         $file_sertifikat = '';
     }
 
@@ -66,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $clean_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($judul ?: 'sertifikat'));
             $filename = 'sertifikat_' . $clean_name . '_' . time() . '.webp';
             if (file_put_contents($upload_dir . $filename, $raw)) {
-                if ($file_sertifikat && file_exists($upload_dir . $file_sertifikat)) {
-                    @unlink($upload_dir . $file_sertifikat);
+                if ($file_sertifikat && $file_sertifikat !== $filename) {
+                    deleteUploadedFile($file_sertifikat, 'pemeringkatan');
                 }
                 $file_sertifikat = $filename;
             } else {
@@ -89,6 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $filename = 'sertifikat_' . $clean_name . '_' . time() . '.' . $ext;
 
             if (move_uploaded_file($_FILES['file_sertifikat']['tmp_name'], $upload_dir . $filename)) {
+                if ($file_sertifikat && $file_sertifikat !== $filename) {
+                    deleteUploadedFile($file_sertifikat, 'pemeringkatan');
+                }
                 $file_sertifikat = $filename;
             } else {
                 $errors[] = 'Gagal menyimpan berkas yang diunggah ke server.';

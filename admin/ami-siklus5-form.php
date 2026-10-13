@@ -62,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $not_name = 'notulensi_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_notulensi']['tmp_name'], $upload_dir . $not_name)) {
+                    if ($is_edit && !empty($data['file_notulensi'])) {
+                        deleteUploadedFile($data['file_notulensi']);
+                    }
                     $file_notulensi = 'ami/siklus5/' . $not_name;
                 }
             }
@@ -76,6 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $dh_name = 'presensi_rtm_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_daftar_hadir']['tmp_name'], $upload_dir . $dh_name)) {
+                    if ($is_edit && !empty($data['file_daftar_hadir'])) {
+                        deleteUploadedFile($data['file_daftar_hadir']);
+                    }
                     $file_daftar_hadir = 'ami/siklus5/' . $dh_name;
                 }
             }
@@ -90,6 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $und_name = 'undangan_rtm_' . time() . '_' . uniqid() . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_undangan']['tmp_name'], $upload_dir . $und_name)) {
+                    if ($is_edit && !empty($data['file_undangan'])) {
+                        deleteUploadedFile($data['file_undangan']);
+                    }
                     $file_undangan = 'ami/siklus5/' . $und_name;
                 }
             }
@@ -103,6 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (isset($_POST['delete_photos']) && is_array($_POST['delete_photos'])) {
+            foreach ($_POST['delete_photos'] as $dp) {
+                deleteUploadedFile($dp);
+            }
             $existing_photos = array_values(array_diff($existing_photos, $_POST['delete_photos']));
         }
 

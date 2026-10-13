@@ -1715,3 +1715,104 @@ function getDaftarTahunAkademikBerita(): array {
     return $taList;
 }
 
+/**
+ * Menghapus file unggahan secara fisik dari folder uploads/ beserta kemungkinan thumbnail/preview yang dihasilkan.
+ * Mendukung string nama file tunggal, path relatif (misal: 'ami/siklus5/foto.webp'),
+ * string format JSON array (misal kolom foto_kegiatan AMI), atau PHP array daftar file.
+ *
+ * @param string|array|null $filePath Path atau nama file yang akan dihapus
+ * @param string $subDir Sub-folder opsional di dalam uploads/ (misal: 'penghargaan', 'tim', 'berita', 'akreditasi_prodi')
+ * @return bool True jika setidaknya satu file berhasil dihapus
+ */
+function deleteUploadedFile($filePath, string $subDir = ''): bool {
+    if (empty($filePath)) {
+        return false;
+    }
+
+    // Jika input berupa array
+    if (is_array($filePath)) {
+        $anyDeleted = false;
+        foreach ($filePath as $single) {
+            if (deleteUploadedFile($single, $subDir)) {
+                $anyDeleted = true;
+            }
+        }
+        return $anyDeleted;
+    }
+
+    if (!is_string($filePath)) {
+        return false;
+    }
+
+    $raw = trim($filePath);
+    if ($raw === '' || filter_var($raw, FILTER_VALIDATE_URL)) {
+        return false;
+    }
+
+    // Cek apakah data berupa JSON string (misal daftar multiple foto_kegiatan di AMI)
+    if (str_starts_with($raw, '[') && str_ends_with($raw, ']')) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            return deleteUploadedFile($decoded, $subDir);
+        }
+    }
+
+    // Mencegah directory traversal
+    if (str_contains($raw, '..')) {
+        return false;
+    }
+
+    // Tentukan direktori absolut target
+    $subDirClean = trim($subDir, "/\\");
+    if (!empty($subDirClean)) {
+        $baseDir = rtrim(UPLOAD_PATH, "/\\") . '/' . $subDirClean . '/';
+        $fileName = basename($raw);
+    } else {
+        $clean = preg_replace('#^uploads/#i', '', ltrim($raw, "/\\"));
+        $dirPart = dirname($clean);
+        $baseDir = rtrim(UPLOAD_PATH, "/\\") . ($dirPart !== '.' && $dirPart !== '' ? '/' . $dirPart : '') . '/';
+        $fileName = basename($clean);
+    }
+
+    $fullPath = $baseDir . $fileName;
+    $deleted = false;
+
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        @unlink($fullPath);
+        $deleted = true;
+    }
+
+    // Hapus juga file preview / thumbnail terkait jika ada (misal hasil konversi PDF ke WebP/JPG)
+    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+
+    $possibleThumbs = [
+        $baseDir . 'thumb_' . $baseName . '.webp',
+        $baseDir . 'thumb_' . $baseName . '.jpg',
+        $baseDir . 'thumb_' . $baseName . '.png',
+        $baseDir . $baseName . '.webp',
+        $baseDir . $baseName . '.jpg',
+        $baseDir . $baseName . '.png',
+    ];
+
+    // Jika buletin, cek juga folder covers/
+    if (str_contains($baseDir, 'buletin')) {
+        $coversDir = rtrim(UPLOAD_PATH, "/\\") . '/buletin/covers/';
+        $possibleThumbs[] = $coversDir . $fileName;
+        $possibleThumbs[] = $coversDir . 'cov_' . $baseName . '.webp';
+        $possibleThumbs[] = $coversDir . 'cov_' . $baseName . '.jpg';
+        $possibleThumbs[] = $coversDir . 'thumb_' . $baseName . '.webp';
+        $possibleThumbs[] = $coversDir . 'thumb_' . $baseName . '.jpg';
+        $possibleThumbs[] = $coversDir . $baseName . '.webp';
+        $possibleThumbs[] = $coversDir . $baseName . '.jpg';
+    }
+
+    foreach ($possibleThumbs as $thumb) {
+        if ($thumb !== $fullPath && file_exists($thumb) && is_file($thumb)) {
+            @unlink($thumb);
+            $deleted = true;
+        }
+    }
+
+    return $deleted;
+}

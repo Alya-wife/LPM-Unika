@@ -10,8 +10,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $stmt->execute([$id]);
     $p = $stmt->fetch();
     if ($p) {
-        if (!empty($p['featured_image']) && file_exists(UPLOAD_PATH . $p['featured_image'])) {
-            @unlink(UPLOAD_PATH . $p['featured_image']);
+        if (!empty($p['featured_image'])) {
+            deleteUploadedFile($p['featured_image']);
         }
         $db->prepare("DELETE FROM pages WHERE id = ?")->execute([$id]);
         $_SESSION['flash'] = 'Halaman "' . $p['judul'] . '" berhasil dihapus.';

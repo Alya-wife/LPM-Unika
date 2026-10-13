@@ -33,9 +33,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row = $db->prepare("SELECT gambar FROM hero_slides WHERE id = ?");
     $row->execute([$id]);
     $item = $row->fetch();
-    if ($item && $item['gambar'] && !filter_var($item['gambar'], FILTER_VALIDATE_URL)) {
-        $path = __DIR__ . '/../uploads/slides/' . $item['gambar'];
-        if (file_exists($path)) @unlink($path);
+    if ($item && !empty($item['gambar'])) {
+        deleteUploadedFile($item['gambar'], 'slides');
     }
     $db->prepare("DELETE FROM hero_slides WHERE id = ?")->execute([$id]);
     $_SESSION['flash'] = 'Gambar slide berhasil dihapus.';

@@ -54,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $new_name = 'kegiatan_' . time() . '_' . uniqid() . '.' . $ext;
                     if (move_uploaded_file($_FILES['file_dokumen']['tmp_name'], $upload_dir . $new_name)) {
+                        if ($is_edit && !empty($data['file_dokumen'])) {
+                            deleteUploadedFile($data['file_dokumen']);
+                        }
                         $file_dokumen = 'ami/siklus1/' . $new_name;
                         // Format bytes to human readable
                         $bytes = $_FILES['file_dokumen']['size'];
@@ -116,6 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         } else {
                             $foto = 'ami/siklus1/' . $c_filename;
                         }
+                        if ($is_edit && !empty($data['foto']) && $data['foto'] !== $foto) {
+                            deleteUploadedFile($data['foto']);
+                        }
                         $has_cropped = true;
                     }
                 }
@@ -125,6 +131,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$has_cropped && !empty($_FILES['foto']['name']) && !is_array($_FILES['foto']['name'])) {
                     $saved_webp = convertAndSaveWebP($_FILES['foto']['tmp_name'], $target_dir, 'opening_', 88, 1920);
                     if ($saved_webp) {
+                        if (!empty($data['foto'])) {
+                            deleteUploadedFile($data['foto']);
+                        }
                         $foto = 'ami/siklus1/' . $saved_webp;
                     } else {
                         $error = 'Gagal memproses gambar foto. Pastikan format JPG, PNG, atau WebP valid.';

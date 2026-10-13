@@ -11,16 +11,16 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row = $db->prepare("SELECT gambar FROM berita WHERE id = ?");
     $row->execute([$id]);
     $row = $row->fetch();
-    if ($row && $row['gambar'] && file_exists(__DIR__ . '/../uploads/berita/' . $row['gambar'])) {
-        @unlink(__DIR__ . '/../uploads/berita/' . $row['gambar']);
+    if ($row && !empty($row['gambar'])) {
+        deleteUploadedFile($row['gambar'], 'berita');
     }
 
     // 2. Delete gambar-gambar slider jika ada
     $extra_imgs = $db->prepare("SELECT gambar FROM berita_gambar WHERE berita_id = ?");
     $extra_imgs->execute([$id]);
     while ($img_row = $extra_imgs->fetch()) {
-        if ($img_row['gambar'] && file_exists(__DIR__ . '/../uploads/berita/' . $img_row['gambar'])) {
-            @unlink(__DIR__ . '/../uploads/berita/' . $img_row['gambar']);
+        if (!empty($img_row['gambar'])) {
+            deleteUploadedFile($img_row['gambar'], 'berita');
         }
     }
     $db->prepare("DELETE FROM berita_gambar WHERE berita_id = ?")->execute([$id]);

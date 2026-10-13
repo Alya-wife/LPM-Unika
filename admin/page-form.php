@@ -51,6 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fname = 'page_' . time() . '_' . rand(100,999) . '.webp';
                     $dest  = UPLOAD_PATH . $fname;
                     if (file_put_contents($dest, $raw)) {
+                        if ($is_edit && !empty($page['featured_image']) && $page['featured_image'] !== $fname) {
+                            deleteUploadedFile($page['featured_image']);
+                        }
                         $featured_image = $fname;
                     } else {
                         $error = 'Gagal menyimpan gambar halaman hasil penyesuaian.';
@@ -64,16 +67,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $saved_name = convertAndSaveWebP($_FILES['featured_image_file']['tmp_name'], UPLOAD_PATH, 'page_');
                     if ($saved_name) {
+                        if ($is_edit && !empty($page['featured_image']) && $page['featured_image'] !== $saved_name) {
+                            deleteUploadedFile($page['featured_image']);
+                        }
                         $featured_image = $saved_name;
                     } else {
                         $fname = 'page_' . time() . '_' . rand(100,999) . '.' . $ext;
                         $dest  = UPLOAD_PATH . $fname;
                         if (move_uploaded_file($_FILES['featured_image_file']['tmp_name'], $dest)) {
+                            if ($is_edit && !empty($page['featured_image']) && $page['featured_image'] !== $fname) {
+                                deleteUploadedFile($page['featured_image']);
+                            }
                             $featured_image = $fname;
                         }
                     }
                 }
             } elseif (isset($_POST['remove_image']) && $_POST['remove_image'] == '1') {
+                if ($is_edit && !empty($page['featured_image'])) {
+                    deleteUploadedFile($page['featured_image']);
+                }
                 $featured_image = null;
             }
 

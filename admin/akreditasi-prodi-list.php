@@ -5,13 +5,15 @@ $db = getDB();
 
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $row = $db->prepare("SELECT file_sertifikat FROM akreditasi_prodi WHERE id = ?");
+    $row = $db->prepare("SELECT file_sertifikat, file_sk FROM akreditasi_prodi WHERE id = ?");
     $row->execute([$id]);
     $data = $row->fetch();
-    if ($data && $data['file_sertifikat']) {
-        $path = __DIR__ . '/../uploads/akreditasi_prodi/' . $data['file_sertifikat'];
-        if (file_exists($path)) {
-            unlink($path);
+    if ($data) {
+        if (!empty($data['file_sertifikat'])) {
+            deleteUploadedFile($data['file_sertifikat'], 'akreditasi_prodi');
+        }
+        if (!empty($data['file_sk'])) {
+            deleteUploadedFile($data['file_sk'], 'akreditasi_prodi');
         }
     }
     $db->prepare("DELETE FROM akreditasi_prodi WHERE id = ?")->execute([$id]);

@@ -15,8 +15,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $row->execute([$id]);
     $item = $row->fetch();
     $item_kat = $item['kategori'] ?? 'lpm';
-    if ($item && $item['foto'] && file_exists(__DIR__ . '/../uploads/tim/' . $item['foto'])) {
-        @unlink(__DIR__ . '/../uploads/tim/' . $item['foto']);
+    if ($item && !empty($item['foto'])) {
+        deleteUploadedFile($item['foto'], 'tim');
     }
     $db->prepare("DELETE FROM tim_lpm WHERE id = ?")->execute([$id]);
     $_SESSION['flash'] = 'Personel berhasil dihapus.';

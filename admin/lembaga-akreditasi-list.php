@@ -10,9 +10,11 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $stmt->execute([$id]);
     $item = $stmt->fetch();
     if ($item) {
-        if ($item['file_akreditasi']) {
-            $f_path = __DIR__ . '/../uploads/akreditasi/' . $item['file_akreditasi'];
-            if (file_exists($f_path)) @unlink($f_path);
+        if (!empty($item['logo'])) {
+            deleteUploadedFile($item['logo'], 'akreditasi');
+        }
+        if (!empty($item['file_akreditasi'])) {
+            deleteUploadedFile($item['file_akreditasi'], 'akreditasi');
         }
         $db->prepare("DELETE FROM lembaga_akreditasi WHERE id = ?")->execute([$id]);
         $_SESSION['flash'] = 'Data lembaga akreditasi berhasil dihapus.';

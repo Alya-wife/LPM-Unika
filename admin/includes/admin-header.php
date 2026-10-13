@@ -162,6 +162,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
         </div>
 
         <!-- 2. Halaman Beranda (Dropdown) -->
+        <?php if (canAccessModule('beranda')): ?>
         <?php $grp_beranda = in_array($current_admin, ['slider-list','slider-form','penghargaan-list','penghargaan-form']); ?>
         <div class="admin-nav-dropdown <?= $grp_beranda ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_beranda ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -182,8 +183,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 3. Halaman Profil (Dropdown) -->
+        <?php if (canAccessModule('profil')): ?>
         <?php $grp_profil = in_array($current_admin, ['profil-edit','tim-list','tim-form','struktur-organisasi']); ?>
         <div class="admin-nav-dropdown <?= $grp_profil ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_profil ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -207,8 +210,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 4. Halaman Akreditasi (Dropdown) -->
+        <?php if (canAccessModule('akreditasi')): ?>
         <?php $grp_akred = in_array($current_admin, ['akreditasi-institusi','akreditasi-status-nasional','lembaga-akreditasi-list','lembaga-akreditasi-form','akreditasi-prodi-list','akreditasi-prodi-form','pemeringkatan-list','pemeringkatan-form','pemeringkatan-setting']); ?>
         <div class="admin-nav-dropdown <?= $grp_akred ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_akred ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -250,8 +255,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 5. Halaman SPMI (Dropdown) -->
+        <?php if (canAccessModule('spmi')): ?>
         <?php $grp_spmi = in_array($current_admin, ['dokumen-list','dokumen-form','kategori-dokumen','spmi-kemendikti-list','spmi-kemendikti-form','spmi-portal-setting','spmi-ppepp-card']); ?>
         <div class="admin-nav-dropdown <?= $grp_spmi ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_spmi ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -281,8 +288,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 6. Halaman FAQ & Edukasi (Dropdown) -->
+        <?php if (canAccessModule('faq')): ?>
         <?php $grp_faq = in_array($current_admin, ['faq-setting','kategori-faq','glosarium-setting','kalender-list','kalender-form','buletin-list','buletin-form']); ?>
         <div class="admin-nav-dropdown <?= $grp_faq ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_faq ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -312,8 +321,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 6. Halaman AMI (Dropdown) -->
+        <?php if (canAccessModule('ami')): ?>
         <?php $grp_ami = in_array($current_admin, ['ami-pengantar','ami-siklus-list','ami-siklus1-form','ami-siklus4-dok-form','ami-siklus4-form','ami-siklus5-form','ami-periode']); ?>
         <div class="admin-nav-dropdown <?= $grp_ami ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_ami ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -334,8 +345,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 7. Halaman Berita & Kegiatan (Dropdown) -->
+        <?php if (canAccessModule('berita')): ?>
         <?php $grp_berita = in_array($current_admin, ['berita-list','berita-form','berita-review','kategori-berita']); ?>
         <div class="admin-nav-dropdown <?= $grp_berita ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_berita ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -356,8 +369,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 8. Halaman Layanan (3 Sub-Menu Selaras Publik) -->
+        <?php if (canAccessModule('layanan')): ?>
         <?php
         $unread_feedback  = 0;
         $unread_kunjungan = 0;
@@ -422,8 +437,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- 9. Visual Page Builder (Elementor Style) -->
+        <?php if (canAccessModule('builder')): ?>
         <div style="margin-bottom:0.35rem;">
             <a href="<?= SITE_URL ?>/admin/advance-setting.php" class="admin-nav-link <?= $current_admin === 'advance-setting' ? 'active' : '' ?>">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -432,8 +449,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <span>Visual Page Builder</span>
             </a>
         </div>
+        <?php endif; ?>
 
         <!-- 10. Kelola Halaman (Pages - Dropdown) -->
+        <?php if (canAccessModule('pages')): ?>
         <?php $grp_pages = in_array($current_admin, ['page-list','page-form','kategori-page']); ?>
         <div class="admin-nav-dropdown <?= $grp_pages ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_pages ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -454,9 +473,10 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
-        <!-- 10. Pengaturan Sistem (Dropdown) -->
-        <?php $grp_pengaturan = in_array($current_admin, ['pengaturan', 'convert-images']); ?>
+        <!-- 11. Pengaturan Sistem & Pengguna (Dropdown) -->
+        <?php $grp_pengaturan = in_array($current_admin, ['pengaturan', 'convert-images', 'user-list', 'user-form']); ?>
         <div class="admin-nav-dropdown <?= $grp_pengaturan ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_pengaturan ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
                 <span class="d-flex align-items-center gap-2">
@@ -469,12 +489,21 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
             <div class="admin-dropdown-menu">
+                <?php if (canAccessModule('pengaturan')): ?>
                 <a href="<?= SITE_URL ?>/admin/pengaturan.php" class="admin-subnav-link <?= $current_admin === 'pengaturan' ? 'active' : '' ?>">
                     <span>• Identitas &amp; Kontak</span>
                 </a>
                 <a href="<?= SITE_URL ?>/admin/convert-images.php" class="admin-subnav-link <?= $current_admin === 'convert-images' ? 'active' : '' ?>">
                     <span>• Konversi WebP HD</span>
                 </a>
+                <?php endif; ?>
+
+                <?php if (isAdminSuper()): ?>
+                <a href="<?= SITE_URL ?>/admin/user-list.php" class="admin-subnav-link <?= in_array($current_admin, ['user-list', 'user-form']) ? 'active' : '' ?>">
+                    <span>• Manajemen Pengguna</span>
+                </a>
+                <?php endif; ?>
+
                 <a href="<?= SITE_URL ?>/" target="_blank" class="admin-subnav-link">
                     <span>• Buka Website Live</span>
                 </a>
@@ -488,14 +517,22 @@ $accred_nav_alerts = checkAccreditationExpirations();
     <!-- Admin User Info -->
     <div style="padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:var(--purple-glow);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgba(255,255,255,0.7)" width="18" height="18">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                </svg>
+            <div style="width:36px;height:36px;background:var(--purple-glow);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:0.85rem;">
+                <?= strtoupper(substr($admin_name, 0, 1)) ?>
             </div>
             <div>
-                <div style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);"><?= e($admin_name) ?></div>
-                <div style="font-size:0.68rem;color:rgba(255,255,255,0.35);">Administrator</div>
+                <div style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.85);line-height:1.2;"><?= e($admin_name) ?></div>
+                <div style="margin-top:3px;">
+                    <?php if (isAdminSuper()): ?>
+                        <span class="badge rounded-pill" style="background:linear-gradient(135deg, #F59E0B, #D97706);color:#fff;font-size:0.6rem;padding:0.18rem 0.5rem;">
+                            <i class="bi bi-shield-shaded me-1"></i>Super Admin
+                        </span>
+                    <?php else: ?>
+                        <span class="badge rounded-pill bg-info text-dark" style="font-size:0.6rem;padding:0.18rem 0.5rem;">
+                            <i class="bi bi-person-badge me-1"></i>Admin Terbatas
+                        </span>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -593,3 +630,20 @@ $accred_nav_alerts = checkAccreditationExpirations();
     </div>
 
     <div class="admin-main">
+        <?php if (!empty($_SESSION['flash_error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-shield-x fs-5"></i>
+            <div><?= e($_SESSION['flash_error']) ?></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['flash_error']); ?>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['flash'])): ?>
+        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle fs-5"></i>
+            <div><?= e($_SESSION['flash']) ?></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['flash']); ?>
+        <?php endif; ?>

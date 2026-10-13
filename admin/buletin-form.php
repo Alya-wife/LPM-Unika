@@ -147,14 +147,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $is_restricted     = !empty($_POST['is_restricted']) ? 1 : 0;
+        $max_preview_pages = (int)($_POST['max_preview_pages'] ?? 3);
+        $allowed_domains   = parseSubmittedAllowedDomains();
+
         if (!$error) {
             if ($is_edit && $id) {
-                $stmt = $db->prepare("UPDATE buletin SET judul=?, edisi=?, periode_akademik=?, deskripsi=?, file_path=?, cover_path=?, tanggal_terbit=?, is_aktif=? WHERE id=?");
-                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif, $id]);
+                $stmt = $db->prepare("UPDATE buletin SET judul=?, edisi=?, periode_akademik=?, deskripsi=?, file_path=?, cover_path=?, tanggal_terbit=?, is_aktif=?, is_restricted=?, max_preview_pages=?, allowed_domains=? WHERE id=?");
+                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif, $is_restricted, $max_preview_pages, $allowed_domains, $id]);
                 $_SESSION['flash'] = 'Buletin berhasil diperbarui.';
             } else {
-                $stmt = $db->prepare("INSERT INTO buletin (judul, edisi, periode_akademik, deskripsi, file_path, cover_path, tanggal_terbit, is_aktif) VALUES (?,?,?,?,?,?,?,?)");
-                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif]);
+                $stmt = $db->prepare("INSERT INTO buletin (judul, edisi, periode_akademik, deskripsi, file_path, cover_path, tanggal_terbit, is_aktif, is_restricted, max_preview_pages, allowed_domains) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                $stmt->execute([$judul, $edisi, $periode_akademik, $deskripsi ?: null, $file_path, $cover_path, $tanggal_terbit, $is_aktif, $is_restricted, $max_preview_pages, $allowed_domains]);
                 $_SESSION['flash'] = 'Buletin berhasil diupload.';
             }
             redirect(SITE_URL . '/admin/buletin-list.php');
@@ -258,6 +262,16 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <span id="pdfStatusText">Memproses PDF...</span>
                             </div>
                             <style>@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }</style>
+                        </div>
+
+                        <!-- Pengaturan Proteksi / Pembatasan Akses File -->
+                        <div class="mb-4">
+                            <?php
+                            $res_is_restricted   = $buletin['is_restricted'] ?? 0;
+                            $res_max_pages       = $buletin['max_preview_pages'] ?? 3;
+                            $res_allowed_domains = $buletin['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                            require __DIR__ . '/includes/file-restriction-field.php';
+                            ?>
                         </div>
 
                         <!-- ── Judul (auto-filled) ── -->

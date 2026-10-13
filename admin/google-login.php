@@ -84,40 +84,63 @@ $picture = trim($payload['picture'] ?? '');
 
 $db = getDB();
 
-// 2. Ambil data admin dari tabel users atau cek daftar admin yang diizinkan
+// 2. Ambil data admin dari tabel users
 $stmt = $db->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
 $stmt->execute([$email]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$allowed_admins = ['tu.lpm@unika.ac.id', 'ravywhienelda@gmail.com'];
-if (!$user && !in_array($email, $allowed_admins, true)) {
+// Bootstrap fallback untuk akun developer / root kampus awal jika belum terdaftar
+$allowed_bootstrap = ['tu.lpm@unika.ac.id', 'ravywhienelda@gmail.com'];
+if (!$user && in_array($email, $allowed_bootstrap, true)) {
+    // Cari user id 1 untuk dihubungkan
+    $root_user = $db->query("SELECT * FROM users WHERE id = 1 LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    if ($root_user) {
+        $db->prepare("UPDATE users SET email = ?, nama_lengkap = COALESCE(NULLIF(nama_lengkap, ''), ?), role = 'superadmin', status = 1 WHERE id = 1")->execute([$email, $name]);
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        $db->prepare("INSERT INTO users (id, nama_lengkap, username, email, role, akses_halaman, status) VALUES (1, ?, ?, ?, 'superadmin', NULL, 1)")->execute([$name, explode('@', $email)[0], $email]);
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+if (!$user) {
     http_response_code(403);
     echo json_encode([
         'success' => false,
-        'message' => 'Akses Ditolak: Akun Google ' . $email . ' tidak memiliki hak akses administrator.'
+        'message' => 'Akses Ditolak: Akun Google ' . $email . ' belum didaftarkan oleh Administrator. Silakan hubungi Super Admin untuk menambahkan akun ini.'
     ]);
     exit;
 }
 
-if (!$user) {
-    // Ambil data admin default (id 1)
-    $first_user = $db->query("SELECT id, nama_lengkap, username FROM users ORDER BY id ASC LIMIT 1")->fetch();
-    $admin_user_id   = $first_user['id'] ?? 1;
-    $admin_user_name = $name ?: ($first_user['nama_lengkap'] ?? 'Developer / Tester');
-    // Hanya perbarui email user jika akun tu.lpm@unika.ac.id
-    if ($email === 'tu.lpm@unika.ac.id') {
-        $db->prepare("UPDATE users SET email = ? WHERE id = ?")->execute([$email, $admin_user_id]);
-    }
-} else {
-    $admin_user_id   = $user['id'];
-    $admin_user_name = $user['nama_lengkap'] ?: ($name ?: 'Administrator');
+if (isset($user['status']) && (int)$user['status'] === 0) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Akses Ditolak: Akun administrator ' . $email . ' sedang dinonaktifkan. Silakan hubungi Super Admin.'
+    ]);
+    exit;
 }
 
+// Perbarui nama atau foto jika belum ada di database
+if (empty($user['nama_lengkap']) && !empty($name)) {
+    $db->prepare("UPDATE users SET nama_lengkap = ? WHERE id = ?")->execute([$name, $user['id']]);
+    $user['nama_lengkap'] = $name;
+}
+
+$admin_user_id   = (int)$user['id'];
+$admin_user_name = $user['nama_lengkap'] ?: ($name ?: 'Administrator');
+$admin_role      = $user['role'] ?? 'admin';
+$admin_perms     = json_decode($user['akses_halaman'] ?? '[]', true) ?: [];
+
 // 5. Berikan Sesi Admin
-$_SESSION['admin_id']      = $admin_user_id;
-$_SESSION['admin_name']    = $admin_user_name;
-$_SESSION['admin_email']   = $email;
-$_SESSION['admin_picture'] = $picture;
+$_SESSION['admin_id']          = $admin_user_id;
+$_SESSION['admin_name']        = $admin_user_name;
+$_SESSION['admin_email']       = $email;
+$_SESSION['admin_picture']     = $picture;
+$_SESSION['admin_role']        = $admin_role;
+$_SESSION['admin_permissions'] = is_array($admin_perms) ? $admin_perms : [];
 
 // Berikan juga sesi civitas UNIKA agar tidak perlu login ulang di halaman dokumen publik
 $_SESSION['unika_user'] = [

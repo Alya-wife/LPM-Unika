@@ -138,28 +138,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $foto_kegiatan_json = !empty($existing_photos) ? json_encode($existing_photos) : null;
+        $is_restricted     = !empty($_POST['is_restricted']) ? 1 : 0;
+        $max_preview_pages = (int)($_POST['max_preview_pages'] ?? 3);
+        $allowed_domains   = parseSubmittedAllowedDomains();
 
         if (!$error) {
             if ($is_edit) {
                 $stmt = $db->prepare("
                     UPDATE ami_siklus4_dokumentasi 
-                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = '', file_berita_acara = ?, file_daftar_hadir = ?, file_undangan = ?, foto_kegiatan = ? 
+                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = '', file_berita_acara = ?, file_daftar_hadir = ?, file_undangan = ?, foto_kegiatan = ?, is_restricted = ?, max_preview_pages = ?, allowed_domains = ? 
                     WHERE id = ?
                 ");
                 $stmt->execute([
                     $periode, $tingkat, $fakultas, $prodi, $judul,
-                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json, $id
+                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json,
+                    $is_restricted, $max_preview_pages, $allowed_domains, $id
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil diperbarui.';
             } else {
                 $stmt = $db->prepare("
                     INSERT INTO ami_siklus4_dokumentasi 
-                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, file_undangan, foto_kegiatan) 
-                    VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?)
+                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, file_undangan, foto_kegiatan, is_restricted, max_preview_pages, allowed_domains) 
+                    VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $periode, $tingkat, $fakultas, $prodi, $judul,
-                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json
+                    $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json,
+                    $is_restricted, $max_preview_pages, $allowed_domains
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil ditambahkan.';
             }
@@ -320,6 +325,16 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                             <?php endif; ?>
                         </div>
+                    </div>
+
+                    <!-- Pengaturan Proteksi / Pembatasan Akses Berkas Dokumen -->
+                    <div class="col-12">
+                        <?php
+                        $res_is_restricted   = $data['is_restricted'] ?? 0;
+                        $res_max_pages       = $data['max_preview_pages'] ?? 3;
+                        $res_allowed_domains = $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                        require __DIR__ . '/includes/file-restriction-field.php';
+                        ?>
                     </div>
 
                     <!-- 4. Upload Foto Dokumentasi (Multiple + Cropper Support) -->

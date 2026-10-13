@@ -8,6 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_SESSION['admin_id'])) {
     redirect(SITE_URL . '/admin/dashboard.php');
 }
+
+
+$login_error = $_GET['error'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -42,7 +45,7 @@ if (isset($_SESSION['admin_id'])) {
             border: 1px solid rgba(255,255,255,0.14);
             backdrop-filter: blur(24px);
             border-radius: var(--radius-xl);
-            padding: 2.75rem 2.25rem;
+            padding: 2.5rem 2.25rem;
             width: 100%;
             max-width: 440px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.45);
@@ -59,11 +62,11 @@ if (isset($_SESSION['admin_id'])) {
             font-size: 0.83rem;
             color: rgba(255,255,255,0.65);
             line-height: 1.5;
-            margin-bottom: 1.75rem;
+            margin-bottom: 1.5rem;
         }
         .back-link {
             text-align: center;
-            margin-top: 1.75rem;
+            margin-top: 1.5rem;
             font-size: 0.82rem;
             color: rgba(255,255,255,0.4);
         }
@@ -73,12 +76,28 @@ if (isset($_SESSION['admin_id'])) {
             transition: var(--transition);
         }
         .back-link a:hover { color: #fff; }
+        .form-control-dark {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+        .form-control-dark:focus {
+            background: rgba(255,255,255,0.14);
+            border-color: #A78BFA;
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.25);
+        }
+        .form-control-dark::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
     </style>
 </head>
 <body>
     <div class="login-card animate-fadeInUp">
         <!-- Logo -->
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.25rem;">
             <div class="brand-logo-wrap" style="width:48px;height:48px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:5px;">
                 <img src="<?= SITE_URL ?>/assets/images/logo-unika.png" alt="Logo UNIKA" class="brand-logo-img" style="max-width:100%;max-height:100%;">
             </div>
@@ -89,9 +108,13 @@ if (isset($_SESSION['admin_id'])) {
         </div>
 
         <div class="login-title">Autentikasi Administrator</div>
-        <div class="login-sub">Masuk ke panel kontrol Lembaga Penjaminan Mutu menggunakan akun Google resmi.</div>
+        <div class="login-sub">Masuk menggunakan Akun Google resmi yang telah didaftarkan oleh Super Administrator.</div>
 
-
+        <?php if (!empty($login_error)): ?>
+        <div class="alert alert-danger py-2 px-3 mb-3 text-start rounded-3" style="font-size:0.83rem;background:rgba(239,68,68,0.2);border:1px solid #ef4444;color:#fecaca;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= e($login_error) ?>
+        </div>
+        <?php endif; ?>
 
         <!-- Loading State Google -->
         <div id="adminLoginLoading" style="display:none;padding:0.85rem;background:rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:0.88rem;align-items:center;justify-content:center;gap:10px;margin-bottom:1.25rem;">
@@ -105,7 +128,7 @@ if (isset($_SESSION['admin_id'])) {
             <div id="googleErrorMsg" style="display:none;width:100%;margin-top:0.85rem;text-align:left;background:rgba(239,68,68,0.18);border:1px solid #EF4444;color:#ffcaca;border-radius:var(--radius-sm);padding:0.75rem 1rem;font-size:0.83rem;line-height:1.5;"></div>
         </div>
 
-        <div class="back-link border-top pt-3" style="border-color:rgba(255,255,255,0.1) !important;">
+        <div class="back-link border-top pt-3 mt-4" style="border-color:rgba(255,255,255,0.1) !important;">
             <a href="<?= SITE_URL ?>/">
                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Beranda Website
             </a>

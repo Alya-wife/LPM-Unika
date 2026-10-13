@@ -117,30 +117,15 @@ $pic   = trim($payload['picture'] ?? '');
 $allowed_dev_emails = ['ravywhienelda@gmail.com'];
 $is_dev_tester      = in_array($email, $allowed_dev_emails, true);
 
-// VALIDASI DOMAIN RESMI KHUSUS @unika.ac.id (Mengecualikan akun mahasiswa @student.unika.ac.id)
+// Cek tipe akun
 $is_student_domain = (bool)preg_match('/@([a-z0-9\.-]*\.)?student\.unika\.ac\.id$/i', $email);
 $is_unika_domain   = (bool)preg_match('/@unika\.ac\.id$/i', $email);
 
-if (!$is_dev_tester) {
-    if ($is_student_domain) {
-        echo json_encode([
-            'success'  => false,
-            'is_unika' => false,
-            'email'    => $email,
-            'message'  => 'Akses Ditolak: Dokumen SPMI ini hanya diperuntukkan bagi akun dosen/staf/unit resmi (@unika.ac.id). Akun mahasiswa (' . $email . ') tidak memiliki izin untuk membuka dokumen ini.'
-        ]);
-        exit;
-    }
-
-    if (!$is_unika_domain) {
-        echo json_encode([
-            'success'  => false,
-            'is_unika' => false,
-            'email'    => $email,
-            'message'  => 'Akses Terbatas: Dokumen lengkap SPMI hanya dapat dibuka oleh akun resmi @unika.ac.id. Anda saat ini masuk dengan akun: ' . $email . '. Silakan gunakan akun Google @unika.ac.id Anda.'
-        ]);
-        exit;
-    }
+$user_type = 'umum';
+if ($is_unika_domain && !$is_student_domain) {
+    $user_type = 'dosen_tendik';
+} elseif ($is_student_domain) {
+    $user_type = 'mahasiswa';
 }
 
 // Simpan sesi autentikasi civitas UNIKA
@@ -148,14 +133,16 @@ $_SESSION['unika_user'] = [
     'email'     => $email,
     'name'      => $name,
     'picture'   => $pic,
-    'hd'        => $payload['hd'] ?? 'unika.ac.id',
+    'user_type' => $user_type,
+    'hd'        => $payload['hd'] ?? ($is_student_domain ? 'student.unika.ac.id' : 'unika.ac.id'),
     'logged_at' => time()
 ];
 
 echo json_encode([
-    'success'  => true,
-    'is_unika' => true,
-    'message'  => 'Selamat datang, ' . $name . '! Akses penuh dokumen SPMI berhasil dibuka.',
-    'user'     => $_SESSION['unika_user']
+    'success'   => true,
+    'is_unika'  => true,
+    'user_type' => $user_type,
+    'message'   => 'Selamat datang, ' . $name . '! Autentikasi akun Google berhasil.',
+    'user'      => $_SESSION['unika_user']
 ]);
 exit;

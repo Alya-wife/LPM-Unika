@@ -70,18 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'File dokumen wajib diunggah.';
         }
 
-        if (!$error) {
-            if ($is_edit) {
-                $stmt = $db->prepare("UPDATE ami_siklus4_dokumen SET periode = ?, jenis = ?, judul = ?, file_dokumen = ?, file_size = ?, keterangan = ?, urutan = ? WHERE id = ?");
-                $stmt->execute([$periode, $jenis, $judul, $file_dokumen, $file_size, $keterangan, $urutan, $id]);
-                $_SESSION['flash'] = "Dokumen {$label_jenis} berhasil diperbarui.";
-            } else {
-                $stmt = $db->prepare("INSERT INTO ami_siklus4_dokumen (periode, jenis, judul, file_dokumen, file_size, keterangan, urutan) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$periode, $jenis, $judul, $file_dokumen, $file_size, $keterangan, $urutan]);
-                $_SESSION['flash'] = "Dokumen {$label_jenis} berhasil ditambahkan.";
+            $is_restricted     = !empty($_POST['is_restricted']) ? 1 : 0;
+            $max_preview_pages = (int)($_POST['max_preview_pages'] ?? 3);
+            $allowed_domains   = parseSubmittedAllowedDomains();
+
+            if (!$error) {
+                if ($is_edit) {
+                    $stmt = $db->prepare("UPDATE ami_siklus4_dokumen SET periode = ?, jenis = ?, judul = ?, file_dokumen = ?, file_size = ?, keterangan = ?, urutan = ?, is_restricted = ?, max_preview_pages = ?, allowed_domains = ? WHERE id = ?");
+                    $stmt->execute([$periode, $jenis, $judul, $file_dokumen, $file_size, $keterangan, $urutan, $is_restricted, $max_preview_pages, $allowed_domains, $id]);
+                    $_SESSION['flash'] = "Dokumen {$label_jenis} berhasil diperbarui.";
+                } else {
+                    $stmt = $db->prepare("INSERT INTO ami_siklus4_dokumen (periode, jenis, judul, file_dokumen, file_size, keterangan, urutan, is_restricted, max_preview_pages, allowed_domains) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$periode, $jenis, $judul, $file_dokumen, $file_size, $keterangan, $urutan, $is_restricted, $max_preview_pages, $allowed_domains]);
+                    $_SESSION['flash'] = "Dokumen {$label_jenis} berhasil ditambahkan.";
+                }
+                redirect(SITE_URL . '/admin/ami-siklus-list.php?tab=siklus4&periode=' . urlencode($periode));
             }
-            redirect(SITE_URL . '/admin/ami-siklus-list.php?tab=siklus4&periode=' . urlencode($periode));
-        }
     }
 }
 
@@ -166,6 +170,16 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </a>
                         </div>
                         <?php endif; ?>
+
+                        <!-- Pengaturan Proteksi / Pembatasan Akses File -->
+                        <div class="mt-3">
+                            <?php
+                            $res_is_restricted   = $data['is_restricted'] ?? 0;
+                            $res_max_pages       = $data['max_preview_pages'] ?? 3;
+                            $res_allowed_domains = $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                            require __DIR__ . '/includes/file-restriction-field.php';
+                            ?>
+                        </div>
                     </div>
 
                     <div class="col-12">

@@ -694,18 +694,22 @@ try {
                                     <span><i class="bi bi-hdd me-1"></i><?= e($keg['file_size'] ?? 'Softfile') ?></span>
                                     <span>•</span>
                                     <span class="text-truncate" style="max-width:220px;"><?= basename($keg['file_dokumen']) ?></span>
+                                    <?php if (!empty($keg['is_restricted'])): ?>
+                                    <span>•</span>
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i>Dibatasi</span>
+                                    <?php endif; ?>
                                 </div>
                                 <?php if (!empty($keg['keterangan'])): ?>
                                 <p class="text-muted small mb-0 mt-1" style="font-size:0.8rem;line-height:1.4;"><?= e($keg['keterangan']) ?></p>
                                 <?php endif; ?>
                             </div>
                             <div class="doc-ami-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($keg['file_dokumen']) ?>', '<?= e(addslashes($keg['judul'])) ?>')">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($keg['file_dokumen']) ?>', '<?= e(addslashes($keg['judul'])) ?>', <?= (int)($keg['is_restricted'] ?? 0) ?>, <?= (int)($keg['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($keg['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                     <i class="bi bi-eye me-1"></i> Pratinjau
                                 </button>
-                                <a href="<?= SITE_URL ?>/uploads/<?= e($keg['file_dokumen']) ?>" target="_blank" download class="btn btn-sm btn-primary rounded-pill px-3 py-1">
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($keg['file_dokumen']) ?>', '<?= e(addslashes($keg['judul'])) ?>', <?= (int)($keg['is_restricted'] ?? 0) ?>, <?= (int)($keg['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($keg['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                     <i class="bi bi-download me-1"></i> Unduh
-                                </a>
+                                </button>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -896,15 +900,20 @@ try {
                                 </div>
                                 <div class="doc-ami-info">
                                     <div class="doc-ami-title"><?= e($p['judul']) ?></div>
-                                    <div class="text-muted small text-truncate"><?= basename($p['file_dokumen']) ?> (<?= e($p['file_size'] ?? 'PDF') ?>)</div>
+                                    <div class="text-muted small text-truncate">
+                                        <?= basename($p['file_dokumen']) ?> (<?= e($p['file_size'] ?? 'PDF') ?>)
+                                        <?php if (!empty($p['is_restricted'])): ?>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.68rem;"><i class="bi bi-lock-fill me-1"></i>Dibatasi</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <div class="doc-ami-actions">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($p['file_dokumen']) ?>', '<?= e(addslashes($p['judul'])) ?>')">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($p['file_dokumen']) ?>', '<?= e(addslashes($p['judul'])) ?>', <?= (int)($p['is_restricted'] ?? 0) ?>, <?= (int)($p['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($p['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                         <i class="bi bi-eye me-1"></i> Pratinjau
                                     </button>
-                                    <a href="<?= SITE_URL ?>/uploads/<?= e($p['file_dokumen']) ?>" target="_blank" download class="btn btn-sm btn-primary rounded-pill px-3 py-1">
+                                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($p['file_dokumen']) ?>', '<?= e(addslashes($p['judul'])) ?>', <?= (int)($p['is_restricted'] ?? 0) ?>, <?= (int)($p['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($p['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                         <i class="bi bi-download me-1"></i> Unduh
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -939,15 +948,20 @@ try {
                                 </div>
                                 <div class="doc-ami-info">
                                     <div class="doc-ami-title"><?= e($j['judul']) ?></div>
-                                    <div class="text-muted small text-truncate"><?= basename($j['file_dokumen']) ?> (<?= e($j['file_size'] ?? 'PDF') ?>)</div>
+                                    <div class="text-muted small text-truncate">
+                                        <?= basename($j['file_dokumen']) ?> (<?= e($j['file_size'] ?? 'PDF') ?>)
+                                        <?php if (!empty($j['is_restricted'])): ?>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.68rem;"><i class="bi bi-lock-fill me-1"></i>Dibatasi</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <div class="doc-ami-actions">
-                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($j['file_dokumen']) ?>', '<?= e(addslashes($j['judul'])) ?>')">
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($j['file_dokumen']) ?>', '<?= e(addslashes($j['judul'])) ?>', <?= (int)($j['is_restricted'] ?? 0) ?>, <?= (int)($j['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($j['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                         <i class="bi bi-eye me-1"></i> Pratinjau
                                     </button>
-                                    <a href="<?= SITE_URL ?>/uploads/<?= e($j['file_dokumen']) ?>" target="_blank" download class="btn btn-sm btn-success text-white rounded-pill px-3 py-1">
+                                    <button type="button" class="btn btn-sm btn-success text-white rounded-pill px-3 py-1" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($j['file_dokumen']) ?>', '<?= e(addslashes($j['judul'])) ?>', <?= (int)($j['is_restricted'] ?? 0) ?>, <?= (int)($j['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($j['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                         <i class="bi bi-download me-1"></i> Unduh
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -1065,12 +1079,12 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>')">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>" download class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan">
+                                            <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-download"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                     <?php endif; ?>
@@ -1086,12 +1100,12 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>')">
+                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
+                                            <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-download"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                     <?php endif; ?>
@@ -1107,12 +1121,12 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>')">
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <a href="<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara">
+                                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                                 <i class="bi bi-download"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                     <?php endif; ?>
@@ -1252,12 +1266,12 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>')">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>" download class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan">
+                                        <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-download"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1273,12 +1287,12 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>')">
+                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>" download class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir">
+                                        <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-download"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1294,12 +1308,12 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openDocModal('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>')">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>" download class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi">
+                                        <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                                             <i class="bi bi-download"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                                 <?php endif; ?>
@@ -1412,7 +1426,13 @@ function openPhotoModal(imgSrc, title, subtitle) {
 }
 
 // Modal Pratinjau Dokumen (Preview Sebelum Unduh)
-function openDocModal(docUrl, docTitle, docSubtitle) {
+function openDocModal(docUrl, docTitle, docSubtitle, isRestricted, maxPages, allowedDomains) {
+    var ext = (docUrl.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf' && typeof openPdfViewer === 'function') {
+        openPdfViewer(docUrl, docTitle, isRestricted, maxPages, allowedDomains);
+        return;
+    }
+
     var iframe = document.getElementById('docModalIframe');
     var fallback = document.getElementById('docModalFallback');
     var loading = document.getElementById('docModalLoading');
@@ -1422,26 +1442,66 @@ function openDocModal(docUrl, docTitle, docSubtitle) {
     var dlBtn = document.getElementById('docModalDownloadBtn');
     var fbDlBtn = document.getElementById('docModalFallbackDownload');
 
-    titleEl.textContent = docTitle || 'Dokumen AMI';
-    subEl.textContent = docSubtitle || docUrl.split('/').pop();
-    newTabBtn.href = docUrl;
-    dlBtn.href = docUrl;
-    fbDlBtn.href = docUrl;
+    if (titleEl) titleEl.textContent = docTitle || 'Dokumen AMI';
+    if (subEl) subEl.textContent = docSubtitle || docUrl.split('/').pop();
+    if (newTabBtn) newTabBtn.href = docUrl;
+    if (dlBtn) dlBtn.href = docUrl;
+    if (fbDlBtn) fbDlBtn.href = docUrl;
 
-    var ext = docUrl.split('.').pop().toLowerCase();
     if (ext === 'doc' || ext === 'docx') {
-        iframe.style.display = 'none';
-        loading.style.display = 'none';
-        fallback.style.display = 'block';
+        if (iframe) iframe.style.display = 'none';
+        if (loading) loading.style.display = 'none';
+        if (fallback) fallback.style.display = 'block';
     } else {
-        fallback.style.display = 'none';
-        iframe.style.display = 'block';
-        loading.style.display = 'block';
-        iframe.src = docUrl;
+        if (fallback) fallback.style.display = 'none';
+        if (iframe) {
+            iframe.style.display = 'block';
+            iframe.src = docUrl;
+        }
+        if (loading) loading.style.display = 'block';
     }
 
     var modal = new bootstrap.Modal(document.getElementById('docPreviewModal'));
     modal.show();
+}
+
+// Buka Dokumen AMI dengan Pemeriksaan Batasan & Viewer Universal
+function openAmiDocWithCheck(docUrl, docTitle, isRestricted, maxPages, allowedDomains) {
+    var ext = (docUrl.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf' && typeof openPdfViewer === 'function') {
+        openPdfViewer(docUrl, docTitle, isRestricted, maxPages, allowedDomains);
+        return;
+    }
+    openDocModal(docUrl, docTitle, '', isRestricted, maxPages, allowedDomains);
+}
+
+// Unduh Dokumen AMI dengan Pengecekan Batasan Hak Akses
+function downloadAmiDocWithCheck(docUrl, docTitle, isRestricted, maxPages, allowedDomains) {
+    var restricted = (isRestricted == 1 || isRestricted === true || isRestricted === '1');
+    if (restricted) {
+        var hasAccess = false;
+        if (window.UNIKA_CONFIG && window.UNIKA_CONFIG.isLoggedIn && window.UNIKA_CONFIG.currentUser) {
+            var email = window.UNIKA_CONFIG.currentUser.email || '';
+            if (typeof isUserAllowedForDoc === 'function') {
+                hasAccess = isUserAllowedForDoc(email, allowedDomains);
+            }
+        }
+        if (!hasAccess) {
+            if (typeof openPdfViewer === 'function') {
+                openPdfViewer(docUrl, docTitle, isRestricted, maxPages, allowedDomains);
+            } else {
+                alert('Dokumen ini dibatasi untuk civitas akademika dengan domain resmi (' + (allowedDomains || '@unika.ac.id') + '). Silakan masuk terlebih dahulu.');
+            }
+            return;
+        }
+    }
+    var link = document.createElement('a');
+    link.href = docUrl;
+    link.download = docUrl.split('/').pop();
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // Reset iframe on modal close

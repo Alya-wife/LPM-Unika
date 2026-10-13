@@ -282,14 +282,40 @@ let currentPdfDoc = null;
 let currentPdfUrl = '';
 let currentPdfTitle = '';
 let currentTotalPages = 0;
+let currentPdfIsRestricted = false;
+let currentPdfMaxPages = 3;
+let currentPdfAllowedDomains = '@unika.ac.id,@student.unika.ac.id';
+let currentPdfRenderedPages = 0;
 let isRendering = false;
+
+/**
+ * Cek apakah email pengguna cocok dengan daftar domain yang diizinkan
+ */
+function isUserAllowedForDoc(userEmail, allowedDomainsStr) {
+    if (!userEmail) return false;
+    if (!allowedDomainsStr) return true;
+    const emailLower = userEmail.toLowerCase().trim();
+    const domains = allowedDomainsStr.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+    if (domains.length === 0) return true;
+    for (let dom of domains) {
+        if (dom.startsWith('@')) {
+            if (emailLower.endsWith(dom)) return true;
+        } else if (emailLower.endsWith('@' + dom) || emailLower === dom) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * Buka Universal PDF Viewer
  */
-function openPdfViewer(fileUrl, docTitle) {
+function openPdfViewer(fileUrl, docTitle, isRestricted, maxPages, allowedDomains) {
     currentPdfUrl   = fileUrl;
     currentPdfTitle = docTitle || 'Dokumen LPM';
+    currentPdfIsRestricted = (isRestricted == 1 || isRestricted === true || isRestricted === '1');
+    currentPdfMaxPages = (typeof maxPages !== 'undefined' && maxPages !== null) ? parseInt(maxPages, 10) : 3;
+    currentPdfAllowedDomains = allowedDomains || '@unika.ac.id,@student.unika.ac.id';
 
     const modalEl = document.getElementById('modalPdfViewer');
     if (!modalEl) {
@@ -313,6 +339,31 @@ function openPdfViewer(fileUrl, docTitle) {
 
     // Muat Dokumen via PDF.js
     loadPdfDocument(fileUrl);
+}
+
+// Alias untuk AMI
+function openAmiDoc(fileUrl, docTitle, isRestricted, maxPages, allowedDomains) {
+    openPdfViewer(fileUrl, docTitle, isRestricted, maxPages, allowedDomains);
+}
+
+/**
+ * Cek status akses pengguna saat ini untuk dokumen aktif
+ */
+function checkCurrentUserDocAccess() {
+    if (!currentPdfIsRestricted) {
+        return { hasAccess: true, isRestricted: false };
+    }
+    if (!window.UNIKA_CONFIG.isLoggedIn || !window.UNIKA_CONFIG.currentUser) {
+        return { hasAccess: false, isRestricted: true, reason: 'not_logged_in' };
+    }
+    const email = window.UNIKA_CONFIG.currentUser.email || '';
+    const isAllowed = isUserAllowedForDoc(email, currentPdfAllowedDomains);
+    return {
+        hasAccess: isAllowed,
+        isRestricted: true,
+        reason: isAllowed ? 'ok' : 'domain_mismatch',
+        email: email
+    };
 }
 
 /**
@@ -341,26 +392,26 @@ function loadPdfDocument(fileUrl) {
         currentTotalPages = pdf.numPages;
         document.getElementById('pdfLoadingSpinner').style.display = 'none';
 
-        // Tentukan jumlah halaman yang dirender:
-        // Jika logged in sebagai civitas UNIKA -> Render SEMUA halaman
-        // Jika belum login -> Render maksimal 3 halaman pertama
-        const maxPagesToRender = window.UNIKA_CONFIG.isLoggedIn ? currentTotalPages : Math.min(3, currentTotalPages);
+        const accessInfo = checkCurrentUserDocAccess();
+        let maxPagesToRender = currentTotalPages;
 
-        document.getElementById('modalPdfPageCount').textContent = window.UNIKA_CONFIG.isLoggedIn 
-            ? `${currentTotalPages} Halaman (Akses Penuh)`
-            : `Menampilkan ${maxPagesToRender} dari ${currentTotalPages} Halaman`;
+        if (accessInfo.hasAccess) {
+            maxPagesToRender = currentTotalPages;
+            document.getElementById('modalPdfPageCount').textContent = `${currentTotalPages} Halaman (Akses Penuh)`;
+        } else {
+            maxPagesToRender = Math.max(0, Math.min(currentPdfMaxPages, currentTotalPages));
+            document.getElementById('modalPdfPageCount').textContent = `Menampilkan ${maxPagesToRender} dari ${currentTotalPages} Halaman (Pratinjau Dibatasi)`;
+        }
 
-        renderPages(1, maxPagesToRender, function() {
-            // Jika dokumen lebih dari 3 halaman dan user belum login -> Tampilkan Stage Locked Card
-            if (!window.UNIKA_CONFIG.isLoggedIn && currentTotalPages > 3) {
-                const stageCard = document.getElementById('stageLockCard');
-                stageCard.style.display = 'block';
-                document.getElementById('stageLockProgressText').textContent = 
-                    `Pratinjau 3 Halaman Selesai • Halaman 4 s/d ${currentTotalPages} Terkunci`;
-                const percent = Math.min(100, Math.round((3 / currentTotalPages) * 100));
-                document.getElementById('stageProgressFill').style.width = percent + '%';
-            }
-        });
+        currentPdfRenderedPages = maxPagesToRender;
+
+        if (maxPagesToRender > 0) {
+            renderPages(1, maxPagesToRender, function() {
+                handleLockCardDisplay(accessInfo);
+            });
+        } else {
+            handleLockCardDisplay(accessInfo);
+        }
 
     }).catch(function(error) {
         console.error('Error memuat PDF:', error);
@@ -371,6 +422,43 @@ function loadPdfDocument(fileUrl) {
             </div>
         `;
     });
+}
+
+/**
+ * Tampilkan / Sembunyikan Stage Lock Card sesuai hak akses
+ */
+function handleLockCardDisplay(accessInfo) {
+    const stageCard = document.getElementById('stageLockCard');
+    if (!stageCard) return;
+
+    if (accessInfo.hasAccess) {
+        stageCard.style.display = 'none';
+        return;
+    }
+
+    stageCard.style.display = 'block';
+    const progressText = document.getElementById('stageLockProgressText');
+    const progressFill = document.getElementById('stageProgressFill');
+
+    if (currentPdfMaxPages > 0 && currentTotalPages > currentPdfMaxPages) {
+        progressText.textContent = `Pratinjau ${currentPdfMaxPages} Halaman Selesai • Halaman ${currentPdfMaxPages + 1} s/d ${currentTotalPages} Terkunci`;
+        const percent = Math.min(100, Math.round((currentPdfMaxPages / currentTotalPages) * 100));
+        progressFill.style.width = percent + '%';
+    } else {
+        progressText.textContent = `Seluruh ${currentTotalPages} Halaman Dokumen Terkunci`;
+        progressFill.style.width = '0%';
+    }
+
+    // Format info domain yang diizinkan
+    const alertBox = document.getElementById('unikaAuthAlert');
+    if (accessInfo.reason === 'domain_mismatch') {
+        if (alertBox) {
+            alertBox.innerHTML = `<strong>Akses Ditolak:</strong> Akun Anda (${accessInfo.email}) tidak memiliki izin untuk membuka dokumen ini. Berkas ini hanya diperuntukkan bagi domain: <code>${currentPdfAllowedDomains}</code>.`;
+            alertBox.style.display = 'block';
+        }
+    } else {
+        if (alertBox) alertBox.style.display = 'none';
+    }
 }
 
 /**
@@ -439,24 +527,30 @@ function renderSinglePage(pageNum, callback) {
  * Update status tombol Download
  */
 function updateDownloadBtnState() {
-    const downloadBtn = document.getElementById('modalPdfDownload');
-    const downloadText = document.getElementById('modalPdfDownloadText');
-    const stageBadge   = document.getElementById('modalPdfStageBadge');
-    const userPill     = document.getElementById('modalUserPill');
+    const downloadBtn    = document.getElementById('modalPdfDownload');
+    const downloadText   = document.getElementById('modalPdfDownloadText');
+    const stageBadge     = document.getElementById('modalPdfStageBadge');
+    const userPill       = document.getElementById('modalUserPill');
     const unlockedBanner = document.getElementById('stageUnlockedBanner');
 
-    if (window.UNIKA_CONFIG.isLoggedIn) {
+    const accessInfo = checkCurrentUserDocAccess();
+
+    if (accessInfo.hasAccess) {
         downloadBtn.href = currentPdfUrl;
         downloadBtn.setAttribute('download', '');
         downloadBtn.onclick = null;
         downloadText.textContent = 'Unduh Lengkap';
         stageBadge.className = 'pdf-stage-badge unlocked';
-        stageBadge.textContent = 'Akses Penuh Civitas UNIKA';
-        userPill.style.display = 'inline-flex';
-        unlockedBanner.style.display = 'flex';
-        if (window.UNIKA_CONFIG.currentUser) {
-            document.getElementById('modalUserName').textContent = window.UNIKA_CONFIG.currentUser.name || 'Civitas UNIKA';
+        stageBadge.textContent = currentPdfIsRestricted ? 'Akses Penuh Terbuka' : 'Akses Publik Terbuka';
+        
+        if (window.UNIKA_CONFIG.isLoggedIn && window.UNIKA_CONFIG.currentUser) {
+            userPill.style.display = 'inline-flex';
+            unlockedBanner.style.display = 'flex';
+            document.getElementById('modalUserName').textContent = window.UNIKA_CONFIG.currentUser.name || 'Pengguna Terverifikasi';
             document.getElementById('bannerUserEmail').textContent = window.UNIKA_CONFIG.currentUser.email || '';
+        } else {
+            userPill.style.display = 'none';
+            unlockedBanner.style.display = 'none';
         }
     } else {
         downloadBtn.removeAttribute('download');
@@ -466,11 +560,11 @@ function updateDownloadBtnState() {
             if (stageCard && stageCard.style.display !== 'none') {
                 stageCard.scrollIntoView({ behavior: 'smooth' });
             }
-            alert('Akses Terbatas: Dokumen lengkap SPMI dan hak unduh berkas hanya dapat diakses oleh Civitas Akademika Universitas Katolik Soegijapranata (@unika.ac.id).\n\nSilakan masuk menggunakan akun Google UNIKA Anda pada formulir autentikasi di bawah.');
+            alert(`Akses Terbatas: Dokumen lengkap dan hak unduh hanya dapat dibuka oleh akun resmi (${currentPdfAllowedDomains}).\n\nSilakan masuk menggunakan akun Google Anda pada panel autentikasi di bawah.`);
         };
-        downloadText.textContent = 'Unduh Dokumen';
+        downloadText.textContent = 'Unduh Dokumen (Terkunci)';
         stageBadge.className = 'pdf-stage-badge locked';
-        stageBadge.textContent = 'Pratinjau Terbatas (Halaman 1–3)';
+        stageBadge.textContent = `Pratinjau Dibatasi (${currentPdfMaxPages} Halaman)`;
         userPill.style.display = 'none';
         unlockedBanner.style.display = 'none';
     }
@@ -526,7 +620,7 @@ function handleGoogleCredentialResponse(response) {
         return;
     }
 
-    // Kirim token ke backend PHP untuk verifikasi domain @unika.ac.id
+    // Kirim token ke backend PHP untuk verifikasi
     fetch(window.UNIKA_CONFIG.siteUrl + '/auth-google.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -534,36 +628,43 @@ function handleGoogleCredentialResponse(response) {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success && data.is_unika) {
-            // SUKSES: Akun Civitas UNIKA Terverifikasi
+        if (data.success && data.user) {
             window.UNIKA_CONFIG.isLoggedIn = true;
             window.UNIKA_CONFIG.currentUser = data.user;
 
-            // Sembunyikan Card Pembatas
-            const stageCard = document.getElementById('stageLockCard');
-            if (stageCard) stageCard.style.display = 'none';
+            const isAllowed = isUserAllowedForDoc(data.user.email, currentPdfAllowedDomains);
 
-            // Update status UI
-            updateDownloadBtnState();
+            if (isAllowed || !currentPdfIsRestricted) {
+                // SUKSES: Akun Terverifikasi & Domain Diizinkan
+                const stageCard = document.getElementById('stageLockCard');
+                if (stageCard) stageCard.style.display = 'none';
 
-            // Render sisa halaman (halaman 4 sampai selesai)
-            if (currentPdfDoc && currentTotalPages > 3) {
-                renderPages(4, currentTotalPages, function() {
-                    document.getElementById('modalPdfPageCount').textContent = 
-                        `${currentTotalPages} Halaman (Akses Penuh Terbuka)`;
-                });
+                updateDownloadBtnState();
+
+                // Render sisa halaman yang belum ter-render
+                if (currentPdfDoc && currentTotalPages > currentPdfRenderedPages) {
+                    renderPages(currentPdfRenderedPages + 1, currentTotalPages, function() {
+                        document.getElementById('modalPdfPageCount').textContent = 
+                            `${currentTotalPages} Halaman (Akses Penuh Terbuka)`;
+                    });
+                }
+
+                alert(`Autentikasi Berhasil!\n\nSelamat datang, ${data.user.name}!\nAkses dokumen lengkap (${currentTotalPages} halaman) dan fitur unduh telah aktif.`);
+            } else {
+                // Akun valid Google tapi domain tidak cocok dengan allowed_domains dokumen
+                if (alertBox) {
+                    alertBox.innerHTML = `
+                        <strong>Akses Ditolak:</strong><br>
+                        Akun Google Anda (${data.user.email}) tidak memiliki izin untuk dokumen ini.<br>
+                        Dokumen ini hanya dapat diakses oleh akun: <code>${currentPdfAllowedDomains}</code>.
+                    `;
+                    alertBox.style.display = 'block';
+                }
             }
 
-            // Notifikasi Sukses Formal
-            alert(`Autentikasi Berhasil\n\nSelamat datang, ${data.user.name}!\nAkses dokumen lengkap (${currentTotalPages} halaman) dan fitur unduh telah aktif.`);
-
         } else {
-            // DITOLAK: Bukan akun @unika.ac.id
             if (alertBox) {
-                alertBox.innerHTML = `
-                    <strong>Akses Ditolak:</strong><br>
-                    ${data.message || 'Hanya akun resmi @unika.ac.id yang memiliki hak akses penuh terhadap dokumen ini.'}
-                `;
+                alertBox.innerHTML = `<strong>Akses Ditolak:</strong><br>${data.message || 'Gagal memverifikasi akun Google.'}`;
                 alertBox.style.display = 'block';
             }
         }
@@ -581,7 +682,7 @@ function handleGoogleCredentialResponse(response) {
  * Logout Civitas UNIKA
  */
 function logoutCivitas() {
-    if (!confirm('Apakah Anda ingin keluar dari sesi Civitas UNIKA? Dokumen akan kembali ke mode pratinjau 3 halaman.')) {
+    if (!confirm('Apakah Anda ingin keluar dari sesi akun? Dokumen akan kembali ke mode pratinjau.')) {
         return;
     }
 
@@ -591,9 +692,8 @@ function logoutCivitas() {
     .then(() => {
         window.UNIKA_CONFIG.isLoggedIn = false;
         window.UNIKA_CONFIG.currentUser = null;
-        // Muat ulang pratinjau dalam modal
         if (currentPdfUrl) {
-            openPdfViewer(currentPdfUrl, currentPdfTitle);
+            openPdfViewer(currentPdfUrl, currentPdfTitle, currentPdfIsRestricted, currentPdfMaxPages, currentPdfAllowedDomains);
         }
     });
 }

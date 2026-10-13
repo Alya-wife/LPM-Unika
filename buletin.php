@@ -581,7 +581,8 @@ require_once __DIR__ . '/includes/navbar.php';
                             <a href="<?= $pdf_url ?>"
                                target="_blank"
                                class="book-card"
-                               title="<?= e($b['judul']) ?> – <?= e($b['edisi']) ?>">
+                               title="<?= e($b['judul']) ?> – <?= e($b['edisi']) ?>"
+                               onclick="if(typeof openPdfViewer==='function'){event.preventDefault();openPdfViewer('<?= $pdf_url ?>', '<?= e(addslashes($b['judul'])) ?>', <?= (int)($b['is_restricted'] ?? 0) ?>, <?= (int)($b['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($b['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>');}">
 
                                 <!-- Badan Buku 3D -->
                                 <div class="book-spine-shell">

@@ -43,14 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'File dokumen wajib diupload.';
         }
 
+        $is_restricted     = !empty($_POST['is_restricted']) ? 1 : 0;
+        $max_preview_pages = (int)($_POST['max_preview_pages'] ?? 3);
+        $allowed_domains   = parseSubmittedAllowedDomains();
+
         if (!$error) {
             if ($is_edit && $id) {
-                $stmt = $db->prepare("UPDATE dokumen SET nama_dokumen=?, kategori=?, file_path=? WHERE id=?");
-                $stmt->execute([$nama_dokumen, $kategori, $file_path, $id]);
+                $stmt = $db->prepare("UPDATE dokumen SET nama_dokumen=?, kategori=?, file_path=?, is_restricted=?, max_preview_pages=?, allowed_domains=? WHERE id=?");
+                $stmt->execute([$nama_dokumen, $kategori, $file_path, $is_restricted, $max_preview_pages, $allowed_domains, $id]);
                 $_SESSION['flash'] = 'Dokumen berhasil diperbarui.';
             } else {
-                $stmt = $db->prepare("INSERT INTO dokumen (nama_dokumen, kategori, file_path) VALUES (?,?,?)");
-                $stmt->execute([$nama_dokumen, $kategori, $file_path]);
+                $stmt = $db->prepare("INSERT INTO dokumen (nama_dokumen, kategori, file_path, is_restricted, max_preview_pages, allowed_domains) VALUES (?,?,?,?,?,?)");
+                $stmt->execute([$nama_dokumen, $kategori, $file_path, $is_restricted, $max_preview_pages, $allowed_domains]);
                 $_SESSION['flash'] = 'Dokumen berhasil diupload.';
             }
             redirect(SITE_URL . '/admin/dokumen-list.php');
@@ -139,6 +143,16 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <a href="<?= SITE_URL ?>/uploads/dokumen/<?= e($dokumen['file_path']) ?>" target="_blank" class="text-purple" style="margin-left:6px;">Lihat file</a>
                             </div>
                             <?php endif; ?>
+                        </div>
+
+                        <!-- Pengaturan Proteksi / Pembatasan Akses File -->
+                        <div class="col-12">
+                            <?php
+                            $res_is_restricted   = $dokumen['is_restricted'] ?? 0;
+                            $res_max_pages       = $dokumen['max_preview_pages'] ?? 3;
+                            $res_allowed_domains = $dokumen['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                            require __DIR__ . '/includes/file-restriction-field.php';
+                            ?>
                         </div>
 
                         <!-- Upload area visual -->

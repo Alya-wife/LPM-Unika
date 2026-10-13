@@ -926,9 +926,12 @@ function renderSpmiDokumenTableRows($docs) {
             <td style="color:var(--text-muted);font-size:0.85rem;text-align:center;font-weight:600;"><?= $i + 1 ?></td>
             <td>
                 <?php if ($has_file && $is_pdf): ?>
-                <a href="javascript:void(0)" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>')" style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
+                <a href="javascript:void(0)" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')" style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
                     <?= htmlspecialchars($d['nama_dokumen']) ?>
                 </a>
+                <?php if (!empty($d['is_restricted'])): ?>
+                <span class="badge bg-warning text-dark ms-1" style="font-size:0.68rem;"><i class="bi bi-lock-fill me-1"></i>Dibatasi</span>
+                <?php endif; ?>
                 <?php elseif ($has_file): ?>
                 <a href="<?= $file_url ?>" download style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
                     <?= htmlspecialchars($d['nama_dokumen']) ?>
@@ -947,7 +950,7 @@ function renderSpmiDokumenTableRows($docs) {
             <td style="text-align:center;">
                 <?php if ($has_file): ?>
                     <?php if ($is_pdf): ?>
-                    <button type="button" class="btn-download" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>')">
+                    <button type="button" class="btn-download" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         Buka PDF
                     </button>

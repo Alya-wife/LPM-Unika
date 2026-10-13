@@ -3,7 +3,145 @@ require_once __DIR__ . '/includes/auth.php';
 $admin_page_title = 'Manajemen Penghargaan';
 $db = getDB();
 
-// Handle capaian mutu & akreditasi institusi update (Beranda)
+// Handle Simpan / Tambah / Edit Item Capaian Mutu Multi-Item (Beranda)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_capaian_item') {
+    $item_id   = (int)($_POST['item_id'] ?? 0);
+    $badge     = trim($_POST['badge'] ?? 'Akreditasi Institusi');
+    $peringkat = trim($_POST['peringkat'] ?? 'UNGGUL');
+    $judul     = trim($_POST['judul'] ?? "Capaian Mutu\nUniversitas Katolik Soegijapranata");
+    $nomor_sk  = trim($_POST['nomor_sk'] ?? '');
+    $deskripsi = trim($_POST['deskripsi'] ?? '');
+    $btn_text  = trim($_POST['btn_text'] ?? 'Lihat Akreditasi Program Studi');
+    $btn_link  = trim($_POST['btn_link'] ?? 'akreditasi-prodi.php');
+    $urutan    = (int)($_POST['urutan'] ?? 1);
+
+    $items = getCapaianMutuItems();
+    $upload_dir = __DIR__ . '/../uploads/akreditasi/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+
+    $existing_index = -1;
+    $current_item = null;
+    if ($item_id > 0) {
+        foreach ($items as $idx => $it) {
+            if ((int)($it['id'] ?? 0) === $item_id) {
+                $existing_index = $idx;
+                $current_item = $it;
+                break;
+            }
+        }
+    }
+
+    $new_file = $current_item['file_sertifikat'] ?? '';
+
+    // Cek hasil penyesuaian gambar cropper (base64)
+    $cropped_b64 = $_POST['cropped_image_data'] ?? '';
+    if (!empty($cropped_b64) && strpos($cropped_b64, 'data:image') === 0) {
+        $b64_parts = explode(',', $cropped_b64);
+        if (count($b64_parts) === 2) {
+            $img_data = base64_decode($b64_parts[1]);
+            $temp_img = $upload_dir . 'temp_crop_' . uniqid() . '.webp';
+            if (file_put_contents($temp_img, $img_data)) {
+                $uploaded_pdf = saveOrConvertToPdf($temp_img, $upload_dir, 'akred_cert_', 'sertifikat.webp');
+                @unlink($temp_img);
+                if ($uploaded_pdf) {
+                    if ($new_file && $new_file !== $uploaded_pdf && strpos($new_file, '2023_Sertifikat') === false) {
+                        deleteUploadedFile($new_file, 'akreditasi');
+                    }
+                    $new_file = $uploaded_pdf;
+                    getOrGeneratePdfPreview($new_file, 'akreditasi');
+                }
+            }
+        }
+    } elseif (isset($_FILES['file_sertifikat']) && $_FILES['file_sertifikat']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['file_sertifikat']['tmp_name'];
+        $name = $_FILES['file_sertifikat']['name'];
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp'])) {
+            $uploaded_pdf = saveOrConvertToPdf($tmp, $upload_dir, 'akred_cert_', $name);
+            if ($uploaded_pdf) {
+                if ($new_file && $new_file !== $uploaded_pdf && strpos($new_file, '2023_Sertifikat') === false) {
+                    deleteUploadedFile($new_file, 'akreditasi');
+                }
+                $new_file = $uploaded_pdf;
+                getOrGeneratePdfPreview($new_file, 'akreditasi');
+            }
+        }
+    }
+
+    if ($existing_index >= 0) {
+        $items[$existing_index] = [
+            'id'              => $item_id,
+            'badge'           => $badge,
+            'judul'           => $judul,
+            'deskripsi'       => $deskripsi,
+            'peringkat'       => $peringkat,
+            'nomor_sk'        => $nomor_sk,
+            'file_sertifikat' => $new_file,
+            'btn_text'        => $btn_text,
+            'btn_link'        => $btn_link,
+            'urutan'          => $urutan
+        ];
+    } else {
+        $max_id = 0;
+        foreach ($items as $it) {
+            $max_id = max($max_id, (int)($it['id'] ?? 0));
+        }
+        $new_id = $max_id + 1;
+        $items[] = [
+            'id'              => $new_id,
+            'badge'           => $badge,
+            'judul'           => $judul,
+            'deskripsi'       => $deskripsi,
+            'peringkat'       => $peringkat,
+            'nomor_sk'        => $nomor_sk,
+            'file_sertifikat' => $new_file,
+            'btn_text'        => $btn_text,
+            'btn_link'        => $btn_link,
+            'urutan'          => $urutan ?: (count($items) + 1)
+        ];
+    }
+
+    // Urutkan item berdasarkan urutan lalu id
+    usort($items, function($a, $b) {
+        $ua = (int)($a['urutan'] ?? 1);
+        $ub = (int)($b['urutan'] ?? 1);
+        if ($ua === $ub) {
+            return ($a['id'] ?? 0) <=> ($b['id'] ?? 0);
+        }
+        return $ua <=> $ub;
+    });
+
+    saveCapaianMutuItems($items);
+    $_SESSION['flash'] = 'Data Sertifikat Capaian Mutu berhasil disimpan.';
+    redirect(SITE_URL . '/admin/penghargaan-list.php');
+}
+
+// Handle Hapus Item Capaian Mutu
+if (isset($_GET['delete_capaian']) && is_numeric($_GET['delete_capaian'])) {
+    $del_id = (int)$_GET['delete_capaian'];
+    $items = getCapaianMutuItems();
+    if (count($items) <= 1) {
+        $_SESSION['flash_error'] = 'Minimal harus ada 1 sertifikat capaian mutu untuk ditampilkan di Beranda.';
+    } else {
+        $filtered = [];
+        foreach ($items as $it) {
+            if ((int)($it['id'] ?? 0) === $del_id) {
+                if (!empty($it['file_sertifikat']) && strpos($it['file_sertifikat'], '2023_Sertifikat') === false) {
+                    deleteUploadedFile($it['file_sertifikat'], 'akreditasi');
+                }
+            } else {
+                $filtered[] = $it;
+            }
+        }
+        saveCapaianMutuItems($filtered);
+        $_SESSION['flash'] = 'Sertifikat capaian mutu berhasil dihapus.';
+    }
+    redirect(SITE_URL . '/admin/penghargaan-list.php');
+}
+
+// Fallback legacy update capaian mutu & akreditasi institusi update (Beranda)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_capaian_mutu') {
     $akred_badge     = trim($_POST['akred_institusi_badge'] ?? 'Akreditasi Institusi');
     $akred_judul     = trim($_POST['akred_institusi_judul'] ?? "Capaian Mutu\nUniversitas Katolik Soegijapranata");
@@ -11,17 +149,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $akred_sk        = trim($_POST['akred_institusi_sk'] ?? '');
     $akred_teks      = trim($_POST['akred_institusi_teks'] ?? '');
 
-    setPengaturan('akred_institusi_badge', $akred_badge);
-    setPengaturan('akred_institusi_judul', $akred_judul);
-    setPengaturan('akred_institusi_peringkat', $akred_peringkat);
-    setPengaturan('akred_institusi_sk', $akred_sk);
-    setPengaturan('akred_institusi_teks', $akred_teks);
-
-    // Handle upload file sertifikat jika ada
     $upload_dir = __DIR__ . '/../uploads/akreditasi/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
+
+    $items = getCapaianMutuItems();
+    $current_file = $items[0]['file_sertifikat'] ?? getPengaturan('akred_institusi_file', '');
 
     if (isset($_FILES['file_sertifikat']) && $_FILES['file_sertifikat']['error'] === UPLOAD_ERR_OK) {
         $tmp = $_FILES['file_sertifikat']['tmp_name'];
@@ -30,20 +164,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if (in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp'])) {
             $new_name = saveOrConvertToPdf($tmp, $upload_dir, 'akred_institusi_cert_', $name);
             if ($new_name) {
-                $old = getPengaturan('akred_institusi_file');
-                if ($old && file_exists($upload_dir . $old) && strpos($old, 'akred_institusi_cert_') === 0) {
-                    @unlink($upload_dir . $old);
-                    $old_thumb = $upload_dir . pathinfo($old, PATHINFO_FILENAME) . '.webp';
-                    if (file_exists($old_thumb)) @unlink($old_thumb);
-                    $old_thumb_jpg = $upload_dir . 'thumb_' . pathinfo($old, PATHINFO_FILENAME) . '.jpg';
-                    if (file_exists($old_thumb_jpg)) @unlink($old_thumb_jpg);
+                if ($current_file && $current_file !== $new_name && strpos($current_file, '2023_Sertifikat') === false) {
+                    deleteUploadedFile($current_file, 'akreditasi');
                 }
-                setPengaturan('akred_institusi_file', $new_name);
+                $current_file = $new_name;
                 getOrGeneratePdfPreview($new_name, 'akreditasi');
             }
         }
     }
 
+    if (!empty($items)) {
+        $items[0]['badge']           = $akred_badge;
+        $items[0]['judul']           = $akred_judul;
+        $items[0]['peringkat']       = $akred_peringkat;
+        $items[0]['nomor_sk']        = $akred_sk;
+        $items[0]['deskripsi']       = $akred_teks;
+        $items[0]['file_sertifikat'] = $current_file;
+    } else {
+        $items[] = [
+            'id'              => 1,
+            'badge'           => $akred_badge,
+            'judul'           => $akred_judul,
+            'peringkat'       => $akred_peringkat,
+            'nomor_sk'        => $akred_sk,
+            'deskripsi'       => $akred_teks,
+            'file_sertifikat' => $current_file,
+            'btn_text'        => 'Lihat Akreditasi Program Studi',
+            'btn_link'        => 'akreditasi-prodi.php',
+            'urutan'          => 1
+        ];
+    }
+
+    saveCapaianMutuItems($items);
     $_SESSION['flash'] = 'Data Capaian Mutu & Sertifikat Akreditasi Beranda berhasil diperbarui.';
     redirect(SITE_URL . '/admin/penghargaan-list.php');
 }
@@ -109,18 +261,12 @@ if ($stat_akreditasi === '') {
 }
 $stat_dokumen         = getPengaturan('stat_dokumen', '');
 
-// Data Capaian Mutu & Akreditasi Beranda
-$akred_badge     = getPengaturan('akred_institusi_badge', 'Akreditasi Institusi');
-$akred_judul     = getPengaturan('akred_institusi_judul', "Capaian Mutu\nUniversitas Katolik Soegijapranata");
-$akred_peringkat = getPengaturan('akred_institusi_peringkat', 'UNGGUL');
-$akred_sk        = getPengaturan('akred_institusi_sk', 'Nomor SK: -');
-$akred_teks      = getPengaturan('akred_institusi_teks', 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).');
-$default_cert    = file_exists(__DIR__ . '/../uploads/akreditasi/2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf') ? '2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf' : '';
-$akred_file      = getPengaturan('akred_institusi_file', $default_cert);
-$akred_preview   = $akred_file ? getOrGeneratePdfPreview($akred_file, 'akreditasi') : '';
+// Data Capaian Mutu & Akreditasi Beranda (Multi-Item)
+$capaian_items = getCapaianMutuItems();
 
 $flash = $_SESSION['flash'] ?? '';
-unset($_SESSION['flash']);
+$flash_error = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash'], $_SESSION['flash_error']);
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -134,7 +280,16 @@ require_once __DIR__ . '/includes/admin-header.php';
 </div>
 <?php endif; ?>
 
-<!-- Form Kelola Capaian Mutu & Akreditasi Institusi Beranda -->
+<?php if ($flash_error): ?>
+<div class="alert-lpm alert-danger mb-4" style="background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 8.25h.008v.008H12v-.008Z" />
+    </svg>
+    <?= e($flash_error) ?>
+</div>
+<?php endif; ?>
+
+<!-- Kelola Capaian Mutu & Sertifikat Akreditasi Beranda (Multi-Item) -->
 <div class="admin-table-wrap mb-4" style="padding: 1.5rem 1.75rem; border: 1.5px solid #E2E8F0; background: #FFFFFF; border-radius: 12px;">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-3" style="border-bottom: 1px solid #F1F5F9;">
         <div>
@@ -143,12 +298,18 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .982-3.172M12 3a4.5 4.5 0 0 0-4.5 4.5v1.875a3.375 3.375 0 0 0 3.375 3.375h2.25a3.375 3.375 0 0 0 3.375-3.375V7.5A4.5 4.5 0 0 0 12 3Z" />
                 </svg>
                 Capaian Mutu &amp; Sertifikat Akreditasi (Beranda)
+                <span class="badge bg-purple-subtle text-purple border border-purple-subtle ms-1" style="font-size:0.75rem; font-weight:700;">
+                    <?= count($capaian_items) ?> Sertifikat
+                </span>
             </h5>
             <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                Sesuaikan teks capaian mutu universitas, peringkat akreditasi, nomor SK, dan unggah berkas sertifikat yang tampil di bagian tengah halaman Beranda.
+                Kelola daftar sertifikat capaian mutu yang tampil di Beranda. Bila terdapat lebih dari 1 sertifikat, di Beranda kartu sertifikat akan bergeser otomatis (slide carousel) dan teks di sisi kirinya berganti selaras dengan sertifikat yang aktif.
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" id="btnTambahCapaian" style="font-size: 0.82rem; border-radius: 6px; background:var(--purple); border-color:var(--purple); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Tambah Sertifikat Capaian
+            </button>
             <a href="<?= SITE_URL ?>/admin/akreditasi-institusi.php" class="btn btn-sm btn-outline-primary" style="font-size: 0.8rem; border-radius: 6px;">
                 <i class="bi bi-gear-fill me-1"></i> Detail Akreditasi Institusi
             </a>
@@ -158,89 +319,123 @@ require_once __DIR__ . '/includes/admin-header.php';
         </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="action" value="update_capaian_mutu">
-        <div class="row g-3">
-            <div class="col-lg-7">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #334155;">Badge Kategori</label>
-                        <input type="text" name="akred_institusi_badge" class="form-control" value="<?= e($akred_badge) ?>" placeholder="Contoh: Akreditasi Institusi" style="border-radius: 8px;">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #334155;">Peringkat Akreditasi</label>
-                        <input type="text" name="akred_institusi_peringkat" class="form-control" value="<?= e($akred_peringkat) ?>" placeholder="Contoh: UNGGUL" required style="border-radius: 8px; font-weight:700; color:var(--purple);">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #334155;">Judul Bagian Capaian Mutu</label>
-                        <input type="text" name="akred_institusi_judul" class="form-control" value="<?= e($akred_judul) ?>" placeholder="Capaian Mutu Universitas Katolik Soegijapranata" required style="border-radius: 8px;">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #334155;">Nomor SK Akreditasi</label>
-                        <input type="text" name="akred_institusi_sk" class="form-control" value="<?= e($akred_sk) ?>" placeholder="Contoh: No. 101/SK/BAN-PT/Ak/PT/III/2023" style="border-radius: 8px;">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: #334155;">Teks Komitmen / Deskripsi Capaian Mutu</label>
-                        <textarea name="akred_institusi_teks" rows="3" class="form-control" style="border-radius: 8px;" placeholder="Tuliskan komitmen mutu atau ringkasan capaian akreditasi..."><?= e($akred_teks) ?></textarea>
-                    </div>
-                </div>
+    <!-- Alert status slide -->
+    <?php if (count($capaian_items) > 1): ?>
+        <div class="alert alert-info py-2 px-3 small mb-3 d-flex align-items-center gap-2" style="border-radius:8px; font-size:0.83rem; background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+            <i class="bi bi-arrow-repeat fs-5 text-primary"></i>
+            <div>
+                <strong>Auto-Slide Beranda Aktif (<?= count($capaian_items) ?> Sertifikat):</strong> Berkas sertifikat di sisi kanan bergeser otomatis setiap 5 detik, dan seluruh informasi teks di sisi kiri (Badge, Judul, Peringkat, SK, Deskripsi, Tombol) berganti otomatis mengikuti sertifikat aktif.
             </div>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-secondary py-2 px-3 small mb-3 d-flex align-items-center gap-2" style="border-radius:8px; font-size:0.83rem; background:#F8FAFC; border-color:#E2E8F0; color:#475569;">
+            <i class="bi bi-info-circle fs-5 text-secondary"></i>
+            <div>
+                <strong>Mode Tampilan Tunggal (1 Sertifikat):</strong> Saat ini hanya ada 1 sertifikat capaian. Klik <strong>Tambah Sertifikat Capaian</strong> di atas bila ingin menambahkan sertifikat lain agar fitur rotasi carousel otomatis aktif di Beranda.
+            </div>
+        </div>
+    <?php endif; ?>
 
-            <div class="col-lg-5">
-                <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 10px; padding: 1.25rem;" class="h-100 d-flex flex-column justify-content-between">
-                    <div>
-                        <label class="form-label d-flex align-items-center justify-content-between" style="font-weight: 600; font-size: 0.85rem; color: #334155;">
-                            <span>Berkas Sertifikat Akreditasi</span>
-                            <span class="badge bg-primary-subtle text-primary border" style="font-size:0.7rem;">Otomatis PDF</span>
-                        </label>
-
-                        <?php if ($akred_file && file_exists(__DIR__ . '/../uploads/akreditasi/' . $akred_file)): ?>
-                            <div class="p-2 mb-3 bg-white border rounded-3 d-flex align-items-center gap-3">
-                                <div style="width: 64px; height: 64px; border-radius: 6px; overflow: hidden; background: #EEF2F6; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-                                    <?php if ($akred_preview && file_exists(__DIR__ . '/../uploads/akreditasi/' . $akred_preview)): ?>
-                                        <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($akred_preview) ?>" alt="Sertifikat" style="width: 100%; height: 100%; object-fit: cover;">
+    <!-- Tabel Daftar Sertifikat Capaian Mutu -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+            <thead style="background:#F8FAFC; border-bottom:1.5px solid #E2E8F0;">
+                <tr>
+                    <th width="45" class="text-center">#</th>
+                    <th width="110">Sertifikat</th>
+                    <th>Informasi Capaian (Teks Beranda)</th>
+                    <th width="190">Tombol Aksi</th>
+                    <th width="120" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($capaian_items as $c_idx => $c_item): 
+                    $c_file = $c_item['file_sertifikat'] ?? '';
+                    $c_prev = $c_file ? getOrGeneratePdfPreview($c_file, 'akreditasi') : '';
+                ?>
+                <tr>
+                    <td class="text-center fw-bold text-muted"><?= $c_item['urutan'] ?? ($c_idx + 1) ?></td>
+                    <td>
+                        <?php if ($c_file && file_exists(__DIR__ . '/../uploads/akreditasi/' . $c_file)): ?>
+                            <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($c_file) ?>" target="_blank" title="Buka berkas sertifikat">
+                                <div style="width:90px;height:65px;border-radius:8px;overflow:hidden;border:1px solid #CBD5E1;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.06);position:relative;">
+                                    <?php if ($c_prev && file_exists(__DIR__ . '/../uploads/akreditasi/' . $c_prev)): ?>
+                                        <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($c_prev) ?>" alt="Sertifikat" style="width:100%;height:100%;object-fit:cover;">
                                     <?php else: ?>
-                                        <i class="bi bi-file-earmark-pdf text-danger fs-2"></i>
+                                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-3"></i>
                                     <?php endif; ?>
+                                    <span style="position:absolute;bottom:2px;right:2px;background:rgba(15,23,42,0.85);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 3px;border-radius:3px;">
+                                        <?= strtoupper(pathinfo($c_file, PATHINFO_EXTENSION)) ?>
+                                    </span>
                                 </div>
-                                <div style="min-width: 0; flex-grow: 1;">
-                                    <div class="text-truncate fw-semibold text-navy small mb-1"><?= e($akred_file) ?></div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($akred_file) ?>" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem; border-radius:4px;">
-                                            <i class="bi bi-box-arrow-up-right me-1"></i> Buka Berkas
-                                        </a>
-                                        <span class="badge bg-success-subtle text-success py-1 px-2" style="font-size:0.7rem;">Aktif di Beranda</span>
-                                    </div>
-                                </div>
-                            </div>
+                            </a>
                         <?php else: ?>
-                            <div class="alert alert-warning py-2 px-3 small mb-3" style="border-radius: 8px;">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Belum ada sertifikat yang diunggah. Tampilan di beranda saat ini masih berupa placeholder kosong.
+                            <div style="width:90px;height:65px;border-radius:8px;background:#F1F5F9;border:1px dashed #CBD5E1;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:0.7rem;text-align:center;padding:4px;">
+                                Tanpa Berkas
                             </div>
                         <?php endif; ?>
-
-                        <div class="mb-2">
-                            <label class="form-label small text-muted mb-1"><?= $akred_file ? 'Ganti Berkas Sertifikat:' : 'Unggah Berkas Baru:' ?></label>
-                            <input type="file" name="file_sertifikat" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.webp" style="border-radius: 6px;">
-                            <div class="mt-1">
-                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 20 MB</span>
-                                <small class="text-muted" style="font-size: 0.73rem;">Mendukung format .pdf, .webp, .jpg, .png. File gambar otomatis diubah ke dokumen PDF.</small>
-                            </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size:0.72rem;font-weight:600;">
+                                <?= e($c_item['badge'] ?? 'Akreditasi Institusi') ?>
+                            </span>
+                            <span class="badge bg-warning-subtle text-dark border border-warning" style="font-size:0.72rem;font-weight:800;">
+                                <?= e($c_item['peringkat'] ?? 'UNGGUL') ?>
+                            </span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-flex justify-content-end mt-3 pt-2" style="border-top: 1px dashed #E2E8F0;">
-            <button type="submit" class="btn-save" style="margin-top: 0; padding: 0.55rem 1.4rem; font-size: 0.875rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-                Simpan Capaian Mutu &amp; Akreditasi
-            </button>
-        </div>
-    </form>
+                        <div class="fw-bold text-navy" style="font-size:0.92rem;line-height:1.35;"><?= nl2br(e($c_item['judul'] ?? '')) ?></div>
+                        <?php if (!empty($c_item['nomor_sk'])): ?>
+                            <div class="text-muted small mt-1"><i class="bi bi-file-text me-1 text-primary"></i><?= e($c_item['nomor_sk']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($c_item['deskripsi'])): ?>
+                            <div class="text-muted small mt-1 text-truncate" style="max-width:480px;" title="<?= e($c_item['deskripsi']) ?>">
+                                <?= e(mb_strimwidth($c_item['deskripsi'], 0, 110, '...')) ?>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <div class="fw-semibold small text-navy mb-1"><?= e($c_item['btn_text'] ?? 'Lihat Akreditasi Program Studi') ?></div>
+                        <span class="badge bg-light text-muted border text-truncate d-inline-block" style="max-width:180px;font-size:0.72rem;">
+                            <?= e($c_item['btn_link'] ?? 'akreditasi-prodi.php') ?>
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-edit-capaian" 
+                                    data-id="<?= (int)($c_item['id'] ?? 0) ?>"
+                                    data-badge="<?= e($c_item['badge'] ?? '') ?>"
+                                    data-peringkat="<?= e($c_item['peringkat'] ?? '') ?>"
+                                    data-judul="<?= e($c_item['judul'] ?? '') ?>"
+                                    data-sk="<?= e($c_item['nomor_sk'] ?? '') ?>"
+                                    data-deskripsi="<?= e($c_item['deskripsi'] ?? '') ?>"
+                                    data-btn-text="<?= e($c_item['btn_text'] ?? 'Lihat Akreditasi Program Studi') ?>"
+                                    data-btn-link="<?= e($c_item['btn_link'] ?? 'akreditasi-prodi.php') ?>"
+                                    data-urutan="<?= (int)($c_item['urutan'] ?? ($c_idx + 1)) ?>"
+                                    data-file="<?= e($c_file) ?>"
+                                    data-preview="<?= e($c_prev) ?>"
+                                    title="Edit Sertifikat Ini" style="border-radius:6px;padding:4px 8px;">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <?php if (count($capaian_items) > 1): ?>
+                                <a href="<?= SITE_URL ?>/admin/penghargaan-list.php?delete_capaian=<?= (int)($c_item['id'] ?? 0) ?>" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Apakah Anda yakin ingin menghapus sertifikat capaian ini dari Beranda?')" 
+                                   title="Hapus Sertifikat Ini" style="border-radius:6px;padding:4px 8px;">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            <?php else: ?>
+                                <button type="button" class="btn btn-sm btn-light border text-muted" disabled title="Minimal harus ada 1 sertifikat" style="border-radius:6px;padding:4px 8px;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Form Kelola Statistik Capaian Beranda -->
@@ -442,5 +637,424 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Modal Tambah / Edit Sertifikat Capaian Mutu -->
+<div class="modal fade" id="modalCapaianItem" tabindex="-1" aria-labelledby="modalCapaianItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:1.25rem 1.75rem;">
+                <h5 class="modal-title fw-bold text-navy" id="modalCapaianItemLabel" style="font-size:1.15rem;">
+                    <i class="bi bi-award-fill text-warning me-2"></i>
+                    <span>Tambah Sertifikat Capaian Mutu</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data" id="formCapaianItem">
+                <input type="hidden" name="action" value="save_capaian_item">
+                <input type="hidden" name="item_id" id="capaian_item_id" value="0">
+                <input type="hidden" name="cropped_image_data" id="capaian_cropped_data" value="">
+                
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Badge Kategori</label>
+                            <input type="text" name="badge" id="capaian_badge" class="form-control" placeholder="Contoh: Akreditasi Institusi" value="Akreditasi Institusi" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-4 col-8">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Peringkat / Predikat <span class="text-danger">*</span></label>
+                            <input type="text" name="peringkat" id="capaian_peringkat" class="form-control fw-bold" placeholder="Contoh: UNGGUL" value="UNGGUL" required style="border-radius:8px; color:var(--purple);">
+                        </div>
+                        <div class="col-md-2 col-4">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Urutan</label>
+                            <input type="number" name="urutan" id="capaian_urutan" class="form-control text-center" min="1" value="1" style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Judul Bagian Capaian Mutu <span class="text-danger">*</span></label>
+                            <input type="text" name="judul" id="capaian_judul" class="form-control" placeholder="Contoh: Capaian Mutu Universitas Katolik Soegijapranata" value="Capaian Mutu Universitas Katolik Soegijapranata" required style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Nomor SK / Sertifikat</label>
+                            <input type="text" name="nomor_sk" id="capaian_sk" class="form-control" placeholder="Contoh: No. 263/SK/BAN-PT/Ak.KP/PT/IV/2023" style="border-radius:8px;">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Teks Komitmen / Deskripsi Capaian Mutu</label>
+                            <textarea name="deskripsi" id="capaian_deskripsi" rows="3" class="form-control" placeholder="Tuliskan komitmen mutu atau ringkasan capaian akreditasi..." style="border-radius:8px;">Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Teks Tombol Aksi</label>
+                            <input type="text" name="btn_text" id="capaian_btn_text" class="form-control" placeholder="Lihat Akreditasi Program Studi" value="Lihat Akreditasi Program Studi" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small mb-1">Tautan / Link Tombol</label>
+                            <input type="text" name="btn_link" id="capaian_btn_link" class="form-control" placeholder="akreditasi-prodi.php" value="akreditasi-prodi.php" style="border-radius:8px;">
+                        </div>
+
+                        <!-- Berkas Sertifikat & Cropper Section -->
+                        <div class="col-12 mt-3 pt-3 border-top">
+                            <label class="form-label fw-semibold text-navy small mb-1 d-flex align-items-center justify-content-between">
+                                <span>Berkas Sertifikat (.PDF / Gambar)</span>
+                                <span class="badge bg-primary-subtle text-primary border" style="font-size:0.7rem;">Otomatis PDF</span>
+                            </label>
+
+                            <!-- Preview Berkas Saat Ini -->
+                            <div id="capaian_current_file_wrap" class="d-none mb-3 p-2 bg-light border rounded-3 align-items-center gap-3">
+                                <div id="capaian_current_thumb" style="width:56px;height:56px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid #CBD5E1;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
+                                <div style="min-width:0;flex-grow:1;">
+                                    <div id="capaian_current_filename" class="text-truncate fw-semibold text-navy small mb-1"></div>
+                                    <a id="capaian_current_link" href="#" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;border-radius:4px;">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Buka Berkas Asli
+                                    </a>
+                                </div>
+                            </div>
+
+                            <input type="file" name="file_sertifikat" id="capaian_file_input" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp" style="border-radius:8px;">
+                            <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap">
+                                <small class="text-muted" style="font-size:0.75rem;">Mendukung berkas .pdf, .webp, .jpg, .png (Maks. 20 MB). Format gambar otomatis diubah ke dokumen PDF resolusi tinggi.</small>
+                            </div>
+
+                            <!-- Image Preview & Crop Button Trigger (untuk gambar) -->
+                            <div id="capaian_image_crop_area" class="d-none mt-3 p-3 bg-light rounded-3 border">
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <div style="width:120px;height:85px;border-radius:8px;overflow:hidden;border:1px solid #CBD5E1;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                                        <img id="capaian_preview_crop_img" src="" alt="Preview Sertifikat" style="width:100%;height:100%;object-fit:cover;">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-navy small mb-1">Penyesuaian Visual Sertifikat</div>
+                                        <p class="text-muted small mb-2" style="font-size:0.78rem;">Anda dapat memotong (crop), memutar (rotate), atau membalik (flip) gambar sertifikat sebelum disimpan.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold d-inline-flex align-items-center gap-1" id="btnOpenCapaianCropper" style="border-radius:6px;">
+                                            <i class="bi bi-crop text-warning"></i> Sesuaikan Gambar (Crop &amp; Rotate)
+                                        </button>
+                                        <span id="capaian_crop_status_badge" class="badge bg-success-subtle text-success border border-success ms-2 d-none" style="font-size:0.75rem;">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Telah disesuaikan
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between" style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:1rem 1.75rem;">
+                    <button type="button" class="btn btn-outline-secondary px-3 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" style="background:var(--purple); border-color:var(--purple); border-radius:8px;">
+                        <i class="bi bi-check-lg fs-5"></i> Simpan Sertifikat Capaian
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cropper Penyesuaian Gambar Sertifikat -->
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-labelledby="cropperModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 15px 35px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:1.25rem 1.75rem;">
+                <h5 class="modal-title fw-bold text-navy" id="cropperModalLabel" style="font-size:1.15rem;">
+                    <i class="bi bi-crop text-primary me-2"></i> Sesuaikan Gambar Sertifikat
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="background:#F1F5F9;">
+                <div style="width:100%; height:380px; background:#0F172A; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                    <img id="cropperTargetImg" src="" alt="Crop Target" style="max-width:100%; max-height:100%;">
+                </div>
+
+                <!-- Kontrol Toolbar -->
+                <div class="p-3 bg-white rounded-3 border mt-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3 col-6 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnFlipH" title="Balik Horizontal">
+                                <i class="bi bi-arrows-expand-vertical"></i> ⇆ Flip H
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnFlipV" title="Balik Vertikal">
+                                <i class="bi bi-arrows-collapse-vertical"></i> ⇅ Flip V
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnRotateLeft" title="Putar Kiri 90°">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnRotateRight" title="Putar Kanan 90°">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnZoomIn" title="Perbesar">
+                                <i class="bi bi-zoom-in"></i> Zoom +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold py-2" id="btnZoomOut" title="Perkecil">
+                                <i class="bi bi-zoom-out"></i> Zoom -
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-bold py-2" id="btnResetCrop" title="Reset Penyesuaian">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rasio Pilihan -->
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top flex-wrap">
+                        <span class="text-muted small fw-bold text-uppercase" style="font-size:0.75rem; letter-spacing:0.5px;">Rasio Aspek:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn fw-semibold" data-ratio="1.414213">A4 Landscape (1.41:1)</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn fw-semibold" data-ratio="1.333333">4:3 Sertifikat</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn fw-semibold" data-ratio="1.777778">16:9 Landscape</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn fw-semibold" data-ratio="NaN">Bebas (Free)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" id="btnCancelCrop" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCrop" style="background:var(--navy); border-color:var(--navy); border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Penyesuaian
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modalCapaianEl = document.getElementById('modalCapaianItem');
+    const bsModalCapaian = modalCapaianEl ? new bootstrap.Modal(modalCapaianEl) : null;
+
+    const modalCropperEl = document.getElementById('cropperModal');
+    const bsModalCropper = modalCropperEl ? new bootstrap.Modal(modalCropperEl) : null;
+
+    const btnTambah = document.getElementById('btnTambahCapaian');
+    const modalTitle = document.getElementById('modalCapaianItemLabel');
+    const formCapaian = document.getElementById('formCapaianItem');
+
+    const inpId = document.getElementById('capaian_item_id');
+    const inpBadge = document.getElementById('capaian_badge');
+    const inpPeringkat = document.getElementById('capaian_peringkat');
+    const inpUrutan = document.getElementById('capaian_urutan');
+    const inpJudul = document.getElementById('capaian_judul');
+    const inpSK = document.getElementById('capaian_sk');
+    const inpDeskripsi = document.getElementById('capaian_deskripsi');
+    const inpBtnText = document.getElementById('capaian_btn_text');
+    const inpBtnLink = document.getElementById('capaian_btn_link');
+    const inpCropped = document.getElementById('capaian_cropped_data');
+
+    const fileInput = document.getElementById('capaian_file_input');
+    const curFileWrap = document.getElementById('capaian_current_file_wrap');
+    const curThumb = document.getElementById('capaian_current_thumb');
+    const curFilename = document.getElementById('capaian_current_filename');
+    const curLink = document.getElementById('capaian_current_link');
+
+    const cropArea = document.getElementById('capaian_image_crop_area');
+    const previewCropImg = document.getElementById('capaian_preview_crop_img');
+    const btnOpenCropper = document.getElementById('btnOpenCapaianCropper');
+    const cropStatusBadge = document.getElementById('capaian_crop_status_badge');
+    const cropperTargetImg = document.getElementById('cropperTargetImg');
+
+    let cropper = null;
+    let currentScaleX = 1;
+    let currentScaleY = 1;
+    let activeRatio = 1.414213;
+
+    // Tombol Tambah Sertifikat Baru
+    if (btnTambah) {
+        btnTambah.addEventListener('click', function() {
+            modalTitle.innerHTML = '<i class="bi bi-award-fill text-warning me-2"></i><span>Tambah Sertifikat Capaian Mutu</span>';
+            formCapaian.reset();
+            inpId.value = '0';
+            inpCropped.value = '';
+            inpBadge.value = 'Akreditasi Institusi';
+            inpPeringkat.value = 'UNGGUL';
+            inpJudul.value = 'Capaian Mutu Universitas Katolik Soegijapranata';
+            inpDeskripsi.value = 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).';
+            inpBtnText.value = 'Lihat Akreditasi Program Studi';
+            inpBtnLink.value = 'akreditasi-prodi.php';
+            inpUrutan.value = '<?= count($capaian_items) + 1 ?>';
+
+            curFileWrap.classList.add('d-none');
+            cropArea.classList.add('d-none');
+            cropStatusBadge.classList.add('d-none');
+            bsModalCapaian.show();
+        });
+    }
+
+    // Tombol Edit Sertifikat
+    document.querySelectorAll('.btn-edit-capaian').forEach(btn => {
+        btn.addEventListener('click', function() {
+            modalTitle.innerHTML = '<i class="bi bi-pencil-square text-primary me-2"></i><span>Edit Sertifikat Capaian Mutu</span>';
+            inpId.value = this.dataset.id || '0';
+            inpBadge.value = this.dataset.badge || '';
+            inpPeringkat.value = this.dataset.peringkat || '';
+            inpJudul.value = this.dataset.judul || '';
+            inpSK.value = this.dataset.sk || '';
+            inpDeskripsi.value = this.dataset.deskripsi || '';
+            inpBtnText.value = this.dataset.btnText || 'Lihat Akreditasi Program Studi';
+            inpBtnLink.value = this.dataset.btnLink || 'akreditasi-prodi.php';
+            inpUrutan.value = this.dataset.urutan || '1';
+            inpCropped.value = '';
+            fileInput.value = '';
+            cropStatusBadge.classList.add('d-none');
+
+            const fName = this.dataset.file || '';
+            const fPrev = this.dataset.preview || '';
+
+            if (fName) {
+                curFileWrap.classList.remove('d-none');
+                curFilename.textContent = fName;
+                curLink.href = '<?= SITE_URL ?>/uploads/akreditasi/' + fName;
+                if (fPrev) {
+                    curThumb.innerHTML = '<img src="<?= SITE_URL ?>/uploads/akreditasi/' + fPrev + '" style="width:100%;height:100%;object-fit:cover;">';
+                    previewCropImg.src = '<?= SITE_URL ?>/uploads/akreditasi/' + fPrev;
+                    cropArea.classList.remove('d-none');
+                } else {
+                    curThumb.innerHTML = '<i class="bi bi-file-earmark-pdf-fill text-danger fs-3"></i>';
+                    cropArea.classList.add('d-none');
+                }
+            } else {
+                curFileWrap.classList.add('d-none');
+                cropArea.classList.add('d-none');
+            }
+
+            bsModalCapaian.show();
+        });
+    });
+
+    // Handle pemilihan berkas
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        previewCropImg.src = evt.target.result;
+                        cropperTargetImg.src = evt.target.result;
+                        cropArea.classList.remove('d-none');
+                        cropStatusBadge.classList.add('d-none');
+                        inpCropped.value = '';
+
+                        // Tampilkan cropper langsung untuk memudahkan user
+                        bsModalCapaian.hide();
+                        setTimeout(() => bsModalCropper.show(), 350);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    cropArea.classList.add('d-none');
+                    inpCropped.value = '';
+                }
+            }
+        });
+    }
+
+    // Tombol buka cropper manual
+    if (btnOpenCropper) {
+        btnOpenCropper.addEventListener('click', function() {
+            if (previewCropImg.src) {
+                cropperTargetImg.src = previewCropImg.src;
+                bsModalCapaian.hide();
+                setTimeout(() => bsModalCropper.show(), 350);
+            }
+        });
+    }
+
+    // Inisialisasi cropper saat modal cropper tampil
+    if (modalCropperEl) {
+        modalCropperEl.addEventListener('shown.bs.modal', function() {
+            if (cropper) cropper.destroy();
+            currentScaleX = 1;
+            currentScaleY = 1;
+            cropper = new Cropper(cropperTargetImg, {
+                aspectRatio: activeRatio,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.95,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                checkCrossOrigin: false,
+            });
+        });
+
+        modalCropperEl.addEventListener('hidden.bs.modal', function() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        });
+    }
+
+    // Batal Crop -> buka kembali modal capaian item
+    const btnCancelCrop = document.getElementById('btnCancelCrop');
+    if (btnCancelCrop) {
+        btnCancelCrop.addEventListener('click', function() {
+            bsModalCropper.hide();
+            setTimeout(() => bsModalCapaian.show(), 350);
+        });
+    }
+
+    // Flip & Rotate
+    const btnFlipH = document.getElementById('btnFlipH');
+    if (btnFlipH) btnFlipH.addEventListener('click', () => { if (!cropper) return; currentScaleX = -currentScaleX; cropper.scaleX(currentScaleX); });
+
+    const btnFlipV = document.getElementById('btnFlipV');
+    if (btnFlipV) btnFlipV.addEventListener('click', () => { if (!cropper) return; currentScaleY = -currentScaleY; cropper.scaleY(currentScaleY); });
+
+    const btnRotL = document.getElementById('btnRotateLeft');
+    if (btnRotL) btnRotL.addEventListener('click', () => { if (cropper) cropper.rotate(-90); });
+
+    const btnRotR = document.getElementById('btnRotateRight');
+    if (btnRotR) btnRotR.addEventListener('click', () => { if (cropper) cropper.rotate(90); });
+
+    const btnZIn = document.getElementById('btnZoomIn');
+    if (btnZIn) btnZIn.addEventListener('click', () => { if (cropper) cropper.zoom(0.1); });
+
+    const btnZOut = document.getElementById('btnZoomOut');
+    if (btnZOut) btnZOut.addEventListener('click', () => { if (cropper) cropper.zoom(-0.1); });
+
+    const btnReset = document.getElementById('btnResetCrop');
+    if (btnReset) btnReset.addEventListener('click', () => { if (!cropper) return; cropper.reset(); currentScaleX = 1; currentScaleY = 1; });
+
+    // Rasio Pilihan
+    document.querySelectorAll('.ratio-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const r = parseFloat(this.dataset.ratio);
+            activeRatio = isNaN(r) ? NaN : r;
+            if (cropper) cropper.setAspectRatio(activeRatio);
+        });
+    });
+
+    // Terapkan Crop
+    const btnApplyCrop = document.getElementById('btnApplyCrop');
+    if (btnApplyCrop) {
+        btnApplyCrop.addEventListener('click', function() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({
+                maxWidth: 2400,
+                maxHeight: 2400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            if (canvas) {
+                const b64 = canvas.toDataURL('image/webp', 0.92);
+                inpCropped.value = b64;
+                previewCropImg.src = b64;
+                cropStatusBadge.classList.remove('d-none');
+            }
+            bsModalCropper.hide();
+            setTimeout(() => bsModalCapaian.show(), 350);
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

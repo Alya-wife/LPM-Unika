@@ -74,13 +74,17 @@ function getBerandaData() {
     $data['stat_akr']    = $jml_akr;
     $data['jml_dokumen'] = $jml_dokumen;
 
-    // 5. Akreditasi
-    $data['akred_file']      = getPengaturan('akred_institusi_file', file_exists(__DIR__ . '/../uploads/akreditasi/2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf') ? '2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf' : '');
-    $data['akred_peringkat'] = getPengaturan('akred_institusi_peringkat', 'UNGGUL');
-    $data['akred_sk']        = getPengaturan('akred_institusi_sk', 'Nomor SK: -');
-    $data['akred_teks']      = getPengaturan('akred_institusi_teks', 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).');
-    $data['akred_badge']     = getPengaturan('akred_institusi_badge', 'Akreditasi Institusi');
-    $data['akred_judul']     = getPengaturan('akred_institusi_judul', "Capaian Mutu\nUniversitas Katolik Soegijapranata");
+    // 5. Akreditasi & Capaian Mutu Multi-Item
+    $data['capaian_items']   = getCapaianMutuItems();
+    $first_cap               = $data['capaian_items'][0] ?? [];
+    $data['akred_file']      = $first_cap['file_sertifikat'] ?? getPengaturan('akred_institusi_file', file_exists(__DIR__ . '/../uploads/akreditasi/2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf') ? '2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf' : '');
+    $data['akred_peringkat'] = $first_cap['peringkat'] ?? getPengaturan('akred_institusi_peringkat', 'UNGGUL');
+    $data['akred_sk']        = $first_cap['nomor_sk'] ?? getPengaturan('akred_institusi_sk', 'Nomor SK: -');
+    $data['akred_teks']      = $first_cap['deskripsi'] ?? getPengaturan('akred_institusi_teks', 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).');
+    $data['akred_badge']     = $first_cap['badge'] ?? getPengaturan('akred_institusi_badge', 'Akreditasi Institusi');
+    $data['akred_judul']     = $first_cap['judul'] ?? getPengaturan('akred_institusi_judul', "Capaian Mutu\nUniversitas Katolik Soegijapranata");
+    $data['akred_btn_text']  = $first_cap['btn_text'] ?? getPengaturan('akred_institusi_btn_text', 'Lihat Akreditasi Program Studi');
+    $data['akred_btn_link']  = $first_cap['btn_link'] ?? getPengaturan('akred_institusi_btn_link', 'akreditasi-prodi.php');
 
     return $data;
 }
@@ -425,61 +429,205 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
             break;
 
         case 'beranda_akreditasi':
-            $akred_badge     = !empty($block['badge']) ? $block['badge'] : $data['akred_badge'];
-            $akred_judul     = !empty($block['title']) ? $block['title'] : $data['akred_judul'];
-            $akred_teks      = !empty($block['content']) ? $block['content'] : $data['akred_teks'];
-            $akred_peringkat = $data['akred_peringkat'];
-            $akred_sk        = $data['akred_sk'];
-            $akred_file      = $data['akred_file'];
+            $capaian_items = $data['capaian_items'] ?? getCapaianMutuItems();
+            $total_items   = count($capaian_items);
+            $first_item    = $capaian_items[0] ?? [];
+
+            $cur_badge     = !empty($block['badge']) ? $block['badge'] : ($first_item['badge'] ?? $data['akred_badge']);
+            $cur_judul     = !empty($block['title']) ? $block['title'] : ($first_item['judul'] ?? $data['akred_judul']);
+            $cur_teks      = !empty($block['content']) ? $block['content'] : ($first_item['deskripsi'] ?? $data['akred_teks']);
+            $cur_peringkat = $first_item['peringkat'] ?? $data['akred_peringkat'];
+            $cur_sk        = $first_item['nomor_sk'] ?? $data['akred_sk'];
+            $cur_btn_text  = $first_item['btn_text'] ?? ($data['akred_btn_text'] ?? 'Lihat Akreditasi Program Studi');
+            $cur_btn_link  = $first_item['btn_link'] ?? ($data['akred_btn_link'] ?? 'akreditasi-prodi.php');
             ?>
             <section class="<?= $pad_class ?>" style="<?= $bg ?: 'background:#FFFFFF;' ?>">
                 <div class="container py-2">
                     <div class="row align-items-center justify-content-center">
+                        <!-- Kolom Kiri: Teks Dinamis yang Berganti Mengikuti Sertifikat -->
                         <div class="col-lg-6 mb-4 mb-lg-0">
                             <div class="pe-lg-5">
-                                <span class="badge bg-purple px-3 py-2 rounded-pill mb-3"><?= e($akred_badge) ?></span>
-                                <h2 class="display-6 fw-bold text-navy mb-4" style="<?= $tc ?>"><?= nl2br(e($akred_judul)) ?></h2>
-                                <p class="lead text-muted mb-4"><?= nl2br(e($akred_teks)) ?></p>
-                                <div class="d-flex align-items-center mb-4">
-                                    <svg width="55" height="70" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-3" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
-                                        <path d="M7 18 L7 29 L12 26 L17 29 L17 18 Z" fill="#FBC02D" />
-                                        <path d="M12 2 L14.5 3.5 L17.5 3 L18.5 6 L21.5 7 L20.5 10 L22 13 L19.5 15 L19.5 18 L16.5 19 L14.5 21.5 L12 20 L9.5 21.5 L7.5 19 L4.5 18 L4.5 15 L2 13 L3.5 10 L2.5 7 L5.5 6 L6.5 3 L9.5 3.5 Z" fill="#FFD54F" />
-                                    </svg>
-                                    <div>
-                                        <h4 class="fw-bold mb-1" style="<?= $tc ?>">AKREDITASI <?= e(strtoupper($akred_peringkat)) ?></h4>
-                                        <p class="text-muted small mb-0"><?= e($akred_sk) ?></p>
+                                <div id="capaianTextWrapper" style="transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
+                                    <span id="capaianBadge" class="badge bg-purple px-3 py-2 rounded-pill mb-3" style="font-weight:600;letter-spacing:0.3px;"><?= e($cur_badge) ?></span>
+                                    <h2 id="capaianJudul" class="display-6 fw-bold text-navy mb-4" style="<?= $tc ?>;line-height:1.25;"><?= nl2br(e($cur_judul)) ?></h2>
+                                    <p id="capaianDeskripsi" class="lead text-muted mb-4" style="font-size:1.05rem;line-height:1.75;"><?= nl2br(e($cur_teks)) ?></p>
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="me-3" style="flex-shrink:0;">
+                                            <svg width="55" height="70" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+                                                <path d="M7 18 L7 29 L12 26 L17 29 L17 18 Z" fill="#FBC02D" />
+                                                <path d="M12 2 L14.5 3.5 L17.5 3 L18.5 6 L21.5 7 L20.5 10 L22 13 L19.5 15 L19.5 18 L16.5 19 L14.5 21.5 L12 20 L9.5 21.5 L7.5 19 L4.5 18 L4.5 15 L2 13 L3.5 10 L2.5 7 L5.5 6 L6.5 3 L9.5 3.5 Z" fill="#FFD54F" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 id="capaianPeringkat" class="fw-bold mb-1" style="<?= $tc ?>"><?= strtoupper(str_starts_with(strtoupper($cur_peringkat), 'AKREDITASI') ? e($cur_peringkat) : 'AKREDITASI ' . e($cur_peringkat)) ?></h4>
+                                            <p id="capaianSK" class="text-muted small mb-0"><?= e($cur_sk) ?></p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-3 mt-2">
+                                        <a id="capaianBtn" href="<?= e($cur_btn_link) ?>" class="btn btn-akred-prodi fw-semibold px-4 py-2 rounded-pill d-flex align-items-center">
+                                            <span id="capaianBtnText"><?= e($cur_btn_text) ?></span> <i class="bi bi-arrow-right ms-2"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                <div class="d-flex flex-wrap gap-3 mt-2">
-                                    <a href="akreditasi-prodi.php" class="btn btn-akred-prodi fw-semibold px-4 py-2 rounded-pill d-flex align-items-center">
-                                        Lihat Akreditasi Program Studi <i class="bi bi-list-check ms-2"></i>
-                                    </a>
+
+                                <?php if ($total_items > 1): ?>
+                                <div class="d-flex align-items-center gap-3 mt-4 pt-3" style="border-top:1px dashed #E2E8F0;">
+                                    <button type="button" class="btn btn-sm btn-outline-purple rounded-circle d-flex align-items-center justify-content-center" data-bs-target="#certCarousel" data-bs-slide="prev" style="width:38px;height:38px;" title="Sertifikat Sebelumnya">
+                                        <i class="bi bi-chevron-left fs-6"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-purple rounded-circle d-flex align-items-center justify-content-center" data-bs-target="#certCarousel" data-bs-slide="next" style="width:38px;height:38px;" title="Sertifikat Berikutnya">
+                                        <i class="bi bi-chevron-right fs-6"></i>
+                                    </button>
+                                    <span class="badge bg-light text-navy border px-3 py-2 rounded-pill small fw-semibold" id="certSlideCounter">
+                                        Sertifikat 1 dari <?= $total_items ?>
+                                    </span>
                                 </div>
+                                <?php endif; ?>
                             </div>
                         </div>
+
+                        <!-- Kolom Kanan: Tilted Certificate Card (Carousel bila > 1 sertifikat) -->
                         <div class="col-lg-5 text-center">
-                            <?php if ($akred_file && file_exists(__DIR__ . '/../uploads/akreditasi/' . $akred_file)): ?>
-                                <?php $akred_preview = getOrGeneratePdfPreview($akred_file, 'akreditasi'); ?>
-                                <a href="uploads/akreditasi/<?= e($akred_file) ?>" target="_blank" class="d-block position-relative shadow-lg rounded-4 overflow-hidden cert-hover-card" style="border: 5px solid white; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease;" onmouseover="this.style.transform='rotate(0deg) scale(1.03)'" onmouseout="this.style.transform='rotate(2deg) scale(1)'">
-                                    <?php if ($akred_preview): ?>
-                                        <img src="uploads/akreditasi/<?= e($akred_preview) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid" style="object-fit: cover; width: 100%; max-height: 380px;" loading="lazy">
-                                    <?php else: ?>
-                                        <div class="bg-light p-4 text-center">
-                                            <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
-                                            <div class="fw-bold text-navy">Dokumen Sertifikat Akreditasi</div>
-                                        </div>
-                                    <?php endif; ?>
-                                </a>
-                            <?php else: ?>
-                                <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 350px; border: 2px dashed #ccc;">
-                                    <i class="bi bi-image text-muted display-1 mb-3"></i>
-                                    <p class="text-muted">Sertifikat Akreditasi siap ditampilkan.</p>
+                            <?php if ($total_items > 1): ?>
+                                <div id="certCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+                                    <div class="carousel-inner p-2">
+                                        <?php foreach ($capaian_items as $idx => $it): ?>
+                                            <?php 
+                                            $f_cert = $it['file_sertifikat'] ?? '';
+                                            $f_prev = $f_cert ? getOrGeneratePdfPreview($f_cert, 'akreditasi') : '';
+                                            ?>
+                                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>"
+                                                 data-badge="<?= e($it['badge'] ?? '') ?>"
+                                                 data-judul="<?= e($it['judul'] ?? '') ?>"
+                                                 data-deskripsi="<?= e($it['deskripsi'] ?? '') ?>"
+                                                 data-peringkat="<?= e($it['peringkat'] ?? '') ?>"
+                                                 data-sk="<?= e($it['nomor_sk'] ?? '') ?>"
+                                                 data-btn-text="<?= e($it['btn_text'] ?? 'Lihat Akreditasi Program Studi') ?>"
+                                                 data-btn-link="<?= e($it['btn_link'] ?? 'akreditasi-prodi.php') ?>"
+                                                 data-slide-index="<?= $idx + 1 ?>">
+                                                
+                                                <?php if ($f_cert && file_exists(UPLOAD_PATH . 'akreditasi/' . $f_cert)): ?>
+                                                    <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($f_cert) ?>" target="_blank" 
+                                                       class="d-block position-relative shadow-lg rounded-4 overflow-hidden cert-hover-card" 
+                                                       style="border: 5px solid white; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease;" 
+                                                       onmouseover="this.style.transform='rotate(0deg) scale(1.03)'" 
+                                                       onmouseout="this.style.transform='rotate(2deg) scale(1)'">
+                                                        <?php if ($f_prev && file_exists(UPLOAD_PATH . 'akreditasi/' . $f_prev)): ?>
+                                                            <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($f_prev) ?>" alt="<?= e($it['judul']) ?>" class="img-fluid" style="object-fit: cover; width: 100%; max-height: 380px;" loading="lazy">
+                                                        <?php else: ?>
+                                                            <div class="bg-light p-4 text-center">
+                                                                <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
+                                                                <div class="fw-bold text-navy"><?= e($it['peringkat']) ?></div>
+                                                                <small class="text-muted d-block"><?= e($f_cert) ?></small>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 350px; border: 2px dashed #ccc;">
+                                                        <i class="bi bi-patch-check text-muted display-1 mb-3"></i>
+                                                        <p class="text-muted mb-0"><?= e($it['judul']) ?></p>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
+                            <?php else: ?>
+                                <!-- Single Certificate Static -->
+                                <?php 
+                                $single_file = $first_item['file_sertifikat'] ?? $data['akred_file'];
+                                $single_prev = $single_file ? getOrGeneratePdfPreview($single_file, 'akreditasi') : '';
+                                ?>
+                                <?php if ($single_file && file_exists(UPLOAD_PATH . 'akreditasi/' . $single_file)): ?>
+                                    <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($single_file) ?>" target="_blank" 
+                                       class="d-block position-relative shadow-lg rounded-4 overflow-hidden cert-hover-card" 
+                                       style="border: 5px solid white; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease;" 
+                                       onmouseover="this.style.transform='rotate(0deg) scale(1.03)'" 
+                                       onmouseout="this.style.transform='rotate(2deg) scale(1)'">
+                                        <?php if ($single_prev && file_exists(UPLOAD_PATH . 'akreditasi/' . $single_prev)): ?>
+                                            <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($single_prev) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid" style="object-fit: cover; width: 100%; max-height: 380px;" loading="lazy">
+                                        <?php else: ?>
+                                            <div class="bg-light p-4 text-center">
+                                                <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
+                                                <div class="fw-bold text-navy">Dokumen Sertifikat Akreditasi</div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 350px; border: 2px dashed #ccc;">
+                                        <i class="bi bi-image text-muted display-1 mb-3"></i>
+                                        <p class="text-muted">Sertifikat Akreditasi siap ditampilkan.</p>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </section>
+            
+            <?php if ($total_items > 1): ?>
+            <script>
+            (function() {
+                function initCertSync() {
+                    var certCar = document.getElementById('certCarousel');
+                    if (!certCar) return;
+                    certCar.addEventListener('slide.bs.carousel', function(e) {
+                        var nextEl = e.relatedTarget;
+                        var txtWrap = document.getElementById('capaianTextWrapper');
+                        if (!nextEl || !txtWrap) return;
+                        
+                        txtWrap.style.opacity = '0';
+                        txtWrap.style.transform = 'translateY(8px)';
+                        
+                        setTimeout(function() {
+                            var b = nextEl.getAttribute('data-badge') || '';
+                            var j = nextEl.getAttribute('data-judul') || '';
+                            var d = nextEl.getAttribute('data-deskripsi') || '';
+                            var p = nextEl.getAttribute('data-peringkat') || '';
+                            var sk = nextEl.getAttribute('data-sk') || '';
+                            var bt = nextEl.getAttribute('data-btn-text') || 'Lihat Akreditasi Program Studi';
+                            var bl = nextEl.getAttribute('data-btn-link') || 'akreditasi-prodi.php';
+                            var idx = nextEl.getAttribute('data-slide-index') || '1';
+                            
+                            var elBadge = document.getElementById('capaianBadge');
+                            if (elBadge) elBadge.textContent = b;
+                            
+                            var elJudul = document.getElementById('capaianJudul');
+                            if (elJudul) elJudul.innerText = j;
+                            
+                            var elDesk = document.getElementById('capaianDeskripsi');
+                            if (elDesk) elDesk.innerText = d;
+                            
+                            var elPeringkat = document.getElementById('capaianPeringkat');
+                            if (elPeringkat) {
+                                var upperP = p.toUpperCase();
+                                elPeringkat.textContent = upperP.startsWith('AKREDITASI') ? upperP : ('AKREDITASI ' + upperP);
+                            }
+                            
+                            var elSK = document.getElementById('capaianSK');
+                            if (elSK) elSK.textContent = sk;
+                            
+                            var elBtn = document.getElementById('capaianBtn');
+                            var elBtnText = document.getElementById('capaianBtnText');
+                            if (elBtn) elBtn.href = bl;
+                            if (elBtnText) elBtnText.textContent = bt;
+                            
+                            var elCounter = document.getElementById('certSlideCounter');
+                            if (elCounter) elCounter.textContent = 'Sertifikat ' + idx + ' dari <?= $total_items ?>';
+                            
+                            txtWrap.style.opacity = '1';
+                            txtWrap.style.transform = 'translateY(0)';
+                        }, 250);
+                    });
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initCertSync);
+                } else {
+                    initCertSync();
+                }
+            })();
+            </script>
+            <?php endif; ?>
             <?php
             break;
 

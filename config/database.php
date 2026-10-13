@@ -1816,3 +1816,78 @@ function deleteUploadedFile($filePath, string $subDir = ''): bool {
 
     return $deleted;
 }
+
+/**
+ * Mengambil daftar item Capaian Mutu & Sertifikat Akreditasi untuk seksi Beranda.
+ * Jika belum ada data multi-item, otomatis fallback membuat item pertama dari pengaturan legacy akred_institusi_*.
+ */
+function getCapaianMutuItems(): array {
+    $raw = getPengaturan('capaian_mutu_items', '');
+    $items = [];
+    if (!empty($raw)) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded) && !empty($decoded)) {
+            $items = array_values($decoded);
+        }
+    }
+
+    if (empty($items)) {
+        $default_cert = file_exists(UPLOAD_PATH . 'akreditasi/2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf') 
+            ? '2023_Sertifikat_Akreditasi_ISK_AIPT_UNIKA_Unggul.pdf' : '';
+        $items[] = [
+            'id'              => 1,
+            'badge'           => getPengaturan('akred_institusi_badge', 'Akreditasi Institusi'),
+            'judul'           => getPengaturan('akred_institusi_judul', "Capaian Mutu\nUniversitas Katolik Soegijapranata"),
+            'deskripsi'       => getPengaturan('akred_institusi_teks', 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).'),
+            'peringkat'       => getPengaturan('akred_institusi_peringkat', 'UNGGUL'),
+            'nomor_sk'        => getPengaturan('akred_institusi_sk', 'Nomor SK: -'),
+            'file_sertifikat' => getPengaturan('akred_institusi_file', $default_cert),
+            'btn_text'        => getPengaturan('akred_institusi_btn_text', 'Lihat Akreditasi Program Studi'),
+            'btn_link'        => getPengaturan('akred_institusi_btn_link', 'akreditasi-prodi.php'),
+            'urutan'          => 1
+        ];
+    }
+
+    usort($items, function($a, $b) {
+        $ua = (int)($a['urutan'] ?? 1);
+        $ub = (int)($b['urutan'] ?? 1);
+        if ($ua === $ub) {
+            return ($a['id'] ?? 0) <=> ($b['id'] ?? 0);
+        }
+        return $ua <=> $ub;
+    });
+
+    return $items;
+}
+
+/**
+ * Menyimpan daftar item Capaian Mutu & Sertifikat Akreditasi dan mensinkronisasikan item pertama ke legacy keys.
+ */
+function saveCapaianMutuItems(array $items): bool {
+    $id_counter = 1;
+    foreach ($items as &$it) {
+        if (empty($it['id'])) {
+            $it['id'] = $id_counter;
+        }
+        $id_counter = max($id_counter + 1, (int)$it['id'] + 1);
+    }
+    unset($it);
+
+    $json = json_encode(array_values($items), JSON_UNESCAPED_UNICODE);
+    setPengaturan('capaian_mutu_items', $json);
+
+    // Sinkronkan item pertama ke pengaturan lama agar backward-compatible
+    if (!empty($items)) {
+        $first = $items[0];
+        setPengaturan('akred_institusi_badge', $first['badge'] ?? 'Akreditasi Institusi');
+        setPengaturan('akred_institusi_judul', $first['judul'] ?? "Capaian Mutu\nUniversitas Katolik Soegijapranata");
+        setPengaturan('akred_institusi_peringkat', $first['peringkat'] ?? 'UNGGUL');
+        setPengaturan('akred_institusi_sk', $first['nomor_sk'] ?? '');
+        setPengaturan('akred_institusi_teks', $first['deskripsi'] ?? '');
+        setPengaturan('akred_institusi_file', $first['file_sertifikat'] ?? '');
+        setPengaturan('akred_institusi_btn_text', $first['btn_text'] ?? 'Lihat Akreditasi Program Studi');
+        setPengaturan('akred_institusi_btn_link', $first['btn_link'] ?? 'akreditasi-prodi.php');
+    }
+
+    return true;
+}

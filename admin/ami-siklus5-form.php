@@ -343,11 +343,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <div class="mt-auto pt-3">
                                 <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
                                         data-bs-toggle="modal" data-bs-target="#modalResUndangan"
-                                        style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:0.45rem 0.75rem;color:#92400E;transition:all 0.2s;">
-                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
-                                        <i class="bi bi-shield-lock-fill text-warning"></i> Proteksi Undangan
-                                    </span>
-                                    <span class="badge" id="badgeUndanganStatus" style="font-size:0.72rem;<?= $res_undangan_is_restricted ? 'background:#F59E0B;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:0.45rem 0.75rem;color:#92400E;min-height:52px;transition:all 0.2s;">
+                                    <div class="d-flex align-items-center gap-2 min-w-0 me-1">
+                                        <i class="bi bi-shield-lock-fill text-warning fs-5 flex-shrink-0"></i>
+                                        <div class="min-w-0" style="line-height:1.2;">
+                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#78350F;">Proteksi Akses</div>
+                                            <div class="text-truncate" style="font-size:0.72rem;color:#B45309;">Berkas Undangan</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge flex-shrink-0" id="badgeUndanganStatus" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_undangan_is_restricted ? 'background:#F59E0B;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
                                         <?= $res_undangan_is_restricted ? 'Dibatasi (' . $res_undangan_max_pages . ' Hal)' : 'Bebas / Publik' ?>
                                     </span>
                                 </button>
@@ -378,11 +382,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <div class="mt-auto pt-3">
                                 <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
                                         data-bs-toggle="modal" data-bs-target="#modalResDaftarHadir"
-                                        style="background:#ECFDF5;border:1.5px solid #A7F3D0;border-radius:10px;padding:0.45rem 0.75rem;color:#065F46;transition:all 0.2s;">
-                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
-                                        <i class="bi bi-shield-lock-fill text-success"></i> Proteksi Daftar Hadir
-                                    </span>
-                                    <span class="badge" id="badgeDaftarHadirStatus" style="font-size:0.72rem;<?= $res_daftar_hadir_is_restricted ? 'background:#10B981;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        style="background:#ECFDF5;border:1.5px solid #A7F3D0;border-radius:10px;padding:0.45rem 0.75rem;color:#065F46;min-height:52px;transition:all 0.2s;">
+                                    <div class="d-flex align-items-center gap-2 min-w-0 me-1">
+                                        <i class="bi bi-shield-lock-fill text-success fs-5 flex-shrink-0"></i>
+                                        <div class="min-w-0" style="line-height:1.2;">
+                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#065F46;">Proteksi Akses</div>
+                                            <div class="text-truncate" style="font-size:0.72rem;color:#047857;">Berkas Daftar Hadir</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge flex-shrink-0" id="badgeDaftarHadirStatus" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_daftar_hadir_is_restricted ? 'background:#10B981;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
                                         <?= $res_daftar_hadir_is_restricted ? 'Dibatasi (' . $res_daftar_hadir_max_pages . ' Hal)' : 'Bebas / Publik' ?>
                                     </span>
                                 </button>
@@ -413,11 +421,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <div class="mt-auto pt-3">
                                 <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
                                         data-bs-toggle="modal" data-bs-target="#modalResNotulensi"
-                                        style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:0.45rem 0.75rem;color:#1E40AF;transition:all 0.2s;">
-                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
-                                        <i class="bi bi-shield-lock-fill text-primary"></i> Proteksi Notulensi
-                                    </span>
-                                    <span class="badge" id="badgeNotulensiStatus" style="font-size:0.72rem;<?= $res_notulensi_is_restricted ? 'background:#3B82F6;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:0.45rem 0.75rem;color:#1E40AF;min-height:52px;transition:all 0.2s;">
+                                    <div class="d-flex align-items-center gap-2 min-w-0 me-1">
+                                        <i class="bi bi-shield-lock-fill text-primary fs-5 flex-shrink-0"></i>
+                                        <div class="min-w-0" style="line-height:1.2;">
+                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#1E40AF;">Proteksi Akses</div>
+                                            <div class="text-truncate" style="font-size:0.72rem;color:#2563EB;">Berkas Notulensi</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge flex-shrink-0" id="badgeNotulensiStatus" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_notulensi_is_restricted ? 'background:#3B82F6;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
                                         <?= $res_notulensi_is_restricted ? 'Dibatasi (' . $res_notulensi_max_pages . ' Hal)' : 'Bebas / Publik' ?>
                                     </span>
                                 </button>

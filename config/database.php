@@ -26,17 +26,40 @@ define('SITE_URL', 'http://localhost/LPM'); // Sesuaikan dengan domain saat onli
 define('UPLOAD_PATH', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', SITE_URL . '/uploads/');
 
-// 3. Konfigurasi Google OAuth (Dapat menggunakan config/oauth.local.php atau config/oauth.php)
+// 3. Konfigurasi Google OAuth (Mendukung file .env, environment server, dan config/oauth.php)
+if (file_exists(__DIR__ . '/../.env')) {
+    $env_lines = @file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($env_lines) {
+        foreach ($env_lines as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '#') === 0) continue;
+            if (strpos($line, '=') !== false) {
+                list($env_key, $env_val) = explode('=', $line, 2);
+                $env_key = trim($env_key);
+                $env_val = trim($env_val, " \t\n\r\0\x0B\"'");
+                if (!getenv($env_key)) {
+                    putenv("$env_key=$env_val");
+                    $_ENV[$env_key] = $env_val;
+                    $_SERVER[$env_key] = $env_val;
+                }
+            }
+        }
+    }
+}
+
 if (file_exists(__DIR__ . '/oauth.local.php')) {
     require_once __DIR__ . '/oauth.local.php';
 } elseif (file_exists(__DIR__ . '/oauth.php')) {
     require_once __DIR__ . '/oauth.php';
 }
+
 if (!defined('GOOGLE_CLIENT_ID')) {
-    define('GOOGLE_CLIENT_ID', '');
+    $env_client_id = getenv('GOOGLE_CLIENT_ID') ?: ($_ENV['GOOGLE_CLIENT_ID'] ?? ($_SERVER['GOOGLE_CLIENT_ID'] ?? ''));
+    define('GOOGLE_CLIENT_ID', $env_client_id ?: '');
 }
 if (!defined('GOOGLE_CLIENT_SECRET')) {
-    define('GOOGLE_CLIENT_SECRET', '');
+    $env_client_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($_ENV['GOOGLE_CLIENT_SECRET'] ?? ($_SERVER['GOOGLE_CLIENT_SECRET'] ?? ''));
+    define('GOOGLE_CLIENT_SECRET', $env_client_secret ?: '');
 }
 
 // Inisialisasi Sesi jika belum aktif

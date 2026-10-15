@@ -992,7 +992,7 @@ try {
                     $tingkat_cls = ($item['tingkat'] === 'prodi') ? 'tingkat-prodi' : 'tingkat-fakultas';
                     ?>
                     <div class="col-lg-6 s4-item <?= $tingkat_cls ?>" data-tingkat="<?= e($item['tingkat']) ?>">
-                        <div class="ami-audit-card" style="border-top: 4px solid <?= $item['tingkat'] === 'prodi' ? 'var(--purple)' : 'var(--primary)' ?> !important;">
+                        <div class="ami-audit-card">
                             <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
                             <?php if (!empty($photos)): ?>
                                 <?php if (count($photos) > 1): 
@@ -1172,7 +1172,7 @@ try {
                 $t_cls = 'rtm-' . $rtm['tingkat'];
                 ?>
                 <div class="col-lg-6 s5-item <?= $t_cls ?>" data-tingkat="<?= e($rtm['tingkat']) ?>">
-                    <div class="ami-audit-card" style="border-top: 4px solid <?= $rtm['tingkat'] === 'universitas' ? '#DC2626' : ($rtm['tingkat'] === 'fakultas' ? 'var(--primary)' : 'var(--purple)') ?> !important;">
+                    <div class="ami-audit-card">
                         <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
                         <?php if (!empty($photos)): ?>
                             <?php if (count($photos) > 1): 

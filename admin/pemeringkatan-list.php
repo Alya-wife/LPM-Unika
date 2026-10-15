@@ -329,9 +329,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <?php endif; ?>
                     </td>
                     <td>
-                        <div class="vstack gap-1">
+                        <div class="d-flex flex-column gap-1" style="width: 135px;">
                             <?php if (!empty($item['link_url'])): ?>
-                            <a href="<?= e($item['link_url']) ?>" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size:0.75rem;width:fit-content;">
+                            <a href="<?= e($item['link_url']) ?>" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center gap-1 py-1 px-2" style="font-size:0.75rem; border-radius:6px; white-space:nowrap; width:100%; text-decoration:none;">
                                 <i class="bi bi-box-arrow-up-right"></i> Link Sumber
                             </a>
                             <?php endif; ?>
@@ -343,7 +343,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 $f_url = SITE_URL . '/uploads/akreditasi/' . $item['file_sertifikat'];
                             }
                             ?>
-                            <a href="<?= $f_url ?>" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size:0.75rem;width:fit-content;">
+                            <a href="<?= $f_url ?>" target="_blank" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center gap-1 py-1 px-2" style="font-size:0.75rem; border-radius:6px; white-space:nowrap; width:100%; text-decoration:none;">
                                 <i class="bi bi-file-earmark-pdf"></i> Berkas Sertifikat
                             </a>
                             <?php endif; ?>

@@ -84,6 +84,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th width="40">#</th>
                     <th>Nama Dokumen</th>
                     <th width="120">Kategori</th>
+                    <th width="110">Berkas</th>
                     <th width="140">Tanggal Rilis</th>
                     <th width="130">Aksi</th>
                 </tr>

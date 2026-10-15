@@ -150,33 +150,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $foto_kegiatan_json = !empty($existing_photos) ? json_encode($existing_photos) : null;
-        $is_restricted     = !empty($_POST['is_restricted']) ? 1 : 0;
-        $max_preview_pages = (int)($_POST['max_preview_pages'] ?? 3);
-        $allowed_domains   = parseSubmittedAllowedDomains();
+
+        // Pengaturan Pembatasan Akses Masing-Masing Dokumen
+        $res_undangan_is_restricted     = !empty($_POST['undangan_is_restricted']) ? 1 : 0;
+        $res_undangan_max_pages         = (int)($_POST['undangan_max_preview_pages'] ?? 3);
+        $res_undangan_allowed_domains   = parseSubmittedAllowedDomains('undangan');
+
+        $res_daftar_hadir_is_restricted   = !empty($_POST['daftar_hadir_is_restricted']) ? 1 : 0;
+        $res_daftar_hadir_max_pages       = (int)($_POST['daftar_hadir_max_preview_pages'] ?? 3);
+        $res_daftar_hadir_allowed_domains = parseSubmittedAllowedDomains('daftar_hadir');
+
+        $res_berita_acara_is_restricted   = !empty($_POST['berita_acara_is_restricted']) ? 1 : 0;
+        $res_berita_acara_max_pages       = (int)($_POST['berita_acara_max_preview_pages'] ?? 3);
+        $res_berita_acara_allowed_domains = parseSubmittedAllowedDomains('berita_acara');
+
+        // Status restriction global (kompatibilitas)
+        $is_restricted     = ($res_undangan_is_restricted || $res_daftar_hadir_is_restricted || $res_berita_acara_is_restricted) ? 1 : 0;
+        $max_preview_pages = 3;
+        $allowed_domains   = '@unika.ac.id,@student.unika.ac.id';
 
         if (!$error) {
             if ($is_edit) {
                 $stmt = $db->prepare("
                     UPDATE ami_siklus4_dokumentasi 
-                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = '', file_berita_acara = ?, file_daftar_hadir = ?, file_undangan = ?, foto_kegiatan = ?, is_restricted = ?, max_preview_pages = ?, allowed_domains = ? 
+                    SET periode = ?, tingkat = ?, fakultas = ?, prodi = ?, judul = ?, narasi_berita_acara = '', 
+                        file_berita_acara = ?, file_daftar_hadir = ?, file_undangan = ?, foto_kegiatan = ?, 
+                        is_restricted = ?, max_preview_pages = ?, allowed_domains = ?,
+                        is_restricted_undangan = ?, max_preview_pages_undangan = ?, allowed_domains_undangan = ?,
+                        is_restricted_daftar_hadir = ?, max_preview_pages_daftar_hadir = ?, allowed_domains_daftar_hadir = ?,
+                        is_restricted_berita_acara = ?, max_preview_pages_berita_acara = ?, allowed_domains_berita_acara = ?
                     WHERE id = ?
                 ");
                 $stmt->execute([
                     $periode, $tingkat, $fakultas, $prodi, $judul,
                     $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json,
-                    $is_restricted, $max_preview_pages, $allowed_domains, $id
+                    $is_restricted, $max_preview_pages, $allowed_domains,
+                    $res_undangan_is_restricted, $res_undangan_max_pages, $res_undangan_allowed_domains,
+                    $res_daftar_hadir_is_restricted, $res_daftar_hadir_max_pages, $res_daftar_hadir_allowed_domains,
+                    $res_berita_acara_is_restricted, $res_berita_acara_max_pages, $res_berita_acara_allowed_domains,
+                    $id
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil diperbarui.';
             } else {
                 $stmt = $db->prepare("
                     INSERT INTO ami_siklus4_dokumentasi 
-                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, file_undangan, foto_kegiatan, is_restricted, max_preview_pages, allowed_domains) 
-                    VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?)
+                    (periode, tingkat, fakultas, prodi, judul, narasi_berita_acara, file_berita_acara, file_daftar_hadir, file_undangan, foto_kegiatan, 
+                     is_restricted, max_preview_pages, allowed_domains,
+                     is_restricted_undangan, max_preview_pages_undangan, allowed_domains_undangan,
+                     is_restricted_daftar_hadir, max_preview_pages_daftar_hadir, allowed_domains_daftar_hadir,
+                     is_restricted_berita_acara, max_preview_pages_berita_acara, allowed_domains_berita_acara) 
+                    VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $periode, $tingkat, $fakultas, $prodi, $judul,
                     $file_berita_acara, $file_daftar_hadir, $file_undangan, $foto_kegiatan_json,
-                    $is_restricted, $max_preview_pages, $allowed_domains
+                    $is_restricted, $max_preview_pages, $allowed_domains,
+                    $res_undangan_is_restricted, $res_undangan_max_pages, $res_undangan_allowed_domains,
+                    $res_daftar_hadir_is_restricted, $res_daftar_hadir_max_pages, $res_daftar_hadir_allowed_domains,
+                    $res_berita_acara_is_restricted, $res_berita_acara_max_pages, $res_berita_acara_allowed_domains
                 ]);
                 $_SESSION['flash'] = 'Dokumentasi audit lapangan berhasil ditambahkan.';
             }
@@ -189,6 +220,19 @@ $cur_tingkat = $data['tingkat'] ?? ($_POST['tingkat'] ?? 'fakultas');
 $cur_fakultas = $data['fakultas'] ?? ($_POST['fakultas'] ?? '');
 $cur_prodi = $data['prodi'] ?? ($_POST['prodi'] ?? '');
 $current_photos = !empty($data['foto_kegiatan']) ? json_decode($data['foto_kegiatan'], true) : [];
+
+// Pembatasan terpisah masing-masing dokumen
+$res_undangan_is_restricted   = (int)($data['is_restricted_undangan'] ?? $data['is_restricted'] ?? 0);
+$res_undangan_max_pages       = (int)($data['max_preview_pages_undangan'] ?? $data['max_preview_pages'] ?? 3);
+$res_undangan_allowed_domains = $data['allowed_domains_undangan'] ?? $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+
+$res_daftar_hadir_is_restricted   = (int)($data['is_restricted_daftar_hadir'] ?? $data['is_restricted'] ?? 0);
+$res_daftar_hadir_max_pages       = (int)($data['max_preview_pages_daftar_hadir'] ?? $data['max_preview_pages'] ?? 3);
+$res_daftar_hadir_allowed_domains = $data['allowed_domains_daftar_hadir'] ?? $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+
+$res_berita_acara_is_restricted   = (int)($data['is_restricted_berita_acara'] ?? $data['is_restricted'] ?? 0);
+$res_berita_acara_max_pages       = (int)($data['max_preview_pages_berita_acara'] ?? $data['max_preview_pages'] ?? 3);
+$res_berita_acara_allowed_domains = $data['allowed_domains_berita_acara'] ?? $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
 
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
@@ -275,10 +319,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <input type="text" name="judul" class="form-control" placeholder="Contoh: Audit Lapangan Program Studi Sistem Informasi Semester Gasal 2025/2026" value="<?= e($data['judul'] ?? ($_POST['judul'] ?? '')) ?>" required>
                     </div>
 
-                    <!-- 3. Berkas Dokumen (Undangan, Daftar Hadir, Berita Acara) -->
+                    <!-- 3. Berkas Dokumen (Undangan, Daftar Hadir, Berita Acara) dengan Button Pembatasan Sendiri-Sendiri -->
                     <div class="col-md-4">
-                        <div class="p-3 border rounded h-100 bg-white">
-                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
+                        <div class="p-3 border rounded h-100 bg-white d-flex flex-column">
+                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between mb-1">
                                 <span><i class="bi bi-envelope-paper text-warning me-1"></i> Undangan</span>
                             </label>
                             <input type="file" name="file_undangan" class="form-control check-filesize" accept=".pdf,.doc,.docx" data-max-mb="20">
@@ -294,12 +338,26 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </a>
                             </div>
                             <?php endif; ?>
+
+                            <!-- Button Pembatasan Khusus Undangan -->
+                            <div class="mt-auto pt-3">
+                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
+                                        data-bs-toggle="modal" data-bs-target="#modalResUndanganS4"
+                                        style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:0.45rem 0.75rem;color:#92400E;transition:all 0.2s;">
+                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
+                                        <i class="bi bi-shield-lock-fill text-warning"></i> Proteksi Undangan
+                                    </span>
+                                    <span class="badge" id="badgeUndanganStatusS4" style="font-size:0.72rem;<?= $res_undangan_is_restricted ? 'background:#F59E0B;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        <?= $res_undangan_is_restricted ? 'Dibatasi (' . $res_undangan_max_pages . ' Hal)' : 'Bebas / Publik' ?>
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="col-md-4">
-                        <div class="p-3 border rounded h-100 bg-white">
-                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
+                        <div class="p-3 border rounded h-100 bg-white d-flex flex-column">
+                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between mb-1">
                                 <span><i class="bi bi-card-checklist text-success me-1"></i> Daftar Hadir</span>
                             </label>
                             <input type="file" name="file_daftar_hadir" class="form-control check-filesize" accept=".pdf,.doc,.docx,.xls,.xlsx" data-max-mb="20">
@@ -315,12 +373,26 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </a>
                             </div>
                             <?php endif; ?>
+
+                            <!-- Button Pembatasan Khusus Daftar Hadir -->
+                            <div class="mt-auto pt-3">
+                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
+                                        data-bs-toggle="modal" data-bs-target="#modalResDaftarHadirS4"
+                                        style="background:#ECFDF5;border:1.5px solid #A7F3D0;border-radius:10px;padding:0.45rem 0.75rem;color:#065F46;transition:all 0.2s;">
+                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
+                                        <i class="bi bi-shield-lock-fill text-success"></i> Proteksi Daftar Hadir
+                                    </span>
+                                    <span class="badge" id="badgeDaftarHadirStatusS4" style="font-size:0.72rem;<?= $res_daftar_hadir_is_restricted ? 'background:#10B981;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        <?= $res_daftar_hadir_is_restricted ? 'Dibatasi (' . $res_daftar_hadir_max_pages . ' Hal)' : 'Bebas / Publik' ?>
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="col-md-4">
-                        <div class="p-3 border rounded h-100 bg-white">
-                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between">
+                        <div class="p-3 border rounded h-100 bg-white d-flex flex-column">
+                            <label class="form-label fw-bold small d-flex align-items-center justify-content-between mb-1">
                                 <span><i class="bi bi-file-earmark-check text-primary me-1"></i> Berita Acara</span>
                             </label>
                             <input type="file" name="file_berita_acara" class="form-control check-filesize" accept=".pdf,.doc,.docx" data-max-mb="20">
@@ -336,17 +408,108 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </a>
                             </div>
                             <?php endif; ?>
+
+                            <!-- Button Pembatasan Khusus Berita Acara -->
+                            <div class="mt-auto pt-3">
+                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
+                                        data-bs-toggle="modal" data-bs-target="#modalResBeritaAcaraS4"
+                                        style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:0.45rem 0.75rem;color:#1E40AF;transition:all 0.2s;">
+                                    <span class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.8rem;">
+                                        <i class="bi bi-shield-lock-fill text-primary"></i> Proteksi Berita Acara
+                                    </span>
+                                    <span class="badge" id="badgeBeritaAcaraStatusS4" style="font-size:0.72rem;<?= $res_berita_acara_is_restricted ? 'background:#3B82F6;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
+                                        <?= $res_berita_acara_is_restricted ? 'Dibatasi (' . $res_berita_acara_max_pages . ' Hal)' : 'Bebas / Publik' ?>
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Pengaturan Proteksi / Pembatasan Akses Berkas Dokumen -->
-                    <div class="col-12">
-                        <?php
-                        $res_is_restricted   = $data['is_restricted'] ?? 0;
-                        $res_max_pages       = $data['max_preview_pages'] ?? 3;
-                        $res_allowed_domains = $data['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                        require __DIR__ . '/includes/file-restriction-field.php';
-                        ?>
+                    <!-- Modal Pengaturan Pembatasan Berkas Undangan -->
+                    <div class="modal fade" id="modalResUndanganS4" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <div class="modal-header border-bottom py-3" style="background:#FFFBEB;">
+                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
+                                        <i class="bi bi-shield-lock-fill text-warning fs-5"></i> Pengaturan Pembatasan: Undangan
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <?php
+                                    $res_prefix          = 'undangan';
+                                    $res_title           = 'Batasi / Proteksi Berkas Undangan';
+                                    $res_is_restricted   = $res_undangan_is_restricted;
+                                    $res_max_pages       = $res_undangan_max_pages;
+                                    $res_allowed_domains = $res_undangan_allowed_domains;
+                                    require __DIR__ . '/includes/file-restriction-field.php';
+                                    ?>
+                                </div>
+                                <div class="modal-footer border-top py-2 bg-light">
+                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
+                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Pengaturan Pembatasan Berkas Daftar Hadir -->
+                    <div class="modal fade" id="modalResDaftarHadirS4" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <div class="modal-header border-bottom py-3" style="background:#ECFDF5;">
+                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
+                                        <i class="bi bi-shield-lock-fill text-success fs-5"></i> Pengaturan Pembatasan: Daftar Hadir
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <?php
+                                    $res_prefix          = 'daftar_hadir';
+                                    $res_title           = 'Batasi / Proteksi Berkas Daftar Hadir';
+                                    $res_is_restricted   = $res_daftar_hadir_is_restricted;
+                                    $res_max_pages       = $res_daftar_hadir_max_pages;
+                                    $res_allowed_domains = $res_daftar_hadir_allowed_domains;
+                                    require __DIR__ . '/includes/file-restriction-field.php';
+                                    ?>
+                                </div>
+                                <div class="modal-footer border-top py-2 bg-light">
+                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
+                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Pengaturan Pembatasan Berkas Berita Acara -->
+                    <div class="modal fade" id="modalResBeritaAcaraS4" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <div class="modal-header border-bottom py-3" style="background:#EFF6FF;">
+                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
+                                        <i class="bi bi-shield-lock-fill text-primary fs-5"></i> Pengaturan Pembatasan: Berita Acara
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <?php
+                                    $res_prefix          = 'berita_acara';
+                                    $res_title           = 'Batasi / Proteksi Berkas Berita Acara';
+                                    $res_is_restricted   = $res_berita_acara_is_restricted;
+                                    $res_max_pages       = $res_berita_acara_max_pages;
+                                    $res_allowed_domains = $res_berita_acara_allowed_domains;
+                                    require __DIR__ . '/includes/file-restriction-field.php';
+                                    ?>
+                                </div>
+                                <div class="modal-footer border-top py-2 bg-light">
+                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
+                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 4. Upload Foto Dokumentasi (Multiple + Cropper Support) -->
@@ -715,6 +878,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
             bsModal.hide();
         }
+    });
+
+    // Sinkronisasi badge status pembatasan per berkas Siklus 4
+    var docPrefixesS4 = [
+        { prefix: 'undangan', badgeId: 'badgeUndanganStatusS4', color: '#F59E0B' },
+        { prefix: 'daftar_hadir', badgeId: 'badgeDaftarHadirStatusS4', color: '#10B981' },
+        { prefix: 'berita_acara', badgeId: 'badgeBeritaAcaraStatusS4', color: '#3B82F6' }
+    ];
+
+    docPrefixesS4.forEach(function(item) {
+        var toggle = document.querySelector('input[name="' + item.prefix + '_is_restricted"]');
+        var pagesInput = document.querySelector('input[name="' + item.prefix + '_max_preview_pages"]');
+        var badge = document.getElementById(item.badgeId);
+
+        function updateBadge() {
+            if (!badge || !toggle) return;
+            if (toggle.checked) {
+                var pages = pagesInput ? pagesInput.value : '3';
+                badge.innerText = 'Dibatasi (' + pages + ' Hal)';
+                badge.style.background = item.color;
+                badge.style.color = '#ffffff';
+            } else {
+                badge.innerText = 'Publik / Bebas';
+                badge.style.background = '#E2E8F0';
+                badge.style.color = '#475569';
+            }
+        }
+
+        if (toggle) toggle.addEventListener('change', updateBadge);
+        if (pagesInput) pagesInput.addEventListener('input', updateBadge);
     });
 });
 </script>

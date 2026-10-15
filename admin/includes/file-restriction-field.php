@@ -43,7 +43,7 @@ $uid = 'res_' . uniqid();
                 </div>
                 <div>
                     <label class="form-check-label fw-bold mb-0 text-dark" for="<?= $uid ?>_toggle" style="cursor:pointer;font-size:0.92rem;">
-                        Batasi / Proteksi Akses File Ini (Hide Berkas Penuh)
+                        <?= htmlspecialchars(($res_title ?? '') ?: 'Batasi / Proteksi Akses File Ini (Hide Berkas Penuh)') ?>
                     </label>
                     <div class="text-muted small" style="font-size:0.78rem;line-height:1.35;">
                         Aktifkan untuk membatasi jumlah halaman yang dapat dilihat publik dan mewajibkan login akun Google resmi untuk membuka dokumen lengkap.

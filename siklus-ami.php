@@ -1079,10 +1079,15 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <?php
+                                            $res_u_st = (int)($item['is_restricted_undangan'] ?? $item['is_restricted'] ?? 0);
+                                            $res_u_pg = (int)($item['max_preview_pages_undangan'] ?? $item['max_preview_pages'] ?? 3);
+                                            $res_u_dm = $item['allowed_domains_undangan'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                            ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
                                                 <i class="bi bi-download"></i>
                                             </button>
                                         </div>
@@ -1100,10 +1105,15 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <?php
+                                            $res_dh_st = (int)($item['is_restricted_daftar_hadir'] ?? $item['is_restricted'] ?? 0);
+                                            $res_dh_pg = (int)($item['max_preview_pages_daftar_hadir'] ?? $item['max_preview_pages'] ?? 3);
+                                            $res_dh_dm = $item['allowed_domains_daftar_hadir'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                            ?>
+                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
                                                 <i class="bi bi-download"></i>
                                             </button>
                                         </div>
@@ -1121,10 +1131,15 @@ try {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <?php
+                                            $res_ba_st = (int)($item['is_restricted_berita_acara'] ?? $item['is_restricted'] ?? 0);
+                                            $res_ba_pg = (int)($item['max_preview_pages_berita_acara'] ?? $item['max_preview_pages'] ?? 3);
+                                            $res_ba_dm = $item['allowed_domains_berita_acara'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                            ?>
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= $res_ba_st ?>, <?= $res_ba_pg ?>, '<?= e(addslashes($res_ba_dm)) ?>')">
                                                 <i class="bi bi-eye me-1"></i> Pratinjau
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= (int)($item['is_restricted'] ?? 0) ?>, <?= (int)($item['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= $res_ba_st ?>, <?= $res_ba_pg ?>, '<?= e(addslashes($res_ba_dm)) ?>')">
                                                 <i class="bi bi-download"></i>
                                             </button>
                                         </div>
@@ -1266,10 +1281,15 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <?php
+                                        $res_u_st = (int)($rtm['is_restricted_undangan'] ?? $rtm['is_restricted'] ?? 0);
+                                        $res_u_pg = (int)($rtm['max_preview_pages_undangan'] ?? $rtm['max_preview_pages'] ?? 3);
+                                        $res_u_dm = $rtm['allowed_domains_undangan'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                        ?>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
                                             <i class="bi bi-download"></i>
                                         </button>
                                     </div>
@@ -1287,10 +1307,15 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <?php
+                                        $res_dh_st = (int)($rtm['is_restricted_daftar_hadir'] ?? $rtm['is_restricted'] ?? 0);
+                                        $res_dh_pg = (int)($rtm['max_preview_pages_daftar_hadir'] ?? $rtm['max_preview_pages'] ?? 3);
+                                        $res_dh_dm = $rtm['allowed_domains_daftar_hadir'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                        ?>
+                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
                                             <i class="bi bi-download"></i>
                                         </button>
                                     </div>
@@ -1308,10 +1333,15 @@ try {
                                         </div>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <?php
+                                        $res_n_st = (int)($rtm['is_restricted_notulensi'] ?? $rtm['is_restricted'] ?? 0);
+                                        $res_n_pg = (int)($rtm['max_preview_pages_notulensi'] ?? $rtm['max_preview_pages'] ?? 3);
+                                        $res_n_dm = $rtm['allowed_domains_notulensi'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+                                        ?>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_n_st ?>, <?= $res_n_pg ?>, '<?= e(addslashes($res_n_dm)) ?>')">
                                             <i class="bi bi-eye me-1"></i> Pratinjau
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= (int)($rtm['is_restricted'] ?? 0) ?>, <?= (int)($rtm['max_preview_pages'] ?? 3) ?>, '<?= e(addslashes($rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                                        <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_n_st ?>, <?= $res_n_pg ?>, '<?= e(addslashes($res_n_dm)) ?>')">
                                             <i class="bi bi-download"></i>
                                         </button>
                                     </div>

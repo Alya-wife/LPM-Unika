@@ -41,3 +41,27 @@ ALTER TABLE `ami_siklus5_rtm`
   ADD COLUMN `is_restricted` TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN `max_preview_pages` INT NOT NULL DEFAULT 3,
   ADD COLUMN `allowed_domains` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';
+
+-- Pembatasan terpisah masing-masing dokumen AMI Siklus 5
+ALTER TABLE `ami_siklus5_rtm`
+  ADD COLUMN `is_restricted_undangan` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_undangan` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_undangan` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id',
+  ADD COLUMN `is_restricted_daftar_hadir` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_daftar_hadir` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_daftar_hadir` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id',
+  ADD COLUMN `is_restricted_notulensi` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_notulensi` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_notulensi` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';
+
+-- Pembatasan terpisah masing-masing dokumen AMI Siklus 4
+ALTER TABLE `ami_siklus4_dokumentasi`
+  ADD COLUMN `is_restricted_undangan` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_undangan` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_undangan` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id',
+  ADD COLUMN `is_restricted_daftar_hadir` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_daftar_hadir` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_daftar_hadir` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id',
+  ADD COLUMN `is_restricted_berita_acara` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `max_preview_pages_berita_acara` INT NOT NULL DEFAULT 3,
+  ADD COLUMN `allowed_domains_berita_acara` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';

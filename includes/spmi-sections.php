@@ -735,38 +735,23 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             </div>
                         </div>
 
-                        <!-- Filter Tahun & Real-time Search Box -->
-                        <div class="d-flex align-items-center gap-2 flex-wrap" style="max-width:560px;width:100%;justify-content:flex-end;">
-                            <!-- Dropdown Filter Tahun -->
-                            <div style="min-width:140px;">
-                                <select id="spmiDocYearSelect" class="form-select" style="border-radius:50px;border-color:var(--border);font-size:0.85rem;font-weight:600;color:var(--navy);padding:0.45rem 2rem 0.45rem 1rem;background-color:#ffffff;box-shadow:none;cursor:pointer;">
-                                    <option value="">Semua Tahun</option>
-                                    <?php foreach ($tahun_list as $th): ?>
-                                    <option value="<?= $th ?>" <?= (string)$tahun_filter === (string)$th ? 'selected' : '' ?>>
-                                        Tahun <?= $th ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <!-- Search Input -->
-                            <div style="min-width:220px;max-width:320px;flex-grow:1;">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0" style="border-radius:50px 0 0 50px;border-color:var(--border);">
-                                        <i class="bi bi-search text-muted"></i>
-                                    </span>
-                                    <input type="text" id="spmiDocSearchInput" class="form-control border-start-0" placeholder="Cari nama dokumen..." style="border-radius:0 50px 50px 0;border-color:var(--border);font-size:0.85rem;box-shadow:none;">
-                                </div>
+                        <!-- Real-time Search Box -->
+                        <div style="min-width:240px;max-width:340px;width:100%;">
+                            <div class="input-group shadow-sm" style="border-radius:50px;overflow:hidden;border:1px solid var(--border);">
+                                <span class="input-group-text bg-white border-0 ps-3">
+                                    <i class="bi bi-search text-muted"></i>
+                                </span>
+                                <input type="text" id="spmiDocSearchInput" class="form-control border-0 ps-1" placeholder="Cari nama dokumen mutu..." style="font-size:0.85rem;box-shadow:none;padding-top:0.45rem;padding-bottom:0.45rem;">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Filter Kategori Tabs (AJAX Filterisasi Terpadu) -->
+                    <!-- Filter Kategori & Filter Tahun Sejejer (Pill Buttons) -->
                     <style>
                     .btn-filter-pill {
                         display: inline-flex;
                         align-items: center;
-                        padding: 0.45rem 1.15rem;
+                        padding: 0.42rem 1.1rem;
                         border-radius: 50px;
                         font-size: 0.82rem;
                         font-weight: 600;
@@ -776,6 +761,7 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                         color: var(--text-muted);
                         border: 1.5px solid var(--border);
                         cursor: pointer;
+                        line-height: 1.35;
                     }
                     .btn-filter-pill:hover {
                         color: var(--navy);
@@ -791,28 +777,38 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                         transform: translateY(-1px);
                     }
                     </style>
-                    <div class="mb-4" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        <button type="button" class="btn-filter-pill spmi-ajax-filter-pill <?= $kategori_filter === '' ? 'active' : '' ?>" data-kategori="">
-                            Semua Dokumen
-                        </button>
-                        <?php foreach ($allowed_kategori as $kat): ?>
-                        <button type="button" class="btn-filter-pill spmi-ajax-filter-pill <?= $kategori_filter === $kat ? 'active' : '' ?>" data-kategori="<?= htmlspecialchars($kat) ?>">
-                            <?= htmlspecialchars($kat) ?>
-                        </button>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <!-- Tombol Kontrol Buka/Tutup Semua Accordion Tahun (Jika > 1 tahun) -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="small text-muted" id="spmiYearStatusText">
-                            <i class="bi bi-info-circle me-1"></i> Dokumen dikelompokkan berdasarkan tahun rilis resmi. Klik judul tahun untuk membuka/menutup daftar berkas.
+                    <div class="spmi-filters-container mb-4 d-flex flex-column gap-2">
+                        <!-- Baris Filter Kategori -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="text-muted fw-bold me-1" style="font-size:0.8rem;min-width:65px;">Kategori:</span>
+                            <button type="button" class="btn-filter-pill spmi-category-pill <?= $kategori_filter === '' ? 'active' : '' ?>" data-kategori="">
+                                Semua Dokumen
+                            </button>
+                            <?php foreach ($allowed_kategori as $kat): ?>
+                            <button type="button" class="btn-filter-pill spmi-category-pill <?= $kategori_filter === $kat ? 'active' : '' ?>" data-kategori="<?= htmlspecialchars($kat) ?>">
+                                <?= htmlspecialchars($kat) ?>
+                            </button>
+                            <?php endforeach; ?>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1" id="btnToggleAllSpmiYears" style="border-radius:20px;font-size:0.78rem;font-weight:600;padding:0.35rem 0.85rem;">
-                            <i class="bi bi-arrows-expand"></i> <span id="btnToggleAllSpmiYearsText">Buka Semua Tahun</span>
-                        </button>
+
+                        <!-- Baris Filter Tahun Rilis -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="text-muted fw-bold me-1" style="font-size:0.8rem;min-width:65px;">Tahun:</span>
+                            <button type="button" class="btn-filter-pill spmi-year-pill <?= ($tahun_filter === '' || $tahun_filter === 'all') ? 'active' : '' ?>" data-tahun="">
+                                Semua Tahun
+                            </button>
+                            <button type="button" class="btn-filter-pill spmi-year-pill <?= $tahun_filter === 'breakdown' ? 'active' : '' ?>" data-tahun="breakdown">
+                                <i class="bi bi-layers-half me-1"></i> Breakdown Per Tahun
+                            </button>
+                            <?php foreach ($tahun_list as $th): ?>
+                            <button type="button" class="btn-filter-pill spmi-year-pill <?= (string)$tahun_filter === (string)$th ? 'active' : '' ?>" data-tahun="<?= $th ?>">
+                                Tahun <?= $th ?>
+                            </button>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
-                    <!-- Container Dokumen Mutu Dikelompokkan per Tahun (Accordion / Dropdown per Tahun) -->
+                    <!-- Container Dokumen Mutu -->
                     <div id="spmiDocListContainer" style="transition:opacity 0.2s ease;">
                         <?php renderSpmiDokumenYearGroups($dokumen_all, $tahun_filter, false); ?>
                     </div>
@@ -829,10 +825,6 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                 function fetchSpmiDocs() {
                     var searchInput = document.getElementById('spmiDocSearchInput');
                     var q = searchInput ? searchInput.value.trim() : '';
-                    var yearSelect = document.getElementById('spmiDocYearSelect');
-                    if (yearSelect) {
-                        activeYear = yearSelect.value;
-                    }
                     var container = document.getElementById('spmiDocListContainer');
                     var badge = document.getElementById('spmiDocCountBadge');
                     if (container) {
@@ -846,6 +838,7 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                             if (container) {
                                 container.innerHTML = data.html;
                                 container.style.opacity = '1';
+                                bindAccordionToggle();
                             }
                             if (badge) {
                                 badge.innerText = data.count + ' Dokumen';
@@ -857,27 +850,29 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                         });
                 }
 
-                // Filter pills click handler
-                document.querySelectorAll('.spmi-ajax-filter-pill').forEach(function(pill) {
+                // Filter Kategori pills
+                document.querySelectorAll('.spmi-category-pill').forEach(function(pill) {
                     pill.addEventListener('click', function(e) {
                         e.preventDefault();
-                        document.querySelectorAll('.spmi-ajax-filter-pill').forEach(function(p) { p.classList.remove('active'); });
+                        document.querySelectorAll('.spmi-category-pill').forEach(function(p) { p.classList.remove('active'); });
                         this.classList.add('active');
                         activeCategory = this.getAttribute('data-kategori') || '';
                         fetchSpmiDocs();
                     });
                 });
 
-                // Dropdown tahun change handler
-                var yearSelect = document.getElementById('spmiDocYearSelect');
-                if (yearSelect) {
-                    yearSelect.addEventListener('change', function() {
-                        activeYear = this.value;
+                // Filter Tahun pills
+                document.querySelectorAll('.spmi-year-pill').forEach(function(pill) {
+                    pill.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        document.querySelectorAll('.spmi-year-pill').forEach(function(p) { p.classList.remove('active'); });
+                        this.classList.add('active');
+                        activeYear = this.getAttribute('data-tahun') || '';
                         fetchSpmiDocs();
                     });
-                }
+                });
 
-                // Debounced search input handler
+                // Search input debounced
                 var searchInput = document.getElementById('spmiDocSearchInput');
                 if (searchInput) {
                     searchInput.addEventListener('input', function() {
@@ -886,35 +881,38 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
                     });
                 }
 
-                // Toggle Buka/Tutup Semua Tahun
-                var btnToggleAll = document.getElementById('btnToggleAllSpmiYears');
-                if (btnToggleAll) {
-                    btnToggleAll.addEventListener('click', function() {
-                        var collapses = document.querySelectorAll('#accordionSpmiDokumen .accordion-collapse');
-                        var buttons = document.querySelectorAll('#accordionSpmiDokumen .accordion-button');
-                        allYearsExpanded = !allYearsExpanded;
-                        collapses.forEach(function(col) {
-                            if (allYearsExpanded) {
-                                col.classList.add('show');
-                            } else {
-                                col.classList.remove('show');
+                // Bind tombol Buka/Tutup Semua Tahun pada mode accordion breakdown
+                function bindAccordionToggle() {
+                    var btnToggleAll = document.getElementById('btnToggleAllSpmiYears');
+                    if (btnToggleAll) {
+                        btnToggleAll.addEventListener('click', function() {
+                            var collapses = document.querySelectorAll('#accordionSpmiDokumen .accordion-collapse');
+                            var buttons = document.querySelectorAll('#accordionSpmiDokumen .accordion-button');
+                            allYearsExpanded = !allYearsExpanded;
+                            collapses.forEach(function(col) {
+                                if (allYearsExpanded) {
+                                    col.classList.add('show');
+                                } else {
+                                    col.classList.remove('show');
+                                }
+                            });
+                            buttons.forEach(function(btn) {
+                                if (allYearsExpanded) {
+                                    btn.classList.remove('collapsed');
+                                    btn.setAttribute('aria-expanded', 'true');
+                                } else {
+                                    btn.classList.add('collapsed');
+                                    btn.setAttribute('aria-expanded', 'false');
+                                }
+                            });
+                            var btnText = document.getElementById('btnToggleAllSpmiYearsText');
+                            if (btnText) {
+                                btnText.innerText = allYearsExpanded ? 'Tutup Semua Tahun' : 'Buka Semua Tahun';
                             }
                         });
-                        buttons.forEach(function(btn) {
-                            if (allYearsExpanded) {
-                                btn.classList.remove('collapsed');
-                                btn.setAttribute('aria-expanded', 'true');
-                            } else {
-                                btn.classList.add('collapsed');
-                                btn.setAttribute('aria-expanded', 'false');
-                            }
-                        });
-                        var btnText = document.getElementById('btnToggleAllSpmiYearsText');
-                        if (btnText) {
-                            btnText.innerText = allYearsExpanded ? 'Tutup Semua Tahun' : 'Buka Semua Tahun';
-                        }
-                    });
+                    }
                 }
+                bindAccordionToggle();
             })();
             </script>
             <?php
@@ -923,20 +921,84 @@ function renderSpmiSection($type, $block = [], $is_builder = false, $kategori_fi
 }
 
 /**
- * Render Dokumen Mutu Terkelompok Berdasarkan Tahun (Accordion / Dropdown per Tahun)
+ * Render Dokumen Mutu Terkelompok Berdasarkan Tahun (Flat Table atau Breakdown Accordion / Per Tahun)
  */
 function renderSpmiDokumenYearGroups($docs, $active_year = '', $is_searching = false) {
     if (empty($docs)) {
         ?>
-        <div class="card p-5 text-center border-0 rounded-4 shadow-sm" style="background:#ffffff;border:1px dashed var(--border) !important;">
+        <div class="card p-5 text-center border-0 rounded-4 shadow-sm" style="background:#ffffff;border:1.5px dashed var(--border) !important;">
             <i class="bi bi-file-earmark-x" style="font-size:3rem;color:#94a3b8;opacity:0.6;"></i>
             <h5 class="mt-3 fw-bold text-navy">Tidak Ada Dokumen Mutu Ditemukan</h5>
-            <p class="text-muted small mb-0">Coba ubah kata kunci pencarian atau ganti filter tahun/kategori di atas.</p>
+            <p class="text-muted small mb-0">Coba ubah kata kunci pencarian atau ganti filter kategori/tahun di atas.</p>
         </div>
         <?php
         return;
     }
 
+    // MODE 1: TAMPILAN UTAMA (Default: Langsung Menampilkan Semua Dokumen)
+    if ($active_year === '' || $active_year === 'all') {
+        ?>
+        <div class="card border-0 rounded-4 shadow-sm" style="overflow:hidden;border:1.5px solid #E2E8F0 !important;background:#ffffff;">
+            <div class="table-responsive mb-0">
+                <table class="doc-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:55px;text-align:center;">No</th>
+                            <th>Nama Dokumen Mutu</th>
+                            <th style="width:160px;">Kategori</th>
+                            <th style="width:160px;">Tanggal Rilis</th>
+                            <th style="width:140px;text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($docs as $row_no => $d): ?>
+                            <?php renderSpmiDocRowHtml($d, $row_no + 1); ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php
+        return;
+    }
+
+    // MODE 2: TAHUN SPESIFIK (Misal klik "2026", "2024", dll)
+    if ($active_year !== 'breakdown' && is_numeric($active_year)) {
+        ?>
+        <div class="card border-0 rounded-4 shadow-sm mb-3" style="overflow:hidden;border:1.5px solid #E2E8F0 !important;background:#ffffff;">
+            <div class="py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color:#F8FAFC;border-bottom:1.5px solid #E2E8F0;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar3-range-fill text-primary" style="font-size:1.15rem;"></i>
+                    <span class="fw-bold text-navy" style="font-size:1.05rem;">Dokumen Mutu Tahun <?= htmlspecialchars($active_year) ?></span>
+                </div>
+                <span class="badge bg-white text-navy border px-3 py-1 rounded-pill fw-bold" style="font-size:0.78rem;">
+                    <?= count($docs) ?> Dokumen Mutu
+                </span>
+            </div>
+            <div class="table-responsive mb-0">
+                <table class="doc-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:55px;text-align:center;">No</th>
+                            <th>Nama Dokumen Mutu</th>
+                            <th style="width:160px;">Kategori</th>
+                            <th style="width:160px;">Tanggal Rilis</th>
+                            <th style="width:140px;text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($docs as $row_no => $d): ?>
+                            <?php renderSpmiDocRowHtml($d, $row_no + 1); ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php
+        return;
+    }
+
+    // MODE 3: BREAKDOWN PER TAHUN (Accordion)
     // Kelompokkan dokumen per tahun rilis resmi
     $by_year = [];
     foreach ($docs as $d) {
@@ -948,11 +1010,19 @@ function renderSpmiDokumenYearGroups($docs, $active_year = '', $is_searching = f
     $total_years = count($by_year);
     $idx = 0;
     ?>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="small text-muted" id="spmiYearStatusText">
+            <i class="bi bi-info-circle me-1"></i> Dokumen dikelompokkan berdasarkan tahun rilis resmi. Klik judul tahun untuk membuka/menutup daftar berkas.
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-sm-inline-flex align-items-center gap-1" id="btnToggleAllSpmiYears" style="border-radius:20px;font-size:0.78rem;font-weight:600;padding:0.35rem 0.85rem;">
+            <i class="bi bi-arrows-expand"></i> <span id="btnToggleAllSpmiYearsText">Buka Semua Tahun</span>
+        </button>
+    </div>
+
     <div class="accordion accordion-lpm" id="accordionSpmiDokumen">
         <?php foreach ($by_year as $th => $docs_in_year): $idx++; ?>
         <?php
-        // Buka otomatis jika sedang difilter spesifik per tahun, sedang mencari (search), atau tahun pertama
-        $is_open = (!empty($active_year) || $is_searching || $idx === 1);
+        $is_open = ($is_searching || $idx === 1);
         $collapse_id = 'collapseSpmiTh_' . $th;
         ?>
         <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm spmi-year-accordion" style="overflow:hidden;border:1.5px solid #E2E8F0 !important;">
@@ -989,65 +1059,7 @@ function renderSpmiDokumenYearGroups($docs, $active_year = '', $is_searching = f
                             </thead>
                             <tbody>
                                 <?php foreach ($docs_in_year as $row_no => $d): ?>
-                                <?php
-                                $file_full = __DIR__ . '/../uploads/dokumen/' . ($d['file_path'] ?? '');
-                                $file_url  = SITE_URL . '/uploads/dokumen/' . htmlspecialchars($d['file_path'] ?? '');
-                                $ext       = strtolower(pathinfo($d['file_path'] ?? '', PATHINFO_EXTENSION));
-                                $is_pdf    = ($ext === 'pdf');
-                                $has_file  = !empty($d['file_path']) && file_exists($file_full);
-
-                                $kat_class = 'cat-standar';
-                                $k_lower   = strtolower($d['kategori'] ?? '');
-                                if (strpos($k_lower, 'kebijakan') !== false) $kat_class = 'cat-kebijakan';
-                                elseif (strpos($k_lower, 'manual') !== false) $kat_class = 'cat-manual';
-                                elseif (strpos($k_lower, 'formulir') !== false) $kat_class = 'cat-formulir';
-                                elseif (strpos($k_lower, 'standar') !== false) $kat_class = 'cat-standar';
-                                ?>
-                                <tr>
-                                    <td style="color:var(--text-muted);font-size:0.85rem;text-align:center;font-weight:600;"><?= $row_no + 1 ?></td>
-                                    <td>
-                                        <?php if ($has_file && $is_pdf): ?>
-                                        <a href="javascript:void(0)" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')" style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
-                                            <?= htmlspecialchars($d['nama_dokumen']) ?>
-                                        </a>
-                                        <?php if (!empty($d['is_restricted'])): ?>
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.68rem;"><i class="bi bi-lock-fill me-1"></i>Dibatasi</span>
-                                        <?php endif; ?>
-                                        <?php elseif ($has_file): ?>
-                                        <a href="<?= $file_url ?>" download style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
-                                            <?= htmlspecialchars($d['nama_dokumen']) ?>
-                                        </a>
-                                        <?php else: ?>
-                                        <div style="font-weight:700;color:var(--navy);line-height:1.4;"><?= htmlspecialchars($d['nama_dokumen']) ?></div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($d['deskripsi'])): ?>
-                                        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;" class="text-truncate"><?= htmlspecialchars($d['deskripsi']) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <span class="doc-cat-badge <?= $kat_class ?>"><?= htmlspecialchars($d['kategori']) ?></span>
-                                    </td>
-                                    <td style="font-size:0.85rem;color:var(--text-muted);white-space:nowrap;">
-                                        <div class="fw-semibold text-dark"><?= formatTanggal($d['tanggal_rilis'] ?: $d['created_at']) ?></div>
-                                    </td>
-                                    <td style="text-align:center;">
-                                        <?php if ($has_file): ?>
-                                            <?php if ($is_pdf): ?>
-                                            <button type="button" class="btn-download" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                                Buka PDF
-                                            </button>
-                                            <?php else: ?>
-                                            <a href="<?= $file_url ?>" class="btn-download" download>
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                                Unduh
-                                            </a>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                        <span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Tersedia di LPM</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
+                                    <?php renderSpmiDocRowHtml($d, $row_no + 1); ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -1057,6 +1069,68 @@ function renderSpmiDokumenYearGroups($docs, $active_year = '', $is_searching = f
         </div>
         <?php endforeach; ?>
     </div>
+    <?php
+}
+
+/**
+ * Render Baris HTML Dokumen Mutu SPMI (Tanpa Badge Dibatasi)
+ */
+function renderSpmiDocRowHtml($d, $no) {
+    $file_full = __DIR__ . '/../uploads/dokumen/' . ($d['file_path'] ?? '');
+    $file_url  = SITE_URL . '/uploads/dokumen/' . htmlspecialchars($d['file_path'] ?? '');
+    $ext       = strtolower(pathinfo($d['file_path'] ?? '', PATHINFO_EXTENSION));
+    $is_pdf    = ($ext === 'pdf');
+    $has_file  = !empty($d['file_path']) && file_exists($file_full);
+
+    $kat_class = 'cat-standar';
+    $k_lower   = strtolower($d['kategori'] ?? '');
+    if (strpos($k_lower, 'kebijakan') !== false) $kat_class = 'cat-kebijakan';
+    elseif (strpos($k_lower, 'manual') !== false) $kat_class = 'cat-manual';
+    elseif (strpos($k_lower, 'formulir') !== false) $kat_class = 'cat-formulir';
+    elseif (strpos($k_lower, 'standar') !== false) $kat_class = 'cat-standar';
+    ?>
+    <tr>
+        <td style="color:var(--text-muted);font-size:0.85rem;text-align:center;font-weight:600;"><?= $no ?></td>
+        <td>
+            <?php if ($has_file && $is_pdf): ?>
+            <a href="javascript:void(0)" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')" style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
+                <?= htmlspecialchars($d['nama_dokumen']) ?>
+            </a>
+            <?php elseif ($has_file): ?>
+            <a href="<?= $file_url ?>" download style="font-weight:700;color:var(--navy);text-decoration:none;display:inline-block;line-height:1.4;">
+                <?= htmlspecialchars($d['nama_dokumen']) ?>
+            </a>
+            <?php else: ?>
+            <div style="font-weight:700;color:var(--navy);line-height:1.4;"><?= htmlspecialchars($d['nama_dokumen']) ?></div>
+            <?php endif; ?>
+            <?php if (!empty($d['deskripsi'])): ?>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;" class="text-truncate"><?= htmlspecialchars($d['deskripsi']) ?></div>
+            <?php endif; ?>
+        </td>
+        <td>
+            <span class="doc-cat-badge <?= $kat_class ?>"><?= htmlspecialchars($d['kategori']) ?></span>
+        </td>
+        <td style="font-size:0.85rem;color:var(--text-muted);white-space:nowrap;">
+            <div class="fw-semibold text-dark"><?= formatTanggal($d['tanggal_rilis'] ?: $d['created_at']) ?></div>
+        </td>
+        <td style="text-align:center;">
+            <?php if ($has_file): ?>
+                <?php if ($is_pdf): ?>
+                <button type="button" class="btn-download" onclick="openPdfViewer('<?= $file_url ?>', '<?= addslashes(htmlspecialchars($d['nama_dokumen'])) ?>', <?= (int)($d['is_restricted'] ?? 0) ?>, <?= (int)($d['max_preview_pages'] ?? 3) ?>, '<?= addslashes(htmlspecialchars($d['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id')) ?>')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Buka PDF
+                </button>
+                <?php else: ?>
+                <a href="<?= $file_url ?>" class="btn-download" download>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Unduh
+                </a>
+                <?php endif; ?>
+            <?php else: ?>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Tersedia di LPM</span>
+            <?php endif; ?>
+        </td>
+    </tr>
     <?php
 }
 
@@ -1075,7 +1149,7 @@ function handleSpmiDokumenAjax() {
         $params[] = "%$kategori%";
     }
 
-    if ($tahun !== '' && is_numeric($tahun)) {
+    if ($tahun !== '' && $tahun !== 'breakdown' && is_numeric($tahun)) {
         $sql .= " AND YEAR(COALESCE(tanggal_rilis, created_at)) = ?";
         $params[] = (int)$tahun;
     }

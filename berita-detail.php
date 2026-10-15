@@ -44,7 +44,10 @@ $tgl_publikasi = $berita['tanggal_publikasi'] ?: $berita['created_at'];
 $tahun_akademik = getTahunAkademik($tgl_publikasi);
 
 $page_title = $berita['judul'];
-$meta_desc  = truncate($berita['konten'], 160);
+$meta_desc  = truncate(strip_tags($berita['konten']), 160);
+$og_image   = !empty($berita['gambar']) ? (SITE_URL . '/uploads/berita/' . $berita['gambar']) : (SITE_URL . '/assets/images/og-lpm.png');
+$og_type    = 'article';
+$og_url     = SITE_URL . '/berita-detail.php?slug=' . urlencode($slug);
 
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';

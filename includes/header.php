@@ -6,9 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="<?= isset($meta_desc) ? e($meta_desc) : 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata - Mewujudkan mutu pendidikan tinggi yang unggul dan berkelanjutan.' ?>">
     <meta name="author" content="LPM UNIKA">
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:site_name" content="LPM UNIKA">
     <meta property="og:title" content="<?= isset($page_title) ? e($page_title) . ' | LPM UNIKA' : 'LPM UNIKA - Lembaga Penjaminan Mutu' ?>">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="<?= SITE_URL ?>/assets/images/og-lpm.png">
+    <meta property="og:description" content="<?= isset($meta_desc) ? e($meta_desc) : 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata' ?>">
+    <meta property="og:type" content="<?= isset($og_type) ? e($og_type) : 'website' ?>">
+    <meta property="og:url" content="<?= isset($og_url) ? e($og_url) : (SITE_URL . ($_SERVER['REQUEST_URI'] ?? '')) ?>">
+    <meta property="og:image" content="<?= !empty($og_image) ? e($og_image) : (SITE_URL . '/assets/images/og-lpm.png') ?>">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= isset($page_title) ? e($page_title) . ' | LPM UNIKA' : 'LPM UNIKA - Lembaga Penjaminan Mutu' ?>">
+    <meta name="twitter:description" content="<?= isset($meta_desc) ? e($meta_desc) : 'Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata' ?>">
+    <meta name="twitter:image" content="<?= !empty($og_image) ? e($og_image) : (SITE_URL . '/assets/images/og-lpm.png') ?>">
 
     <title><?= isset($page_title) ? e($page_title) . ' | LPM UNIKA' : 'LPM UNIKA - Lembaga Penjaminan Mutu Universitas Katolik Soegijapranata' ?></title>
 

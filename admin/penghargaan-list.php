@@ -264,6 +264,49 @@ $stat_dokumen         = getPengaturan('stat_dokumen', '');
 // Data Capaian Mutu & Akreditasi Beranda (Multi-Item)
 $capaian_items = getCapaianMutuItems();
 
+// Daftar Halaman Sistem & Dinamis untuk Dropdown Tautan Capaian
+$available_pages = [];
+try {
+    $available_pages = $db->query("SELECT id, judul, slug FROM pages WHERE status = 'publish' ORDER BY judul ASC")->fetchAll();
+} catch (Exception $e) {}
+
+$system_link_options = [
+    'Halaman Akreditasi & Capaian' => [
+        'akreditasi-institusi.php' => 'Akreditasi Institusi',
+        'akreditasi-prodi.php'     => 'Akreditasi Program Studi',
+        'lembaga-akreditasi.php'   => 'Lembaga Akreditasi (BAN-PT & LAM)',
+        'pemeringkatan.php'        => 'Pemeringkatan & Prestasi'
+    ],
+    'Sistem Penjaminan Mutu & Audit' => [
+        'spmi.php'                 => 'Sistem Penjaminan Mutu Internal (SPMI)',
+        'spmi.php?view=dokumen'    => 'Dokumen Kebijakan & Manual SPMI',
+        'ami.php'                  => 'Audit Mutu Internal (AMI)',
+        'siklus-ami.php'           => 'Siklus & Alur AMI'
+    ],
+    'Profil, Layanan & Informasi' => [
+        'profil.php'               => 'Profil Lembaga Penjaminan Mutu',
+        'profil.php?view=visi-misi'=> 'Visi, Misi & Tujuan LPM',
+        'profil.php?view=struktur' => 'Struktur Organisasi LPM',
+        'berita.php'               => 'Berita & Pengumuman',
+        'galeri.php'               => 'Galeri Kegiatan',
+        'layanan.php'              => 'Layanan Mutu LPM',
+        'pelatihan-eksternal.php'  => 'Pelatihan & Bimbingan Teknis',
+        'survei-kepuasan.php'      => 'Survei Kepuasan Stakeholder',
+        'kalender-mutu.php'        => 'Kalender Agenda Mutu',
+        'glosarium.php'            => 'Glosarium Istilah Mutu',
+        'faq.php'                  => 'Tanya Jawab (FAQ)',
+        'kontak.php'               => 'Kontak & Aduan'
+    ]
+];
+
+if (!empty($available_pages)) {
+    $page_opts = [];
+    foreach ($available_pages as $ap) {
+        $page_opts['page.php?slug=' . $ap['slug']] = 'Halaman: ' . $ap['judul'];
+    }
+    $system_link_options['Halaman Dinamis (Pages Web)'] = $page_opts;
+}
+
 $flash = $_SESSION['flash'] ?? '';
 $flash_error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash'], $_SESSION['flash_error']);
@@ -520,21 +563,6 @@ require_once __DIR__ . '/includes/admin-header.php';
     </form>
 </div>
 
-<!-- Pengaturan Layout -->
-<div class="admin-table-wrap mb-4" style="padding: 1.5rem;">
-    <h5 class="mb-3" style="font-weight: 600; color: var(--navy); font-size: 1.1rem;">Pengaturan Layout Beranda</h5>
-    <form method="post" class="d-flex align-items-center gap-3">
-        <input type="hidden" name="action" value="update_layout">
-        <div style="flex-grow: 1; max-width: 300px;">
-            <select name="layout_penghargaan" class="form-control" style="border-radius: 8px;">
-                <option value="slider" <?= $current_layout === 'slider' ? 'selected' : '' ?>>Tampilan Slider / Carousel (Geser)</option>
-                <option value="grid" <?= $current_layout === 'grid' ? 'selected' : '' ?>>Tampilan Grid (Kotak Berjajar)</option>
-            </select>
-        </div>
-        <button type="submit" class="btn-save" style="margin-top: 0; padding: 0.6rem 1.5rem; border-radius: 8px;">Simpan Layout</button>
-    </form>
-</div>
-
 <div class="admin-table-wrap">
     <div class="admin-table-topbar">
         <div class="admin-table-title">Daftar Penghargaan & Prestasi (<?= count($peng_list) ?>)</div>
@@ -690,7 +718,22 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-secondary small mb-1">Tautan / Link Tombol</label>
-                            <input type="text" name="btn_link" id="capaian_btn_link" class="form-control" placeholder="akreditasi-prodi.php" value="akreditasi-prodi.php" style="border-radius:8px;">
+                            <select id="capaian_btn_link_select" class="form-select" style="border-radius:8px;">
+                                <?php foreach ($system_link_options as $group_label => $opts): ?>
+                                    <optgroup label="<?= e($group_label) ?>">
+                                        <?php foreach ($opts as $val => $lbl): ?>
+                                            <option value="<?= e($val) ?>"><?= e($lbl) ?> (<?= e($val) ?>)</option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                                <optgroup label="Tautan Khusus">
+                                    <option value="custom">-- Ketik Tautan Manual / URL Kustom... --</option>
+                                </optgroup>
+                            </select>
+                            <div id="capaian_custom_link_wrap" class="mt-2 d-none">
+                                <input type="text" name="btn_link" id="capaian_btn_link" class="form-control" placeholder="Contoh: akreditasi-prodi.php atau https://..." value="akreditasi-prodi.php" style="border-radius:8px;">
+                                <small class="text-muted" style="font-size:0.75rem;">Ketik URL internal atau tautan eksternal yang dituju.</small>
+                            </div>
                         </div>
 
                         <!-- Berkas Sertifikat & Cropper Section -->
@@ -860,6 +903,47 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentScaleY = 1;
     let activeRatio = 1.414213;
 
+    // Dropdown Tautan Halaman Sync
+    const selBtnLink = document.getElementById('capaian_btn_link_select');
+    const wrapCustomLink = document.getElementById('capaian_custom_link_wrap');
+
+    function syncBtnLinkDropdown(val) {
+        val = (val || '').trim();
+        if (!selBtnLink || !inpBtnLink) return;
+
+        inpBtnLink.value = val;
+        let matched = false;
+
+        for (let i = 0; i < selBtnLink.options.length; i++) {
+            if (selBtnLink.options[i].value === val) {
+                selBtnLink.selectedIndex = i;
+                matched = true;
+                break;
+            }
+        }
+
+        if (matched) {
+            if (wrapCustomLink) wrapCustomLink.classList.add('d-none');
+        } else {
+            selBtnLink.value = 'custom';
+            if (wrapCustomLink) wrapCustomLink.classList.remove('d-none');
+        }
+    }
+
+    if (selBtnLink) {
+        selBtnLink.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                if (wrapCustomLink) wrapCustomLink.classList.remove('d-none');
+                if (inpBtnLink) {
+                    inpBtnLink.focus();
+                }
+            } else {
+                if (wrapCustomLink) wrapCustomLink.classList.add('d-none');
+                if (inpBtnLink) inpBtnLink.value = this.value;
+            }
+        });
+    }
+
     // Tombol Tambah Sertifikat Baru
     if (btnTambah) {
         btnTambah.addEventListener('click', function() {
@@ -872,7 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
             inpJudul.value = 'Capaian Mutu Universitas Katolik Soegijapranata';
             inpDeskripsi.value = 'Universitas kami terus berkomitmen untuk memberikan standar pendidikan terbaik sesuai dengan pedoman Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT).';
             inpBtnText.value = 'Lihat Akreditasi Program Studi';
-            inpBtnLink.value = 'akreditasi-prodi.php';
+            syncBtnLinkDropdown('akreditasi-prodi.php');
             inpUrutan.value = '<?= count($capaian_items) + 1 ?>';
 
             curFileWrap.classList.add('d-none');
@@ -893,7 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
             inpSK.value = this.dataset.sk || '';
             inpDeskripsi.value = this.dataset.deskripsi || '';
             inpBtnText.value = this.dataset.btnText || 'Lihat Akreditasi Program Studi';
-            inpBtnLink.value = this.dataset.btnLink || 'akreditasi-prodi.php';
+            syncBtnLinkDropdown(this.dataset.btnLink || 'akreditasi-prodi.php');
             inpUrutan.value = this.dataset.urutan || '1';
             inpCropped.value = '';
             fileInput.value = '';

@@ -2123,17 +2123,30 @@ img { max-width: 100%; height: auto; }
 /* ─────────────────────────────────────────────────────────────
    CERTIFICATE HOVER CARD & PREVIEWS (BERANDA)
    ───────────────────────────────────────────────────────────── */
+.cert-carousel-container,
+#certCarousel {
+  overflow: visible !important;
+}
+
+.cert-carousel-container .carousel-inner,
+#certCarousel .carousel-inner {
+  overflow: visible !important;
+}
+
 .cert-hover-card {
   cursor: pointer;
-  border: 5px solid white !important;
+  border: 5px solid #ffffff !important;
+  border-radius: 18px;
   transform: rotate(2deg);
+  box-shadow: 0 18px 42px -8px rgba(15, 23, 42, 0.22), 0 8px 18px -4px rgba(15, 23, 42, 0.12) !important;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease !important;
   display: block;
+  background: #ffffff;
 }
 
 .cert-hover-card:hover {
-  transform: rotate(0deg) scale(1.03) !important;
-  box-shadow: 0 24px 50px rgba(10, 25, 47, 0.22) !important;
+  transform: rotate(0deg) scale(1.025) !important;
+  box-shadow: 0 28px 58px -10px rgba(15, 23, 42, 0.28), 0 14px 26px -4px rgba(15, 23, 42, 0.15) !important;
 }
 
 /* General card hover elevation */

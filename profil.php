@@ -1,4 +1,4 @@
-1<?php
+<?php
 require_once __DIR__ . '/config/database.php';
 
 $view = trim($_GET['view'] ?? '');

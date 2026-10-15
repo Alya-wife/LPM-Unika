@@ -20,12 +20,18 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 $filter_kategori = trim($_GET['kategori'] ?? '');
 $kategori_options = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
 
+$has_tgl_rilis = false;
+try {
+    $has_tgl_rilis = !empty($db->query("SHOW COLUMNS FROM dokumen LIKE 'tanggal_rilis'")->fetch());
+} catch (Exception $e) {}
+$date_order = $has_tgl_rilis ? "COALESCE(tanggal_rilis, DATE(created_at))" : "DATE(created_at)";
+
 if ($filter_kategori !== '') {
-    $stmt = $db->prepare("SELECT * FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY COALESCE(tanggal_rilis, DATE(created_at)) DESC, id DESC");
+    $stmt = $db->prepare("SELECT * FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY $date_order DESC, id DESC");
     $stmt->execute([$filter_kategori]);
     $dok_list = $stmt->fetchAll();
 } else {
-    $dok_list = $db->query("SELECT * FROM dokumen ORDER BY COALESCE(tanggal_rilis, DATE(created_at)) DESC, kategori ASC, id DESC")->fetchAll();
+    $dok_list = $db->query("SELECT * FROM dokumen ORDER BY $date_order DESC, kategori ASC, id DESC")->fetchAll();
 }
 
 $flash = $_SESSION['flash'] ?? '';

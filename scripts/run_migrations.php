@@ -661,6 +661,11 @@ $db->exec("
 ");
 $stagesCount = (int)$db->query("SELECT COUNT(*) FROM spmi_ppepp_stages")->fetchColumn();
 if ($stagesCount === 0) {
+    if (file_exists(__DIR__ . '/migrate_spmi_ppepp_stages.php')) {
+        include_once __DIR__ . '/migrate_spmi_ppepp_stages.php';
+    }
+}
+
 // 16. Kolom tanggal_rilis pada Dokumen SPMI
 $dokTanggalRilis = $db->query("SHOW COLUMNS FROM dokumen LIKE 'tanggal_rilis'")->fetchAll();
 if (empty($dokTanggalRilis)) {

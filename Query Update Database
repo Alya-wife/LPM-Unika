@@ -8,9 +8,14 @@ SET `role` = 'superadmin', `status` = 1
 WHERE `id` = 1 OR `username` = 'admin';
 
 ALTER TABLE `dokumen` 
+  ADD COLUMN `tanggal_rilis` DATE NULL DEFAULT NULL AFTER `kategori`,
   ADD COLUMN `is_restricted` TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN `max_preview_pages` INT NOT NULL DEFAULT 3,
   ADD COLUMN `allowed_domains` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';
+
+UPDATE `dokumen` 
+SET `tanggal_rilis` = DATE(created_at) 
+WHERE `tanggal_rilis` IS NULL;
 
 ALTER TABLE `buletin` 
   ADD COLUMN `is_restricted` TINYINT(1) NOT NULL DEFAULT 0,

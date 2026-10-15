@@ -23,10 +23,22 @@ function getSpmiData($kategori_filter = '', $tahun_filter = '') {
     $categories_in_db = $db->query("SELECT DISTINCT kategori FROM dokumen")->fetchAll(PDO::FETCH_COLUMN);
     $data['allowed_kategori'] = array_values(array_unique(array_filter(array_merge($categories_dokumen_table, $categories_in_db))));
 
-    // Ambil daftar tahun unik dari dokumen (berdasarkan tanggal_rilis resmi)
+    // Cek apakah kolom tanggal_rilis tersedia di tabel dokumen
+    static $has_tanggal_rilis = null;
+    if ($has_tanggal_rilis === null) {
+        try {
+            $check_col = $db->query("SHOW COLUMNS FROM dokumen LIKE 'tanggal_rilis'")->fetch();
+            $has_tanggal_rilis = !empty($check_col);
+        } catch (Exception $e) {
+            $has_tanggal_rilis = false;
+        }
+    }
+    $dateExpr = $has_tanggal_rilis ? "COALESCE(tanggal_rilis, created_at)" : "created_at";
+
+    // Ambil daftar tahun unik dari dokumen (berdasarkan tanggal_rilis resmi atau created_at)
     $tahun_list = [];
     try {
-        $tahun_list = $db->query("SELECT DISTINCT YEAR(COALESCE(tanggal_rilis, created_at)) as th FROM dokumen WHERE tanggal_rilis IS NOT NULL OR created_at IS NOT NULL ORDER BY th DESC")->fetchAll(PDO::FETCH_COLUMN);
+        $tahun_list = $db->query("SELECT DISTINCT YEAR($dateExpr) as th FROM dokumen WHERE $dateExpr IS NOT NULL ORDER BY th DESC")->fetchAll(PDO::FETCH_COLUMN);
     } catch (Exception $e) {}
     $data['tahun_list'] = array_values(array_filter($tahun_list));
 
@@ -38,10 +50,10 @@ function getSpmiData($kategori_filter = '', $tahun_filter = '') {
         $params[] = "%$kategori_filter%";
     }
     if ($tahun_filter !== '' && is_numeric($tahun_filter)) {
-        $sql .= " AND YEAR(COALESCE(tanggal_rilis, created_at)) = ?";
+        $sql .= " AND YEAR($dateExpr) = ?";
         $params[] = (int)$tahun_filter;
     }
-    $sql .= " ORDER BY COALESCE(tanggal_rilis, created_at) DESC, id DESC";
+    $sql .= " ORDER BY $dateExpr DESC, id DESC";
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -1140,6 +1152,18 @@ function handleSpmiDokumenAjax() {
     $tahun    = trim($_GET['tahun'] ?? '');
     $q        = trim($_GET['q'] ?? '');
 
+    // Cek ketersediaan tanggal_rilis
+    static $has_tanggal_rilis = null;
+    if ($has_tanggal_rilis === null) {
+        try {
+            $check_col = $db->query("SHOW COLUMNS FROM dokumen LIKE 'tanggal_rilis'")->fetch();
+            $has_tanggal_rilis = !empty($check_col);
+        } catch (Exception $e) {
+            $has_tanggal_rilis = false;
+        }
+    }
+    $dateExpr = $has_tanggal_rilis ? "COALESCE(tanggal_rilis, created_at)" : "created_at";
+
     $sql = "SELECT * FROM dokumen WHERE 1=1";
     $params = [];
 
@@ -1150,7 +1174,7 @@ function handleSpmiDokumenAjax() {
     }
 
     if ($tahun !== '' && $tahun !== 'breakdown' && is_numeric($tahun)) {
-        $sql .= " AND YEAR(COALESCE(tanggal_rilis, created_at)) = ?";
+        $sql .= " AND YEAR($dateExpr) = ?";
         $params[] = (int)$tahun;
     }
 
@@ -1160,7 +1184,7 @@ function handleSpmiDokumenAjax() {
         $params[] = "%$q%";
     }
 
-    $sql .= " ORDER BY COALESCE(tanggal_rilis, created_at) DESC, id DESC";
+    $sql .= " ORDER BY $dateExpr DESC, id DESC";
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);

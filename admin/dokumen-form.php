@@ -15,11 +15,12 @@ $admin_page_title = $is_edit ? 'Edit Dokumen SPMI' : 'Upload Dokumen SPMI';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama_dokumen = trim($_POST['nama_dokumen'] ?? '');
-    $kategori     = trim($_POST['kategori'] ?? '');
-    $id           = (int)($_POST['id'] ?? 0);
-    $kategori_db  = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
-    $allowed_kat  = array_unique(array_merge(['Kebijakan', 'Manual', 'Standar', 'Formulir', 'SOP', 'Laporan AMI', 'Panduan', 'Regulasi', 'Instrumen', 'Download Center'], $kategori_db));
+    $nama_dokumen  = trim($_POST['nama_dokumen'] ?? '');
+    $kategori      = trim($_POST['kategori'] ?? '');
+    $tanggal_rilis = !empty($_POST['tanggal_rilis']) ? trim($_POST['tanggal_rilis']) : date('Y-m-d');
+    $id            = (int)($_POST['id'] ?? 0);
+    $kategori_db   = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+    $allowed_kat   = array_unique(array_merge(['Kebijakan', 'Manual', 'Standar', 'Formulir', 'SOP', 'Laporan AMI', 'Panduan', 'Regulasi', 'Instrumen', 'Download Center'], $kategori_db));
 
     if (!$nama_dokumen || !in_array($kategori, $allowed_kat)) {
         $error = 'Nama dokumen dan kategori wajib diisi dengan benar.';
@@ -38,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
                 $new_file = uniqid('dok_') . '.' . $ext;
                 if (move_uploaded_file($_FILES['file_doc']['tmp_name'], $upload_dir . $new_file)) {
-                    if ($is_edit && !empty($dok['file_path'])) {
-                        deleteUploadedFile($dok['file_path'], 'dokumen');
+                    if ($is_edit && !empty($dokumen['file_path'])) {
+                        deleteUploadedFile($dokumen['file_path'], 'dokumen');
                     }
                     $file_path = $new_file;
                 }
@@ -54,12 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$error) {
             if ($is_edit && $id) {
-                $stmt = $db->prepare("UPDATE dokumen SET nama_dokumen=?, kategori=?, file_path=?, is_restricted=?, max_preview_pages=?, allowed_domains=? WHERE id=?");
-                $stmt->execute([$nama_dokumen, $kategori, $file_path, $is_restricted, $max_preview_pages, $allowed_domains, $id]);
+                $stmt = $db->prepare("UPDATE dokumen SET nama_dokumen=?, kategori=?, tanggal_rilis=?, file_path=?, is_restricted=?, max_preview_pages=?, allowed_domains=? WHERE id=?");
+                $stmt->execute([$nama_dokumen, $kategori, $tanggal_rilis, $file_path, $is_restricted, $max_preview_pages, $allowed_domains, $id]);
                 $_SESSION['flash'] = 'Dokumen berhasil diperbarui.';
             } else {
-                $stmt = $db->prepare("INSERT INTO dokumen (nama_dokumen, kategori, file_path, is_restricted, max_preview_pages, allowed_domains) VALUES (?,?,?,?,?,?)");
-                $stmt->execute([$nama_dokumen, $kategori, $file_path, $is_restricted, $max_preview_pages, $allowed_domains]);
+                $stmt = $db->prepare("INSERT INTO dokumen (nama_dokumen, kategori, tanggal_rilis, file_path, is_restricted, max_preview_pages, allowed_domains) VALUES (?,?,?,?,?,?,?)");
+                $stmt->execute([$nama_dokumen, $kategori, $tanggal_rilis, $file_path, $is_restricted, $max_preview_pages, $allowed_domains]);
                 $_SESSION['flash'] = 'Dokumen berhasil diupload.';
             }
             redirect(SITE_URL . '/admin/dokumen-list.php');
@@ -111,7 +112,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 value="<?= e($is_edit ? $dokumen['nama_dokumen'] : ($_POST['nama_dokumen'] ?? '')) ?>" required>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="kategori">
                                 Kategori Dokumen <span style="color:#C62828;">*</span>
                             </label>
@@ -128,10 +129,21 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <?php endforeach; ?>
                             </select>
                             <div class="mt-1 d-flex justify-content-between align-items-center" style="font-size:0.75rem;">
-                                <span class="text-muted">Pilihan kategori diambil dari data Kategori Dokumen SPMI.</span>
                                 <a href="kategori-dokumen.php" target="_blank" class="text-primary text-decoration-none fw-semibold">
-                                    <i class="bi bi-gear-fill me-1"></i> Kelola / Tambah Kategori Baru &rarr;
+                                    <i class="bi bi-gear-fill me-1"></i> Kelola Kategori Baru &rarr;
                                 </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-family:var(--font-heading);font-size:0.83rem;font-weight:600;color:var(--navy);" for="tanggal_rilis">
+                                Tanggal Rilis Dokumen <span style="color:#C62828;">*</span>
+                            </label>
+                            <input type="date" id="tanggal_rilis" name="tanggal_rilis" class="form-control"
+                                style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem 1rem;"
+                                value="<?= e($is_edit ? ($dokumen['tanggal_rilis'] ?? (!empty($dokumen['created_at']) ? date('Y-m-d', strtotime($dokumen['created_at'])) : date('Y-m-d'))) : ($_POST['tanggal_rilis'] ?? date('Y-m-d'))) ?>" required>
+                            <div class="mt-1 text-muted" style="font-size:0.75rem;">
+                                <i class="bi bi-calendar-event me-1"></i> Tanggal rilis / pengesahan resmi dokumen (bukan tanggal upload sistem).
                             </div>
                         </div>
 

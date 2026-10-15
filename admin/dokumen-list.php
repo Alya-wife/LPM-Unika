@@ -21,11 +21,11 @@ $filter_kategori = trim($_GET['kategori'] ?? '');
 $kategori_options = $db->query("SELECT nama_kategori FROM kategori_dokumen ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
 
 if ($filter_kategori !== '') {
-    $stmt = $db->prepare("SELECT * FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY created_at DESC");
+    $stmt = $db->prepare("SELECT * FROM dokumen WHERE CONVERT(kategori USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ORDER BY COALESCE(tanggal_rilis, DATE(created_at)) DESC, id DESC");
     $stmt->execute([$filter_kategori]);
     $dok_list = $stmt->fetchAll();
 } else {
-    $dok_list = $db->query("SELECT * FROM dokumen ORDER BY kategori, created_at DESC")->fetchAll();
+    $dok_list = $db->query("SELECT * FROM dokumen ORDER BY COALESCE(tanggal_rilis, DATE(created_at)) DESC, kategori ASC, id DESC")->fetchAll();
 }
 
 $flash = $_SESSION['flash'] ?? '';
@@ -84,8 +84,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <th width="40">#</th>
                     <th>Nama Dokumen</th>
                     <th width="120">Kategori</th>
-                    <th width="150">File</th>
-                    <th width="120">Tanggal</th>
+                    <th width="140">Tanggal Rilis</th>
                     <th width="130">Aksi</th>
                 </tr>
             </thead>
@@ -112,7 +111,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <span style="font-size:0.78rem;color:var(--text-light);">File tidak ada</span>
                         <?php endif; ?>
                     </td>
-                    <td style="font-size:0.8rem;color:var(--text-muted);"><?= formatTanggal($d['created_at']) ?></td>
+                    <td style="font-size:0.8rem;color:var(--text-muted);">
+                        <div class="fw-semibold text-dark"><?= formatTanggal($d['tanggal_rilis'] ?: $d['created_at']) ?></div>
+                        <div style="font-size:0.7rem;color:#94a3b8;">Up: <?= date('d/m/Y', strtotime($d['created_at'])) ?></div>
+                    </td>
                     <td>
                         <div style="display:flex;gap:0.4rem;">
                             <a href="dokumen-form.php?id=<?= $d['id'] ?>" class="btn-action btn-edit" style="text-decoration:none;">

@@ -661,7 +661,12 @@ $db->exec("
 ");
 $stagesCount = (int)$db->query("SELECT COUNT(*) FROM spmi_ppepp_stages")->fetchColumn();
 if ($stagesCount === 0) {
-    require_once __DIR__ . '/migrate_spmi_ppepp_stages.php';
+// 16. Kolom tanggal_rilis pada Dokumen SPMI
+$dokTanggalRilis = $db->query("SHOW COLUMNS FROM dokumen LIKE 'tanggal_rilis'")->fetchAll();
+if (empty($dokTanggalRilis)) {
+    $db->exec("ALTER TABLE dokumen ADD COLUMN tanggal_rilis DATE NULL DEFAULT NULL AFTER kategori");
+    $db->exec("UPDATE dokumen SET tanggal_rilis = DATE(created_at) WHERE tanggal_rilis IS NULL");
+    echo "Added tanggal_rilis column to dokumen table.\n";
 }
 
 echo "All migrations finished successfully!\n";

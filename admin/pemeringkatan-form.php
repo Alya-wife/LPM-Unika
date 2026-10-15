@@ -290,16 +290,23 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <?php endif; ?>
                     <div class="d-flex gap-2 align-items-center">
                         <input type="file" name="file_sertifikat" id="inputCertFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp">
-                        <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditCertImg" style="white-space:nowrap;padding:0.6rem 0.9rem;border-radius:8px;">
-                            <i class="bi bi-crop text-warning"></i> Crop
+                        <button type="button" class="btn btn-outline-primary d-none align-items-center gap-1 fw-semibold" id="btnEditCertImg" style="white-space:nowrap;padding:0.55rem 0.9rem;border-radius:8px;">
+                            <i class="bi bi-crop text-warning"></i> Sesuaikan / Edit Gambar
                         </button>
                     </div>
                     <input type="hidden" name="cropped_sertifikat_data" id="croppedSertifikatData">
-                    <small class="text-muted" style="font-size:0.75rem;">Maksimal 10MB (PDF, JPG, PNG, WebP). Berkas gambar dapat disesuaikan framingnya menggunakan editor crop.</small>
+                    <small class="text-muted d-block mt-1" style="font-size:0.75rem;">Maksimal 10MB (PDF, JPG, PNG, WebP). Berkas gambar dapat disesuaikan framingnya menggunakan editor crop interaktif.</small>
                     <div id="liveCertPreview" class="mt-2 d-none">
-                        <div class="p-2 bg-light rounded border d-flex align-items-center gap-2">
-                            <img id="liveCertImg" src="" alt="Preview" style="height:55px;border-radius:4px;object-fit:cover;">
-                            <span class="small text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Gambar siap disimpan</span>
+                        <div class="p-2 bg-light rounded-3 border d-flex align-items-center justify-content-between gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <img id="liveCertImg" src="" alt="Preview" style="height:60px;border-radius:6px;object-fit:cover;border:1px solid #CBD5E1;">
+                                <div>
+                                    <span class="badge bg-success-subtle text-success border border-success mb-1" id="cropCertBadge">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Telah Disesuaikan &amp; Di-crop
+                                    </span>
+                                    <div class="small text-muted" style="font-size:0.75rem;">Gambar siap disimpan ke server dalam format WebP HD.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -410,111 +417,116 @@ require_once __DIR__ . '/includes/admin-header.php';
 </div>
 
 <script>
-let cropperCert = null;
-let scaleXCert = 1;
-let scaleYCert = 1;
-let currentRatioCert = 4 / 3;
+document.addEventListener('DOMContentLoaded', function() {
+    let cropperCert = null;
+    let scaleXCert = 1;
+    let scaleYCert = 1;
+    let currentRatioCert = 4 / 3;
 
-const modalCropCertEl  = document.getElementById('modalCropCert');
-const bsModalCert      = new bootstrap.Modal(modalCropCertEl);
-const sourceImgCert    = document.getElementById('cropperSourceImgCert');
-const fileInputCert    = document.getElementById('inputCertFile');
-const btnEditCert      = document.getElementById('btnEditCertImg');
-const liveCertWrap     = document.getElementById('liveCertPreview');
-const liveCertImg      = document.getElementById('liveCertImg');
-const hiddenCropCert   = document.getElementById('croppedSertifikatData');
-const applyBtnCert     = document.getElementById('btnApplyCropCert');
+    const modalCropCertEl  = document.getElementById('modalCropCert');
+    if (!modalCropCertEl) return;
+    const bsModalCert      = new bootstrap.Modal(modalCropCertEl);
+    const sourceImgCert    = document.getElementById('cropperSourceImgCert');
+    const fileInputCert    = document.getElementById('inputCertFile');
+    const btnEditCert      = document.getElementById('btnEditCertImg');
+    const liveCertWrap     = document.getElementById('liveCertPreview');
+    const liveCertImg      = document.getElementById('liveCertImg');
+    const hiddenCropCert   = document.getElementById('croppedSertifikatData');
+    const applyBtnCert     = document.getElementById('btnApplyCropCert');
 
-function initCropperCert() {
-    if (cropperCert) cropperCert.destroy();
-    scaleXCert = 1;
-    scaleYCert = 1;
-    cropperCert = new Cropper(sourceImgCert, {
-        aspectRatio: currentRatioCert,
-        viewMode: 1,
-        autoCropArea: 0.95,
-        responsive: true,
-        guides: true,
-        checkCrossOrigin: false
-    });
-}
-
-modalCropCertEl.addEventListener('shown.bs.modal', function() { initCropperCert(); });
-modalCropCertEl.addEventListener('hidden.bs.modal', function() {
-    if (cropperCert) {
-        cropperCert.destroy();
-        cropperCert = null;
+    function initCropperCert() {
+        if (cropperCert) cropperCert.destroy();
+        scaleXCert = 1;
+        scaleYCert = 1;
+        cropperCert = new Cropper(sourceImgCert, {
+            aspectRatio: currentRatioCert,
+            viewMode: 1,
+            autoCropArea: 0.95,
+            responsive: true,
+            guides: true,
+            checkCrossOrigin: false
+        });
     }
-});
 
-// Controls
-document.getElementById('btnRotateLeftCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(-90); });
-document.getElementById('btnRotateRightCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(90); });
-document.getElementById('btnFlipHCert')?.addEventListener('click', function() { if (cropperCert) { scaleXCert = -scaleXCert; cropperCert.scaleX(scaleXCert); } });
-document.getElementById('btnFlipVCert')?.addEventListener('click', function() { if (cropperCert) { scaleYCert = -scaleYCert; cropperCert.scaleY(scaleYCert); } });
-document.getElementById('btnZoomInCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.zoom(0.1); });
-document.getElementById('btnZoomOutCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.zoom(-0.1); });
-document.getElementById('btnResetCropCert')?.addEventListener('click', function() { if (cropperCert) { cropperCert.reset(); scaleXCert = 1; scaleYCert = 1; } });
-
-document.querySelectorAll('.ratio-btn-cert').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.ratio-btn-cert').forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        const val = parseFloat(this.getAttribute('data-ratio'));
-        currentRatioCert = isNaN(val) ? NaN : val;
-        if (cropperCert) cropperCert.setAspectRatio(currentRatioCert);
-    });
-});
-
-fileInputCert?.addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-        const file = this.files[0];
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                sourceImgCert.src = e.target.result;
-                liveCertImg.src = e.target.result;
-                liveCertWrap.classList.remove('d-none');
-                btnEditCert.classList.remove('d-none');
-                btnEditCert.classList.add('d-inline-flex');
-                hiddenCropCert.value = '';
-                bsModalCert.show();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            btnEditCert.classList.add('d-none');
-            liveCertWrap.classList.add('d-none');
+    modalCropCertEl.addEventListener('shown.bs.modal', function() { initCropperCert(); });
+    modalCropCertEl.addEventListener('hidden.bs.modal', function() {
+        if (cropperCert) {
+            cropperCert.destroy();
+            cropperCert = null;
         }
-    }
-});
-
-btnEditCert?.addEventListener('click', function() {
-    if (sourceImgCert.src) {
-        bsModalCert.show();
-    }
-});
-
-window.editExistingCert = function(imgUrl) {
-    sourceImgCert.src = imgUrl;
-    bsModalCert.show();
-};
-
-applyBtnCert?.addEventListener('click', function() {
-    if (!cropperCert) return;
-    const canvas = cropperCert.getCroppedCanvas({
-        maxWidth: 1920,
-        maxHeight: 1200,
-        imageSmoothingQuality: 'high'
     });
-    if (canvas) {
-        const dataUrl = canvas.toDataURL('image/webp', 0.88);
-        hiddenCropCert.value = dataUrl;
-        liveCertImg.src = dataUrl;
-        liveCertWrap.classList.remove('d-none');
-        btnEditCert.classList.remove('d-none');
-        btnEditCert.classList.add('d-inline-flex');
-        bsModalCert.hide();
-    }
+
+    // Controls
+    document.getElementById('btnRotateLeftCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(-90); });
+    document.getElementById('btnRotateRightCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(90); });
+    document.getElementById('btnFlipHCert')?.addEventListener('click', function() { if (cropperCert) { scaleXCert = -scaleXCert; cropperCert.scaleX(scaleXCert); } });
+    document.getElementById('btnFlipVCert')?.addEventListener('click', function() { if (cropperCert) { scaleYCert = -scaleYCert; cropperCert.scaleY(scaleYCert); } });
+    document.getElementById('btnZoomInCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.zoom(0.1); });
+    document.getElementById('btnZoomOutCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.zoom(-0.1); });
+    document.getElementById('btnResetCropCert')?.addEventListener('click', function() { if (cropperCert) { cropperCert.reset(); scaleXCert = 1; scaleYCert = 1; } });
+
+    document.querySelectorAll('.ratio-btn-cert').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ratio-btn-cert').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            const val = parseFloat(this.getAttribute('data-ratio'));
+            currentRatioCert = isNaN(val) ? NaN : val;
+            if (cropperCert) cropperCert.setAspectRatio(currentRatioCert);
+        });
+    });
+
+    fileInputCert?.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name);
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sourceImgCert.src = e.target.result;
+                    liveCertImg.src = e.target.result;
+                    liveCertWrap.classList.remove('d-none');
+                    btnEditCert.classList.remove('d-none');
+                    btnEditCert.classList.add('d-inline-flex');
+                    hiddenCropCert.value = '';
+                    bsModalCert.show();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                btnEditCert.classList.add('d-none');
+                liveCertWrap.classList.add('d-none');
+            }
+        }
+    });
+
+    btnEditCert?.addEventListener('click', function() {
+        if (sourceImgCert.src) {
+            bsModalCert.show();
+        }
+    });
+
+    window.editExistingCert = function(imgUrl) {
+        sourceImgCert.src = imgUrl;
+        bsModalCert.show();
+    };
+
+    applyBtnCert?.addEventListener('click', function() {
+        if (!cropperCert) return;
+        const canvas = cropperCert.getCroppedCanvas({
+            maxWidth: 1920,
+            maxHeight: 1200,
+            imageSmoothingQuality: 'high'
+        });
+        if (canvas) {
+            const dataUrl = canvas.toDataURL('image/webp', 0.88);
+            hiddenCropCert.value = dataUrl;
+            liveCertImg.src = dataUrl;
+            liveCertWrap.classList.remove('d-none');
+            btnEditCert.classList.remove('d-none');
+            btnEditCert.classList.add('d-inline-flex');
+            if (fileInputCert) fileInputCert.value = '';
+            bsModalCert.hide();
+        }
+    });
 });
 </script>
 

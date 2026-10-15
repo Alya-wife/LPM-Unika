@@ -241,7 +241,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                     <div class="d-flex gap-2 align-items-center">
                                         <input type="file" name="logo" id="inputLogoLembaga" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
                                         <button type="button" class="btn btn-dark btn-sm d-none align-items-center gap-1" id="btnEditLogoLembaga" style="white-space:nowrap;padding:0.6rem 0.9rem;border-radius:8px;">
-                                            <i class="bi bi-crop text-warning"></i> Edit / Crop
+                                            <i class="bi bi-crop text-warning"></i> Sesuaikan / Edit Logo
                                         </button>
                                     </div>
                                     <input type="hidden" name="cropped_logo_data" id="croppedLogoData">
@@ -351,126 +351,135 @@ require_once __DIR__ . '/includes/admin-header.php';
 </div>
 
 <script>
-let cropperLembaga = null;
-let scaleXLembaga = 1;
-let scaleYLembaga = 1;
-let currentRatioLembaga = 1;
+document.addEventListener('DOMContentLoaded', function() {
+    let cropperLembaga = null;
+    let scaleXLembaga = 1;
+    let scaleYLembaga = 1;
+    let currentRatioLembaga = 1;
 
-const modalCropLembagaEl  = document.getElementById('modalCropLembaga');
-const bsModalLembaga      = new bootstrap.Modal(modalCropLembagaEl);
-const sourceImgLembaga    = document.getElementById('cropperSourceImgLembaga');
-const fileInputLembaga    = document.getElementById('inputLogoLembaga');
-const btnEditLembaga      = document.getElementById('btnEditLogoLembaga');
-const logoPreviewImg      = document.getElementById('logoPreviewImg');
-const logoPlaceholder     = document.getElementById('logoPreviewPlaceholder');
-const hiddenCropLembaga   = document.getElementById('croppedLogoData');
-const applyBtnLembaga     = document.getElementById('btnApplyCropLembaga');
+    const modalCropLembagaEl  = document.getElementById('modalCropLembaga');
+    if (!modalCropLembagaEl) return;
+    const bsModalLembaga      = new bootstrap.Modal(modalCropLembagaEl);
+    const sourceImgLembaga    = document.getElementById('cropperSourceImgLembaga');
+    const fileInputLembaga    = document.getElementById('inputLogoLembaga');
+    const btnEditLembaga      = document.getElementById('btnEditLogoLembaga');
+    const logoPreviewImg      = document.getElementById('logoPreviewImg');
+    const logoPlaceholder     = document.getElementById('logoPreviewPlaceholder');
+    const hiddenCropLembaga   = document.getElementById('croppedLogoData');
+    const applyBtnLembaga     = document.getElementById('btnApplyCropLembaga');
 
-function initCropperLembaga() {
-    if (cropperLembaga) cropperLembaga.destroy();
-    scaleXLembaga = 1;
-    scaleYLembaga = 1;
-    cropperLembaga = new Cropper(sourceImgLembaga, {
-        aspectRatio: currentRatioLembaga,
-        viewMode: 1,
-        autoCropArea: 0.95,
-        responsive: true,
-        guides: true,
-        checkCrossOrigin: false
-    });
-}
-
-modalCropLembagaEl.addEventListener('shown.bs.modal', function() { initCropperLembaga(); });
-modalCropLembagaEl.addEventListener('hidden.bs.modal', function() {
-    if (cropperLembaga) {
-        cropperLembaga.destroy();
-        cropperLembaga = null;
+    function initCropperLembaga() {
+        if (cropperLembaga) cropperLembaga.destroy();
+        scaleXLembaga = 1;
+        scaleYLembaga = 1;
+        cropperLembaga = new Cropper(sourceImgLembaga, {
+            aspectRatio: currentRatioLembaga,
+            viewMode: 1,
+            autoCropArea: 0.95,
+            responsive: true,
+            guides: true,
+            checkCrossOrigin: false
+        });
     }
-});
 
-// Controls
-document.getElementById('btnRotateLeftLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(-90); });
-document.getElementById('btnRotateRightLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(90); });
-document.getElementById('btnFlipHLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleXLembaga = -scaleXLembaga; cropperLembaga.scaleX(scaleXLembaga); } });
-document.getElementById('btnFlipVLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleYLembaga = -scaleYLembaga; cropperLembaga.scaleY(scaleYLembaga); } });
-document.getElementById('btnZoomInLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(0.1); });
-document.getElementById('btnZoomOutLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(-0.1); });
-document.getElementById('btnResetCropLembaga')?.addEventListener('click', function() { if (cropperLembaga) { cropperLembaga.reset(); scaleXLembaga = 1; scaleYLembaga = 1; } });
-
-document.querySelectorAll('.ratio-btn-lembaga').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.ratio-btn-lembaga').forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        const val = parseFloat(this.getAttribute('data-ratio'));
-        currentRatioLembaga = isNaN(val) ? NaN : val;
-        if (cropperLembaga) cropperLembaga.setAspectRatio(currentRatioLembaga);
+    modalCropLembagaEl.addEventListener('shown.bs.modal', function() { initCropperLembaga(); });
+    modalCropLembagaEl.addEventListener('hidden.bs.modal', function() {
+        if (cropperLembaga) {
+            cropperLembaga.destroy();
+            cropperLembaga = null;
+        }
     });
-});
 
-fileInputLembaga?.addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-        const file = this.files[0];
-        // Jika SVG, tidak perlu di-crop (vektor)
-        if (file.name.toLowerCase().endsWith('.svg')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                logoPreviewImg.src = e.target.result;
-                logoPreviewImg.style.display = 'block';
-                if (logoPlaceholder) logoPlaceholder.style.display = 'none';
-                btnEditLembaga.classList.add('d-none');
-            };
-            reader.readAsDataURL(file);
-            return;
+    // Controls
+    document.getElementById('btnRotateLeftLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(-90); });
+    document.getElementById('btnRotateRightLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.rotate(90); });
+    document.getElementById('btnFlipHLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleXLembaga = -scaleXLembaga; cropperLembaga.scaleX(scaleXLembaga); } });
+    document.getElementById('btnFlipVLembaga')?.addEventListener('click', function() { if (cropperLembaga) { scaleYLembaga = -scaleYLembaga; cropperLembaga.scaleY(scaleYLembaga); } });
+    document.getElementById('btnZoomInLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(0.1); });
+    document.getElementById('btnZoomOutLembaga')?.addEventListener('click', function() { if (cropperLembaga) cropperLembaga.zoom(-0.1); });
+    document.getElementById('btnResetCropLembaga')?.addEventListener('click', function() { if (cropperLembaga) { cropperLembaga.reset(); scaleXLembaga = 1; scaleYLembaga = 1; } });
+
+    document.querySelectorAll('.ratio-btn-lembaga').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ratio-btn-lembaga').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            const val = parseFloat(this.getAttribute('data-ratio'));
+            currentRatioLembaga = isNaN(val) ? NaN : val;
+            if (cropperLembaga) cropperLembaga.setAspectRatio(currentRatioLembaga);
+        });
+    });
+
+    fileInputLembaga?.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            // Jika SVG, tidak perlu di-crop (vektor murni)
+            if (file.name.toLowerCase().endsWith('.svg')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (logoPreviewImg) {
+                        logoPreviewImg.src = e.target.result;
+                        logoPreviewImg.style.display = 'block';
+                    }
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                    btnEditLembaga?.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(file.name);
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sourceImgLembaga.src = e.target.result;
+                    if (logoPreviewImg) {
+                        logoPreviewImg.src = e.target.result;
+                        logoPreviewImg.style.display = 'block';
+                    }
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                    btnEditLembaga?.classList.remove('d-none');
+                    btnEditLembaga?.classList.add('d-inline-flex');
+                    hiddenCropLembaga.value = '';
+                    bsModalLembaga.show();
+                };
+                reader.readAsDataURL(file);
+            }
         }
+    });
 
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                sourceImgLembaga.src = e.target.result;
-                logoPreviewImg.src = e.target.result;
-                logoPreviewImg.style.display = 'block';
-                if (logoPlaceholder) logoPlaceholder.style.display = 'none';
-                btnEditLembaga.classList.remove('d-none');
-                btnEditLembaga.classList.add('d-inline-flex');
-                hiddenCropLembaga.value = '';
-                bsModalLembaga.show();
-            };
-            reader.readAsDataURL(file);
+    btnEditLembaga?.addEventListener('click', function() {
+        if (sourceImgLembaga.src) {
+            bsModalLembaga.show();
         }
-    }
-});
+    });
 
-btnEditLembaga?.addEventListener('click', function() {
-    if (sourceImgLembaga.src) {
+    window.editExistingLogoLembaga = function(imgUrl) {
+        sourceImgLembaga.src = imgUrl;
         bsModalLembaga.show();
-    }
-});
+    };
 
-window.editExistingLogoLembaga = function(imgUrl) {
-    sourceImgLembaga.src = imgUrl;
-    bsModalLembaga.show();
-};
-
-applyBtnLembaga?.addEventListener('click', function() {
-    if (!cropperLembaga) return;
-    const canvas = cropperLembaga.getCroppedCanvas({
-        maxWidth: 1000,
-        maxHeight: 1000,
-        imageSmoothingQuality: 'high'
+    applyBtnLembaga?.addEventListener('click', function() {
+        if (!cropperLembaga) return;
+        const canvas = cropperLembaga.getCroppedCanvas({
+            maxWidth: 1000,
+            maxHeight: 1000,
+            imageSmoothingQuality: 'high'
+        });
+        if (canvas) {
+            const dataUrl = canvas.toDataURL('image/webp', 0.9);
+            hiddenCropLembaga.value = dataUrl;
+            if (logoPreviewImg) {
+                logoPreviewImg.src = dataUrl;
+                logoPreviewImg.style.display = 'block';
+            }
+            if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+            if (fileInputLembaga) fileInputLembaga.value = '';
+            btnEditLembaga?.classList.remove('d-none');
+            btnEditLembaga?.classList.add('d-inline-flex');
+            bsModalLembaga.hide();
+        }
     });
-    if (canvas) {
-        const dataUrl = canvas.toDataURL('image/webp', 0.9);
-        hiddenCropLembaga.value = dataUrl;
-        logoPreviewImg.src = dataUrl;
-        logoPreviewImg.style.display = 'block';
-        if (logoPlaceholder) logoPlaceholder.style.display = 'none';
-        btnEditLembaga.classList.remove('d-none');
-        btnEditLembaga.classList.add('d-inline-flex');
-        bsModalLembaga.hide();
-    }
 });
 </script>
-    </div>
-</div>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

@@ -281,9 +281,6 @@ require_once __DIR__ . '/includes/admin-header.php';
                             <a href="<?= $live_url ?>" target="_blank" class="btn-action" style="background:#ECEFF1;color:#455A64;" title="Lihat Halaman Live">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a href="page-form.php?id=<?= $p['id'] ?>" class="btn-action btn-edit" title="Edit Form">
-                                <i class="bi bi-pencil"></i>
-                            </a>
                             <?php if (!$is_core): ?>
                             <a href="page-list.php?delete=<?= $p['id'] ?>" class="btn-action btn-delete" onclick="return confirm('Hapus halaman <?= addslashes($p['judul']) ?>?')" title="Hapus">
                                 <i class="bi bi-trash"></i>

@@ -42,7 +42,6 @@ ALTER TABLE `ami_siklus5_rtm`
   ADD COLUMN `max_preview_pages` INT NOT NULL DEFAULT 3,
   ADD COLUMN `allowed_domains` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';
 
--- Pembatasan terpisah masing-masing dokumen AMI Siklus 5
 ALTER TABLE `ami_siklus5_rtm`
   ADD COLUMN `is_restricted_undangan` TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN `max_preview_pages_undangan` INT NOT NULL DEFAULT 3,
@@ -54,7 +53,6 @@ ALTER TABLE `ami_siklus5_rtm`
   ADD COLUMN `max_preview_pages_notulensi` INT NOT NULL DEFAULT 3,
   ADD COLUMN `allowed_domains_notulensi` VARCHAR(255) NOT NULL DEFAULT '@unika.ac.id,@student.unika.ac.id';
 
--- Pembatasan terpisah masing-masing dokumen AMI Siklus 4
 ALTER TABLE `ami_siklus4_dokumentasi`
   ADD COLUMN `is_restricted_undangan` TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN `max_preview_pages_undangan` INT NOT NULL DEFAULT 3,

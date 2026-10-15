@@ -645,13 +645,18 @@ function findPageRecord(string $identifier): ?array {
 // Helper: Cek apakah menu navigasi halaman aktif dan layak ditampilkan di navbar
 function isPageNavVisible(string $identifier): bool {
     $rec = findPageRecord($identifier);
+
     if (!$rec) {
-        // Jika tidak tercatat di tabel pages, default tetap tampil
         return true;
     }
+
     $isPublished = ($rec['status'] ?? 'publish') === 'publish';
-    $showInNav   = !empty($rec['show_in_nav']);
-    return ($isPublished && $showInNav);
+
+    if (!array_key_exists('show_in_nav', $rec) || $rec['show_in_nav'] === null) {
+        return $isPublished;
+    }
+
+    return $isPublished && (int)$rec['show_in_nav'] === 1;
 }
 
 // Helper: Kompilasi dan render array blok menjadi HTML interaktif

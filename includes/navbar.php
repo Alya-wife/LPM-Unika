@@ -159,7 +159,7 @@ try {
                 <!-- 5. Akreditasi (Whimsical Dropdown) -->
                 <?php if (isPageNavVisible('akreditasi')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
-                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['akreditasi', 'akreditasi-institusi', 'lembaga-akreditasi', 'penghargaan', 'akreditasi-prodi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/akreditasi.php" id="navbarAkreditasi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle <?= in_array($current_page, ['akreditasi', 'akreditasi-institusi', 'lembaga-akreditasi', 'pemeringkatan', 'penghargaan', 'akreditasi-prodi']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/akreditasi-institusi.php" id="navbarAkreditasi" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Akreditasi
                     </a>
                     <div class="dropdown-menu whimsical-dropdown" aria-labelledby="navbarAkreditasi">
@@ -184,7 +184,7 @@ try {
                                 </div>
                             </a>
                             <a href="<?= SITE_URL ?>/pemeringkatan.php" class="whimsical-item <?= in_array($current_page, ['pemeringkatan', 'penghargaan']) ? 'active' : '' ?>">
-                                <div class="whimsical-icon-wrap" style="background:rgba(217,119,6,0.1);color:#D97706;">
+                                <div class="whimsical-icon-wrap">
                                     <i class="bi bi-bar-chart-line-fill"></i>
                                 </div>
                                 <div class="whimsical-item-body">

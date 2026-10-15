@@ -65,8 +65,8 @@ try {
                     </div>
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold" style="font-size:0.88rem;border-radius:8px;">
-                        Cari Istilah
+                    <button type="submit" class="btn btn-purple w-100 fw-bold text-white" style="background:var(--purple);border:none;font-size:0.88rem;border-radius:8px;box-shadow:0 4px 12px rgba(106,27,154,0.25);">
+                        <i class="bi bi-search me-1"></i> Cari Istilah
                     </button>
                     <?php if ($search_term): ?>
                     <a href="glosarium.php" class="btn btn-outline-secondary" style="border-radius:8px;font-size:0.88rem;">Reset</a>

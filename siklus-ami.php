@@ -1400,7 +1400,7 @@ try {
                     <p class="text-muted small mx-auto mb-4" style="max-width:520px;">
                         Berkas ini berformat dokumen (seperti Microsoft Word atau arsip). Silakan unduh dokumen untuk membuka dan membaca berkas secara utuh di perangkat Anda.
                     </p>
-                    <a href="#" id="docModalFallbackDownload" download class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm">
+                    <a href="#" id="docModalFallbackDownload" download class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" style="background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 4px 12px rgba(106,27,154,0.25);">
                         <i class="bi bi-download me-1"></i> Unduh Berkas Sekarang
                     </a>
                 </div>

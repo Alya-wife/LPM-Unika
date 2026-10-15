@@ -275,7 +275,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                     <iframe src="<?= $f_url ?>#toolbar=1&navpanes=0&scrollbar=1" class="pdf-embed-frame" title="<?= htmlspecialchars($br['judul_brosur']) ?>">
                                         <div class="p-5 text-center bg-light">
                                             <p class="text-muted mb-3">Browser Anda tidak mendukung pratinjau PDF langsung di halaman.</p>
-                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold">
+                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold" style="background:var(--purple);border-color:var(--purple);color:#fff;">
                                                 <i class="bi bi-download me-1"></i> Unduh Berkas PDF Brosur
                                             </a>
                                         </div>
@@ -297,7 +297,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <!-- Berkas Word DOCX Terpampang dengan Card Interaktif -->
                                 <div class="p-4 p-md-5 bg-white">
                                     <div class="docx-preview-box">
-                                        <div style="font-size:3.5rem;color:#2563EB;line-height:1;margin-bottom:1rem;">
+                                        <div style="font-size:3.5rem;color:var(--purple);line-height:1;margin-bottom:1rem;">
                                             <i class="bi bi-file-earmark-word-fill"></i>
                                         </div>
                                         <h5 class="fw-bold text-navy mb-2"><?= htmlspecialchars($br['judul_brosur']) ?></h5>
@@ -305,7 +305,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                             Dokumen resmi panduan dan formulir pendaftaran pelatihan tersedia dalam format Microsoft Word (.<?= strtoupper($f_ext) ?>). Anda dapat mengunduh dan menyunting sesuai kebutuhan surat tugas institusi Anda.
                                         </p>
                                         <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold px-4 py-2 rounded-pill">
+                                            <a href="<?= $f_url ?>" download class="btn btn-primary fw-bold px-4 py-2 rounded-pill" style="background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 4px 12px rgba(106,27,154,0.25);">
                                                 <i class="bi bi-download me-1"></i> Unduh Berkas Word (.<?= strtoupper($f_ext) ?>)
                                             </a>
                                             <a href="https://view.officeapps.live.com/op/view.aspx?src=<?= urlencode($f_url) ?>" target="_blank" class="btn btn-outline-secondary fw-semibold px-4 py-2 rounded-pill">

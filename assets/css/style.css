@@ -2437,3 +2437,34 @@ img { max-width: 100%; height: auto; }
   box-shadow: none !important;
 }
 
+/* Penyeragaman Tombol Utama (Primary Button) ke Warna Ungu Khas LPM */
+.btn-primary,
+.btn-purple {
+  background-color: var(--purple) !important;
+  border-color: var(--purple) !important;
+  color: #FFFFFF !important;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-purple:hover,
+.btn-purple:focus,
+.btn-purple:active {
+  background-color: var(--purple-dark) !important;
+  border-color: var(--purple-dark) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(106, 27, 154, 0.35) !important;
+}
+.btn-outline-primary {
+  color: var(--purple) !important;
+  border-color: var(--purple) !important;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background-color: var(--purple) !important;
+  border-color: var(--purple) !important;
+  color: #FFFFFF !important;
+}
+
+

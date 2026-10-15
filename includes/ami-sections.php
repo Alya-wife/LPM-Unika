@@ -132,7 +132,7 @@ function renderAmiSection($type, $block = [], $is_builder = false, $selected_tah
                         <?php endforeach; ?>
                     </div>
                     <div class="text-center mt-4">
-                        <a href="<?= SITE_URL ?>/siklus-ami.php" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" style="box-shadow:0 4px 15px rgba(11,31,68,0.15);">
+                        <a href="<?= SITE_URL ?>/siklus-ami.php" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" style="background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 4px 15px rgba(106,27,154,0.3);">
                             <i class="bi bi-arrow-repeat me-1"></i> Buka Informasi &amp; Dokumentasi Siklus 1 s.d. 5 AMI &rarr;
                         </a>
                     </div>

@@ -505,7 +505,7 @@ require_once __DIR__ . '/includes/navbar.php';
                     <a href="<?= SITE_URL ?>/" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-bold">
                         <i class="bi bi-house me-1"></i> Kembali ke Beranda
                     </a>
-                    <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" style="background:#0284C7;border-color:#0284C7;">
+                    <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" style="background:var(--purple);border-color:var(--purple);box-shadow:0 4px 12px rgba(106,27,154,0.25);">
                         <i class="bi bi-arrow-repeat me-1"></i> Isi Survei Baru
                     </a>
                 </div>

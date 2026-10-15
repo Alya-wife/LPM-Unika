@@ -377,15 +377,27 @@ require_once __DIR__ . '/includes/admin-header.php';
 
                             <?php if (!empty($current_photos)): ?>
                             <div class="mt-3">
-                                <div class="small fw-bold text-muted mb-2">Foto Dokumentasi Tersimpan (Centang kotak merah jika ingin menghapus foto):</div>
+                                <div class="small fw-bold text-muted mb-2">Foto Dokumentasi Tersimpan:</div>
                                 <div class="row g-2">
                                     <?php foreach ($current_photos as $idx => $photo): ?>
-                                    <div class="col-6 col-sm-4 col-md-3">
-                                        <div class="card p-1 border position-relative">
-                                            <img src="<?= SITE_URL ?>/uploads/<?= e($photo) ?>" alt="Foto" class="rounded" style="height:100px;object-fit:cover;width:100%;">
-                                            <div class="form-check mt-1 ps-4" style="font-size:0.75rem;">
-                                                <input class="form-check-input" type="checkbox" name="delete_photos[]" value="<?= e($photo) ?>" id="delPhoto_<?= $idx ?>">
-                                                <label class="form-check-label text-danger" for="delPhoto_<?= $idx ?>">Hapus</label>
+                                    <div class="col-6 col-sm-4 col-md-3" id="photoItemWrapS4_<?= $idx ?>">
+                                        <div class="card p-1 border position-relative h-100 shadow-sm" id="cardExistingS4_<?= $idx ?>">
+                                            <div style="height:110px; border-radius:4px; overflow:hidden; background:#000;">
+                                                <img src="<?= SITE_URL ?>/uploads/<?= e($photo) ?>" alt="Foto" id="imgThumbS4_<?= $idx ?>" style="height:100%;object-fit:cover;width:100%;">
+                                            </div>
+                                            <div class="d-flex align-items-center justify-content-between mt-2 px-1 gap-1 flex-wrap">
+                                                <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 fw-semibold btn-crop-existing-s4 d-inline-flex align-items-center gap-1"
+                                                        data-photo-url="<?= SITE_URL ?>/uploads/<?= e($photo) ?>"
+                                                        data-photo-path="<?= e($photo) ?>"
+                                                        data-idx="<?= $idx ?>"
+                                                        title="Sesuaikan, putar, atau potong foto tersimpan ini"
+                                                        style="font-size:0.75rem; border-radius:4px;">
+                                                    <i class="bi bi-crop text-warning"></i> Sesuaikan
+                                                </button>
+                                                <div class="form-check m-0">
+                                                    <input class="form-check-input check-del-s4" type="checkbox" name="delete_photos[]" value="<?= e($photo) ?>" id="delPhoto_<?= $idx ?>" data-idx="<?= $idx ?>">
+                                                    <label class="form-check-label text-danger" for="delPhoto_<?= $idx ?>" style="font-size:0.75rem; cursor:pointer;">Hapus</label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -427,7 +439,7 @@ require_once __DIR__ . '/includes/admin-header.php';
             </div>
             <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
                 <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
-                    <img id="cropperSourceImgS4" src="" alt="Source" style="max-width:100%;max-height:460px;display:block;">
+                    <img id="cropperSourceImgS4" src="" alt="Source" crossorigin="anonymous" style="max-width:100%;max-height:460px;display:block;">
                 </div>
                 <div class="card p-3 border shadow-sm rounded-3 bg-white">
                     <div class="row g-2 align-items-center">
@@ -550,6 +562,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var scaleY = 1;
     var currentRatio = 16 / 9;
 
+    var currentTargetExistingIdx  = null;
+    var currentTargetExistingPath = null;
+
     function initCropper() {
         if (cropper) cropper.destroy();
         scaleX = 1;
@@ -565,12 +580,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fotoInput.addEventListener('change', function(e) {
         if (this.files && this.files.length > 0) {
+            currentTargetExistingIdx = null;
+            currentTargetExistingPath = null;
             var file = this.files[0];
             if (file.type.match(/^image\//)) {
                 var reader = new FileReader();
                 reader.onload = function(evt) {
                     cropperSourceImg.src = evt.target.result;
-                    if (btnOpenCropper) btnOpenCropper.classList.remove('d-none');
+                    if (btnOpenCropper) {
+                        btnOpenCropper.classList.remove('d-none');
+                        btnOpenCropper.innerHTML = '<i class="bi bi-crop me-1"></i> Sesuaikan Foto Baru Dipilih';
+                    }
+                    bsModal.show();
                 };
                 reader.readAsDataURL(file);
             }
@@ -579,6 +600,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     btnOpenCropper?.addEventListener('click', function() {
         if (cropperSourceImg.src) bsModal.show();
+    });
+
+    // Sesuaikan Foto yang Sudah Terupload / Tersimpan
+    document.querySelectorAll('.btn-crop-existing-s4').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.getAttribute('data-photo-url');
+            var path = this.getAttribute('data-photo-path');
+            var idx = this.getAttribute('data-idx');
+            currentTargetExistingIdx = idx;
+            currentTargetExistingPath = path;
+
+            cropperSourceImg.src = url;
+            if (btnOpenCropper) {
+                btnOpenCropper.classList.remove('d-none');
+                btnOpenCropper.innerHTML = '<i class="bi bi-crop me-1"></i> Sesuaikan Foto Terpilih';
+            }
+            bsModal.show();
+        });
+    });
+
+    // Visual feedback saat checkbox hapus dicentang manual
+    document.querySelectorAll('.check-del-s4').forEach(function(chk) {
+        chk.addEventListener('change', function() {
+            var card = document.getElementById('cardExistingS4_' + this.dataset.idx);
+            if (card) {
+                if (this.checked) {
+                    card.style.opacity = '0.45';
+                    card.style.borderColor = '#EF4444';
+                } else {
+                    card.style.opacity = '1';
+                    card.style.borderColor = '#CBD5E1';
+                }
+            }
+        });
     });
 
     modalEl.addEventListener('shown.bs.modal', function() { initCropper(); });
@@ -609,12 +664,55 @@ document.addEventListener('DOMContentLoaded', function() {
             var dataUrl = canvas.toDataURL('image/webp', 0.88);
             var col = document.createElement('div');
             col.className = 'col-6 col-sm-4 col-md-3';
-            col.innerHTML = '<div class="card p-1 border position-relative shadow-sm"><img src="' + dataUrl + '" style="height:100px;object-fit:cover;border-radius:4px;"><input type="hidden" name="cropped_photos[]" value="' + dataUrl + '"><button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-1 p-1" style="line-height:1;border-radius:50%;" onclick="this.closest(\'.col-6\').remove()">&times;</button></div>';
+
+            var linkedIdx = currentTargetExistingIdx;
+            var existingNote = '';
+
+            if (linkedIdx !== null) {
+                existingNote = '<div class="px-1 py-1 bg-warning-subtle text-dark border-top small text-truncate" style="font-size:0.68rem;font-weight:600;"><i class="bi bi-arrow-repeat me-1 text-warning"></i>Menggantikan foto tersimpan</div>';
+
+                var chkDel = document.getElementById('delPhoto_' + linkedIdx);
+                var cardOld = document.getElementById('cardExistingS4_' + linkedIdx);
+                if (chkDel) chkDel.checked = true;
+                if (cardOld) {
+                    cardOld.style.opacity = '0.45';
+                    cardOld.style.borderColor = '#EF4444';
+                }
+            }
+
+            col.innerHTML = '<div class="card p-1 border position-relative shadow-sm">' +
+                '<img src="' + dataUrl + '" style="height:100px;object-fit:cover;border-radius:4px;">' +
+                existingNote +
+                '<input type="hidden" name="cropped_photos[]" value="' + dataUrl + '">' +
+                '<button type="button" class="btn btn-xs btn-danger position-absolute top-0 end-0 m-1 p-1" style="line-height:1;border-radius:50%;" title="Batalkan foto hasil crop ini">&times;</button>' +
+                '</div>';
+
+            var btnDel = col.querySelector('button');
+            btnDel.addEventListener('click', function() {
+                if (linkedIdx !== null) {
+                    var chkDel = document.getElementById('delPhoto_' + linkedIdx);
+                    var cardOld = document.getElementById('cardExistingS4_' + linkedIdx);
+                    if (chkDel) chkDel.checked = false;
+                    if (cardOld) {
+                        cardOld.style.opacity = '1';
+                        cardOld.style.borderColor = '#CBD5E1';
+                    }
+                }
+                col.remove();
+                if (containerGrid.children.length === 0) {
+                    containerWrap.classList.add('d-none');
+                }
+            });
+
             containerGrid.appendChild(col);
             containerWrap.classList.remove('d-none');
-            // Kosongkan file input asli agar gambar tidak terkirim ganda
-            fotoInput.value = '';
-            if (btnOpenCropper) btnOpenCropper.classList.add('d-none');
+
+            // Kosongkan file input asli jika berasal dari pemilihan file baru
+            if (linkedIdx === null) {
+                fotoInput.value = '';
+                if (btnOpenCropper) btnOpenCropper.classList.add('d-none');
+            }
+
             bsModal.hide();
         }
     });

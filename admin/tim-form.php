@@ -316,32 +316,37 @@ require_once __DIR__ . '/includes/admin-header.php';
                                             Format didukung: JPG, PNG, WEBP (Maksimal 5MB). Setelah memilih file, modal crop otomatis muncul.
                                         </small>
 
-                                        <!-- Opsi Hapus Foto yang Sudah Tersimpan -->
+                                        <!-- Opsi Hapus & Sesuaikan Foto yang Sudah Tersimpan -->
                                         <?php 
                                         $cur_foto_url = ($is_edit && !empty($person['foto'])) ? getTimFotoUrl($person['foto']) : '';
                                         if ($cur_foto_url): 
                                         ?>
-                                        <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" id="existingPhotoCard" style="background:#FFF5F5;border:1.5px solid #FED7D7;">
+                                        <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" id="existingPhotoCard" style="background:#F1F5F9;border:1.5px solid #CBD5E1;">
                                             <div class="d-flex align-items-center gap-3">
                                                 <img src="<?= htmlspecialchars($cur_foto_url) ?>" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid #CBD5E1;">
                                                 <div>
-                                                    <div class="fw-bold text-danger" style="font-size:0.85rem;">Foto Personel Tersimpan</div>
+                                                    <div class="fw-bold text-navy" style="font-size:0.85rem;">Foto Personel Tersimpan</div>
                                                     <small class="text-muted"><?= e($person['foto']) ?></small>
                                                 </div>
                                             </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" name="hapus_foto" id="checkHapusFoto" value="1" style="cursor:pointer;width:2.2em;height:1.2em;">
-                                                <label class="form-check-label fw-bold text-danger ms-1" for="checkHapusFoto" style="cursor:pointer;font-size:0.85rem;">
-                                                    <i class="bi bi-trash3 me-1"></i> Hapus Foto
-                                                </label>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1" id="btnCropExistingFoto" style="border-radius:6px;font-size:0.8rem;">
+                                                    <i class="bi bi-crop text-warning"></i> Sesuaikan Gambar Tersimpan
+                                                </button>
+                                                <div class="form-check form-switch m-0 ms-2">
+                                                    <input class="form-check-input" type="checkbox" name="hapus_foto" id="checkHapusFoto" value="1" style="cursor:pointer;width:2.2em;height:1.2em;">
+                                                    <label class="form-check-label fw-bold text-danger ms-1" for="checkHapusFoto" style="cursor:pointer;font-size:0.85rem;">
+                                                        <i class="bi bi-trash3 me-1"></i> Hapus Foto
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
                                         <?php endif; ?>
 
-                                        <!-- Tombol Buka Modal Crop Manual jika foto sudah dipilih -->
+                                        <!-- Tombol Buka Modal Crop Manual -->
                                         <div class="d-flex gap-2 flex-wrap mb-3">
-                                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3 py-2 d-none align-items-center gap-2" id="btnOpenCropperModal" style="border-radius:8px;">
-                                                <i class="bi bi-crop"></i> Atur &amp; Crop Foto Ini
+                                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3 py-2 <?= $cur_foto_url ? 'd-inline-flex' : 'd-none' ?> align-items-center gap-2" id="btnOpenCropperModal" style="border-radius:8px;">
+                                                <i class="bi bi-crop"></i> Sesuaikan Gambar (Crop &amp; Rotate)
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-danger px-3 py-2 d-none align-items-center gap-1" id="btnResetFoto" style="border-radius:8px;">
                                                 <i class="bi bi-arrow-counterclockwise"></i> Reset Foto
@@ -432,7 +437,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                 
                 <!-- Cropper Workspace -->
                 <div class="crop-container mb-3 shadow-inner">
-                    <img id="cropperImageSource" src="" alt="Source Image">
+                    <img id="cropperImageSource" src="" alt="Source Image" crossorigin="anonymous">
                 </div>
 
                 <!-- Toolbar Kontrol: Flip Horizontal, Zoom, Rotate, Ratio -->
@@ -535,6 +540,33 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentScaleX   = 1;
     let activeRatio     = 4 / 3; // default ratio 4:3 for website card
     const bsCropModal   = new bootstrap.Modal(cropModalEl);
+    const existingPhotoUrl = <?= !empty($cur_foto_url) ? json_encode($cur_foto_url) : '""' ?>;
+
+    function openCropperWithUrl(url) {
+        if (!url) return;
+        cropImageSource.src = url;
+        btnOpenModal.classList.remove('d-none');
+        btnOpenModal.classList.add('d-inline-flex');
+        if (checkHapusFoto) checkHapusFoto.checked = false;
+        bsCropModal.show();
+    }
+
+    const btnCropExisting = document.getElementById('btnCropExistingFoto');
+    if (btnCropExisting) {
+        btnCropExisting.addEventListener('click', function() {
+            const targetUrl = hiddenCroppedData.value || existingPhotoUrl;
+            openCropperWithUrl(targetUrl);
+        });
+    }
+
+    if (btnOpenModal) {
+        btnOpenModal.addEventListener('click', function() {
+            const targetUrl = cropImageSource.src || hiddenCroppedData.value || existingPhotoUrl;
+            if (targetUrl) {
+                openCropperWithUrl(targetUrl);
+            }
+        });
+    }
 
     // Opsi Hapus Foto Tersimpan
     const checkHapusFoto = document.getElementById('checkHapusFoto');
@@ -547,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset input file baru jika ada
                 fileInput.value = '';
                 hiddenCroppedData.value = '';
-                btnOpenModal.classList.add('d-none');
+                btnResetFoto.classList.add('d-none');
                 cropStatusBox.classList.add('d-none');
             } else {
                 // Kembalikan foto lama jika tidak dicentang
@@ -706,22 +738,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tombol Reset Foto
     btnResetFoto.addEventListener('click', function() {
-        if (confirm('Apakah Anda ingin membatalkan pemilihan foto baru ini?')) {
+        if (confirm('Apakah Anda ingin membatalkan perubahan foto ini?')) {
             fileInput.value = '';
             hiddenCroppedData.value = '';
-            cropImageSource.src = '';
-            btnOpenModal.classList.add('d-none');
+            cropImageSource.src = existingPhotoUrl || '';
             btnResetFoto.classList.add('d-none');
             cropStatusBox.classList.add('d-none');
 
-            <?php if ($is_edit && $person['foto'] && file_exists(__DIR__ . '/../uploads/tim/' . $person['foto'])): ?>
+            <?php if ($is_edit && !empty($person['foto']) && file_exists(__DIR__ . '/../uploads/tim/' . $person['foto'])): ?>
                 liveCardImg.src = '<?= SITE_URL ?>/uploads/tim/<?= e($person['foto']) ?>';
                 liveCardImg.classList.remove('d-none');
                 liveCardHolder.classList.add('d-none');
+                btnOpenModal.classList.remove('d-none');
+                btnOpenModal.classList.add('d-inline-flex');
+                btnOpenModal.innerHTML = '<i class="bi bi-crop"></i> Sesuaikan Gambar (Crop &amp; Rotate)';
             <?php else: ?>
                 liveCardImg.src = '';
                 liveCardImg.classList.add('d-none');
                 liveCardHolder.classList.remove('d-none');
+                btnOpenModal.classList.add('d-none');
             <?php endif; ?>
         }
     });

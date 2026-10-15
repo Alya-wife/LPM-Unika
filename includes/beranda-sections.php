@@ -487,10 +487,10 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                         </div>
 
                         <!-- Kolom Kanan: Tilted Certificate Card (Carousel bila > 1 sertifikat) -->
-                        <div class="col-lg-5 text-center">
+                        <div class="col-lg-6 text-center">
                             <?php if ($total_items > 1): ?>
                                 <div id="certCarousel" class="carousel slide carousel-fade cert-carousel-container" data-bs-ride="carousel" data-bs-interval="5000" style="overflow:visible;">
-                                    <div class="carousel-inner" style="overflow:visible; padding:1.25rem 0.75rem 2rem 0.75rem;">
+                                    <div class="carousel-inner" style="overflow:visible; padding:1.25rem 0.5rem 2rem 0.5rem;">
                                         <?php foreach ($capaian_items as $idx => $it): ?>
                                             <?php 
                                             $f_cert = $it['file_sertifikat'] ?? '';
@@ -506,15 +506,15 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                                  data-btn-link="<?= e($it['btn_link'] ?? 'akreditasi-prodi.php') ?>"
                                                  data-slide-index="<?= $idx + 1 ?>">
                                                 
-                                                <div class="cert-card-wrap mx-auto" style="max-width:440px; padding:14px 10px 22px 10px;">
+                                                <div class="cert-card-wrap mx-auto" style="max-width:580px; width:100%; padding:16px 12px 26px 12px;">
                                                     <?php if ($f_cert && file_exists(UPLOAD_PATH . 'akreditasi/' . $f_cert)): ?>
                                                         <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($f_cert) ?>" target="_blank" 
                                                            class="d-block position-relative cert-hover-card" 
-                                                           style="border: 5px solid white; border-radius: 18px; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease; background:#fff; text-decoration:none;" 
+                                                           style="border: 6px solid white; border-radius: 18px; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease; background:#fff; text-decoration:none;" 
                                                            onmouseover="this.style.transform='rotate(0deg) scale(1.025)'" 
                                                            onmouseout="this.style.transform='rotate(2deg) scale(1)'">
                                                             <?php if ($f_prev && file_exists(UPLOAD_PATH . 'akreditasi/' . $f_prev)): ?>
-                                                                <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($f_prev) ?>" alt="<?= e($it['judul']) ?>" class="img-fluid d-block" style="object-fit: cover; width: 100%; max-height: 380px; border-radius: 13px;" loading="lazy">
+                                                                <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($f_prev) ?>" alt="<?= e($it['judul']) ?>" class="img-fluid d-block" style="object-fit: cover; width: 100%; max-height: 430px; border-radius: 13px;" loading="lazy">
                                                             <?php else: ?>
                                                                 <div class="bg-light p-4 text-center" style="border-radius: 13px;">
                                                                     <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
@@ -524,7 +524,7 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                                             <?php endif; ?>
                                                         </a>
                                                     <?php else: ?>
-                                                        <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 350px; border: 2px dashed #ccc;">
+                                                        <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 400px; border: 2px dashed #ccc;">
                                                             <i class="bi bi-patch-check text-muted display-1 mb-3"></i>
                                                             <p class="text-muted mb-0"><?= e($it['judul']) ?></p>
                                                         </div>
@@ -540,15 +540,15 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                 $single_file = $first_item['file_sertifikat'] ?? $data['akred_file'];
                                 $single_prev = $single_file ? getOrGeneratePdfPreview($single_file, 'akreditasi') : '';
                                 ?>
-                                <div class="cert-card-wrap mx-auto" style="max-width:440px; padding:14px 10px 22px 10px;">
+                                <div class="cert-card-wrap mx-auto" style="max-width:580px; width:100%; padding:16px 12px 26px 12px;">
                                     <?php if ($single_file && file_exists(UPLOAD_PATH . 'akreditasi/' . $single_file)): ?>
                                         <a href="<?= SITE_URL ?>/uploads/akreditasi/<?= e($single_file) ?>" target="_blank" 
                                            class="d-block position-relative cert-hover-card" 
-                                           style="border: 5px solid white; border-radius: 18px; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease; background:#fff; text-decoration:none;" 
+                                           style="border: 6px solid white; border-radius: 18px; transform: rotate(2deg); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.35, 1.2), box-shadow 0.35s ease; background:#fff; text-decoration:none;" 
                                            onmouseover="this.style.transform='rotate(0deg) scale(1.025)'" 
                                            onmouseout="this.style.transform='rotate(2deg) scale(1)'">
                                             <?php if ($single_prev && file_exists(UPLOAD_PATH . 'akreditasi/' . $single_prev)): ?>
-                                                <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($single_prev) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid d-block" style="object-fit: cover; width: 100%; max-height: 380px; border-radius: 13px;" loading="lazy">
+                                                <img src="<?= SITE_URL ?>/uploads/akreditasi/<?= e($single_prev) ?>" alt="Sertifikat Akreditasi SCU" class="img-fluid d-block" style="object-fit: cover; width: 100%; max-height: 430px; border-radius: 13px;" loading="lazy">
                                             <?php else: ?>
                                                 <div class="bg-light p-4 text-center" style="border-radius: 13px;">
                                                     <i class="bi bi-file-earmark-pdf text-danger display-1 mb-2"></i>
@@ -557,7 +557,7 @@ function renderBerandaSection($type, $block = [], $is_builder = false) {
                                             <?php endif; ?>
                                         </a>
                                     <?php else: ?>
-                                        <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 350px; border: 2px dashed #ccc;">
+                                        <div class="bg-light rounded-4 shadow-sm d-flex flex-column align-items-center justify-content-center p-5" style="height: 400px; border: 2px dashed #ccc;">
                                             <i class="bi bi-image text-muted display-1 mb-3"></i>
                                             <p class="text-muted">Sertifikat Akreditasi siap ditampilkan.</p>
                                         </div>

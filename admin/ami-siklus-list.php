@@ -745,6 +745,28 @@ require_once __DIR__ . '/includes/admin-header.php';
             Belum ada data dokumentasi audit lapangan untuk periode <?= e($selected_periode) ?>.
         </div>
         <?php else: ?>
+        <!-- Search Bar & Filter Kontrol Siklus 4 -->
+        <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width:500px;">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchSiklus4" class="form-control border-start-0" placeholder="Cari tingkat, fakultas, prodi, atau judul kegiatan..." style="font-size:0.83rem;">
+                    <button class="btn btn-outline-secondary border-start-0 bg-white text-muted d-none" type="button" id="clearSearchS4" title="Hapus pencarian"><i class="bi bi-x-circle-fill"></i></button>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <select id="filterTingkatS4" class="form-select form-select-sm" style="font-size:0.8rem;width:auto;">
+                    <option value="all">-- Semua Tingkat --</option>
+                    <option value="universitas">Tingkat Universitas</option>
+                    <option value="fakultas">Tingkat Fakultas</option>
+                    <option value="prodi">Tingkat Program Studi</option>
+                </select>
+                <span class="badge bg-white text-dark border px-2 py-1 small" id="countBadgeS4">
+                    Menampilkan <?= count($siklus4_dokumentasi) ?> dari <?= count($siklus4_dokumentasi) ?>
+                </span>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
@@ -760,8 +782,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <?php foreach ($siklus4_dokumentasi as $item): ?>
                     <?php 
                     $photos = !empty($item['foto_kegiatan']) ? json_decode($item['foto_kegiatan'], true) : [];
+                    $s4_search_text = strtolower(trim(($item['tingkat'] ?? '') . ' ' . ($item['fakultas'] ?? '') . ' ' . ($item['prodi'] ?? '') . ' ' . ($item['judul'] ?? '')));
                     ?>
-                    <tr>
+                    <tr class="s4-row" data-search="<?= e($s4_search_text) ?>" data-tingkat="<?= e(strtolower($item['tingkat'] ?? '')) ?>">
                         <td>
                             <?php if ($item['tingkat'] === 'universitas'): ?>
                             <span class="badge bg-danger px-2 py-1 mb-1">Tingkat Universitas</span>
@@ -824,6 +847,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <tr id="noDataRowS4" class="d-none">
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-search me-1"></i> Tidak ada data dokumentasi audit lapangan yang cocok dengan pencarian.
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -851,6 +879,28 @@ require_once __DIR__ . '/includes/admin-header.php';
         Belum ada data Rapat Tinjauan Manajemen untuk periode <?= e($selected_periode) ?>.
     </div>
     <?php else: ?>
+    <!-- Search Bar & Filter Kontrol Siklus 5 -->
+    <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width:500px;">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchSiklus5" class="form-control border-start-0" placeholder="Cari tingkat, fakultas, prodi, atau judul kegiatan..." style="font-size:0.83rem;">
+                <button class="btn btn-outline-secondary border-start-0 bg-white text-muted d-none" type="button" id="clearSearchS5" title="Hapus pencarian"><i class="bi bi-x-circle-fill"></i></button>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <select id="filterTingkatS5" class="form-select form-select-sm" style="font-size:0.8rem;width:auto;">
+                <option value="all">-- Semua Tingkat --</option>
+                <option value="universitas">Tingkat Universitas</option>
+                <option value="fakultas">Tingkat Fakultas</option>
+                <option value="prodi">Tingkat Program Studi</option>
+            </select>
+            <span class="badge bg-white text-dark border px-2 py-1 small" id="countBadgeS5">
+                Menampilkan <?= count($siklus5_rtm) ?> dari <?= count($siklus5_rtm) ?>
+            </span>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="admin-table">
             <thead>
@@ -866,8 +916,9 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <?php foreach ($siklus5_rtm as $rtm): ?>
                 <?php 
                 $photos = !empty($rtm['foto_kegiatan']) ? json_decode($rtm['foto_kegiatan'], true) : [];
+                $s5_search_text = strtolower(trim(($rtm['tingkat'] ?? '') . ' ' . ($rtm['fakultas'] ?? '') . ' ' . ($rtm['prodi'] ?? '') . ' ' . ($rtm['judul'] ?? '')));
                 ?>
-                <tr>
+                <tr class="s5-row" data-search="<?= e($s5_search_text) ?>" data-tingkat="<?= e(strtolower($rtm['tingkat'] ?? '')) ?>">
                     <td>
                         <?php if ($rtm['tingkat'] === 'universitas'): ?>
                         <span class="badge bg-danger px-2 py-1 mb-1">Tingkat Universitas</span>
@@ -930,6 +981,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </td>
                 </tr>
                 <?php endforeach; ?>
+                <tr id="noDataRowS5" class="d-none">
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="bi bi-search me-1"></i> Tidak ada data RTM yang cocok dengan pencarian.
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -1047,5 +1103,69 @@ $all_periodes_list = $db->query("SELECT * FROM ami_periode ORDER BY urutan ASC, 
     </div>
 </div>
 <?php endif; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function initAmiAdminSearch(inputId, clearBtnId, filterSelectId, rowClass, countBadgeId, noDataId) {
+        var searchInput = document.getElementById(inputId);
+        var clearBtn = document.getElementById(clearBtnId);
+        var filterSelect = document.getElementById(filterSelectId);
+        var rows = document.querySelectorAll('.' + rowClass);
+        var countBadge = document.getElementById(countBadgeId);
+        var noDataRow = document.getElementById(noDataId);
+        var totalRows = rows.length;
+
+        if (!searchInput || totalRows === 0) return;
+
+        function applyFilter() {
+            var q = searchInput.value.toLowerCase().trim();
+            var selectedTingkat = filterSelect ? filterSelect.value : 'all';
+            var visibleCount = 0;
+
+            if (clearBtn) {
+                clearBtn.classList.toggle('d-none', q === '');
+            }
+
+            rows.forEach(function(r) {
+                var searchData = (r.getAttribute('data-search') || '').toLowerCase();
+                var rowTingkat = (r.getAttribute('data-tingkat') || '').toLowerCase();
+
+                var matchesText = (q === '') || (searchData.indexOf(q) !== -1);
+                var matchesTingkat = (selectedTingkat === 'all') || (rowTingkat === selectedTingkat);
+
+                if (matchesText && matchesTingkat) {
+                    r.style.display = '';
+                    visibleCount++;
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+
+            if (countBadge) {
+                countBadge.textContent = 'Menampilkan ' + visibleCount + ' dari ' + totalRows;
+            }
+            if (noDataRow) {
+                noDataRow.classList.toggle('d-none', visibleCount > 0);
+            }
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+        if (filterSelect) {
+            filterSelect.addEventListener('change', applyFilter);
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                applyFilter();
+                searchInput.focus();
+            });
+        }
+    }
+
+    // Inisialisasi Search Bar Siklus 4 & Siklus 5
+    initAmiAdminSearch('searchSiklus4', 'clearSearchS4', 'filterTingkatS4', 's4-row', 'countBadgeS4', 'noDataRowS4');
+    initAmiAdminSearch('searchSiklus5', 'clearSearchS5', 'filterTingkatS5', 's5-row', 'countBadgeS5', 'noDataRowS5');
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/admin-footer.php'; ?>

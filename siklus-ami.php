@@ -1375,12 +1375,20 @@ if (!function_exists('renderAmiDropdownHierarchy')) {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            <div class="modal-body p-3 p-md-4" style="min-height:320px;max-height:85vh;overflow-y:auto;background:#090D16;display:flex;align-items:center;justify-content:center;">
-                <div id="photoGalleryContainer" style="width:100%;"></div>
+            <div class="modal-body p-3 p-md-4" style="min-height:320px;max-height:85vh;overflow-y:auto;background:#090D16;">
+                <div id="photoGalleryContainer" style="width:100%;margin:0 auto;"></div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width: 576px) {
+    #photoGalleryContainer {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
 
 <!-- Modal Pratinjau Dokumen (Preview Sebelum Unduh) -->
 <div class="modal fade" id="docPreviewModal" tabindex="-1" aria-hidden="true">
@@ -1466,6 +1474,9 @@ function openAmiGallery(photos, title, subtitle) {
 
     if (container) {
         container.innerHTML = '';
+        if (container.parentElement) {
+            container.parentElement.scrollTop = 0;
+        }
         var n = photos.length;
 
         // Layout konsisten 2x2 berasio 16:9 untuk 1, 2, 3, 4 foto

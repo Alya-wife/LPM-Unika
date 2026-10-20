@@ -36,18 +36,20 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $periode = trim($_POST['periode'] ?? '');
-    $tingkat = trim($_POST['tingkat'] ?? 'fakultas'); // 'fakultas' or 'prodi'
-    if (!in_array($tingkat, ['fakultas', 'prodi'])) $tingkat = 'fakultas';
+    $tingkat = trim($_POST['tingkat'] ?? 'fakultas'); // 'universitas', 'fakultas', 'prodi'
+    if (!in_array($tingkat, ['universitas', 'fakultas', 'prodi'])) $tingkat = 'fakultas';
 
-    $fakultas = trim($_POST['fakultas'] ?? '');
+    $fakultas = ($tingkat !== 'universitas') ? trim($_POST['fakultas'] ?? '') : '';
     $prodi = ($tingkat === 'prodi') ? trim($_POST['prodi'] ?? '') : null;
     $judul = trim($_POST['judul'] ?? '');
     $narasi_berita_acara = '';
 
-    if ($periode === '' || $fakultas === '' || $judul === '') {
-        $error = 'Periode, Fakultas, dan Judul Dokumentasi wajib diisi.';
-    } elseif ($tingkat === 'prodi' && empty($prodi)) {
-        $error = 'Harap pilih Program Studi untuk dokumentasi tingkat Prodi.';
+    if ($periode === '' || $judul === '') {
+        $error = 'Periode dan Judul Dokumentasi wajib diisi.';
+    } elseif ($tingkat === 'fakultas' && empty($fakultas)) {
+        $error = 'Harap pilih Fakultas untuk dokumentasi tingkat Fakultas.';
+    } elseif ($tingkat === 'prodi' && (empty($fakultas) || empty($prodi))) {
+        $error = 'Harap pilih Fakultas dan Program Studi untuk dokumentasi tingkat Prodi.';
     } else {
         $upload_dir = __DIR__ . '/../uploads/ami/siklus4/';
         if (!is_dir($upload_dir)) @mkdir($upload_dir, 0777, true);
@@ -125,18 +127,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (preg_match('/^data:image\/(\w+);base64,/', $c_data, $c_match)) {
                     $raw = base64_decode(substr($c_data, strpos($c_data, ',') + 1));
                     if ($raw !== false) {
-                        $c_name = 'dok_crop_' . time() . '_' . uniqid() . '.webp';
-                        if (file_put_contents($upload_dir . $c_name, $raw)) {
-                            $existing_photos[] = 'ami/siklus4/' . $c_name;
-                            $has_cropped = true;
+                        $img = @imagecreatefromstring($raw);
+                        if ($img) {
+                            $c_name = 'dok_crop_' . time() . '_' . uniqid() . '.webp';
+                            $target_crop_file = $upload_dir . $c_name;
+                            imagepalettetotruecolor($img);
+                            imagealphablending($img, false);
+                            imagesavealpha($img, true);
+                            if (imagewebp($img, $target_crop_file, 85)) {
+                                $existing_photos[] = 'ami/siklus4/' . $c_name;
+                                $has_cropped = true;
+                            }
+                            imagedestroy($img);
                         }
                     }
                 }
             }
         }
 
-        // Cegah upload ganda: jika sudah ada foto hasil crop, jangan proses ulang $_FILES foto_kegiatan
-        if (!$error && !$has_cropped && !empty($_FILES['foto_kegiatan']['name'][0])) {
+        // Proses upload semua foto kegiatan baru dari $_FILES (baik dari multi-select, drag & drop, dll)
+        if (!$error && !empty($_FILES['foto_kegiatan']['name'][0])) {
             $count = count($_FILES['foto_kegiatan']['name']);
             for ($i = 0; $i < $count; $i++) {
                 if ($_FILES['foto_kegiatan']['error'][$i] === UPLOAD_ERR_OK) {
@@ -287,14 +297,15 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold small">Tingkatan Audit <span class="text-danger">*</span></label>
                                     <select name="tingkat" id="tingkatSelect" class="form-select" onchange="handleTingkatChange()" required>
+                                        <option value="universitas" <?= $cur_tingkat === 'universitas' ? 'selected' : '' ?>>Tingkat Universitas</option>
                                         <option value="fakultas" <?= $cur_tingkat === 'fakultas' ? 'selected' : '' ?>>Tingkat Fakultas</option>
                                         <option value="prodi" <?= $cur_tingkat === 'prodi' ? 'selected' : '' ?>>Tingkat Program Studi</option>
                                     </select>
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-4" id="fakultasGroup" style="display: <?= $cur_tingkat !== 'universitas' ? 'block' : 'none' ?>;">
                                     <label class="form-label fw-bold small">Pilih Fakultas <span class="text-danger">*</span></label>
-                                    <select name="fakultas" id="fakultasSelect" class="form-select" onchange="handleFakultasChange()" required>
+                                    <select name="fakultas" id="fakultasSelect" class="form-select" onchange="handleFakultasChange()">
                                         <option value="">-- Pilih Fakultas --</option>
                                         <?php foreach ($fakultas_list as $f): ?>
                                         <option value="<?= e($f) ?>" <?= $cur_fakultas === $f ? 'selected' : '' ?>><?= e($f) ?></option>
@@ -339,22 +350,66 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                             <?php endif; ?>
 
-                            <!-- Button Pembatasan Khusus Undangan -->
-                            <div class="mt-auto pt-3">
-                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
-                                        data-bs-toggle="modal" data-bs-target="#modalResUndanganS4"
-                                        style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:0.45rem 0.75rem;color:#92400E;min-height:52px;transition:all 0.2s;">
+                            <!-- Kontrol Proteksi Akses Berkas Undangan (Switch On/Off Kiri Kanan) -->
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background:#FFFBEB;border:1px solid #FDE68A;">
                                     <div class="d-flex align-items-center gap-2 min-w-0 me-1">
-                                        <i class="bi bi-shield-lock-fill text-warning fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0" style="line-height:1.2;">
-                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#78350F;">Proteksi Akses</div>
-                                            <div class="text-truncate" style="font-size:0.72rem;color:#B45309;">Berkas Undangan</div>
+                                        <div style="width:28px;height:28px;border-radius:6px;background:<?= $res_undangan_is_restricted ? 'rgba(217,119,6,0.15)' : '#E2E8F0' ?>;color:<?= $res_undangan_is_restricted ? '#D97706' : '#64748B' ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="iconBoxUndanganS4">
+                                            <i class="bi bi-shield-lock-fill" style="font-size:0.85rem;"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="fw-bold text-dark text-truncate" style="font-size:0.78rem;">Proteksi Akses</div>
+                                            <div class="text-muted text-truncate" id="statusLabelUndanganS4" style="font-size:0.7rem;">
+                                                <?= $res_undangan_is_restricted ? '<span class="text-warning fw-bold">Dibatasi</span>' : 'Bebas / Publik' ?>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="badge flex-shrink-0" id="badgeUndanganStatusS4" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_undangan_is_restricted ? 'background:#F59E0B;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
-                                        <?= $res_undangan_is_restricted ? 'Dibatasi (' . $res_undangan_max_pages . ' Hal)' : 'Bebas / Publik' ?>
-                                    </span>
-                                </button>
+                                    <div class="form-check form-switch m-0 flex-shrink-0">
+                                        <input class="form-check-input ami-protect-toggle" type="checkbox" role="switch" 
+                                               id="toggleUndanganS4" name="undangan_is_restricted" value="1" 
+                                               <?= $res_undangan_is_restricted ? 'checked' : '' ?>
+                                               data-panel="panelUndanganS4"
+                                               data-icon="iconBoxUndanganS4"
+                                               data-label="statusLabelUndanganS4"
+                                               data-color="#D97706"
+                                               style="width:2.4rem;height:1.25rem;cursor:pointer;">
+                                    </div>
+                                </div>
+                                <div id="panelUndanganS4" class="mt-2 p-2 rounded-2 border bg-light" style="display:<?= $res_undangan_is_restricted ? 'block' : 'none' ?>;font-size:0.75rem;">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-file-earmark-ruled text-warning me-1"></i>Batas Pratinjau Publik:
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" max="50" class="form-control text-center fw-bold" name="undangan_max_preview_pages" value="<?= $res_undangan_max_pages ?>" style="max-width:70px;">
+                                            <span class="input-group-text bg-white small">Hal</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-person-check text-success me-1"></i>Izin Akses Penuh:
+                                        </label>
+                                        <div class="d-flex flex-column gap-1">
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="undangan_allowed_domains_arr[]" value="@unika.ac.id" <?= (strpos($res_undangan_allowed_domains, '@unika.ac.id') !== false || !$res_undangan_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Dosen / Tendik</span>
+                                            </label>
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="undangan_allowed_domains_arr[]" value="@student.unika.ac.id" <?= (strpos($res_undangan_allowed_domains, '@student.unika.ac.id') !== false || !$res_undangan_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Mahasiswa</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-top">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-at text-info me-1"></i>Akun / Domain Khusus:
+                                        </label>
+                                        <input type="text" class="form-control form-control-sm" name="undangan_custom_domains" value="<?= e(extractCustomDomains($res_undangan_allowed_domains)) ?>" placeholder="Contoh: @gmail.com, auditor@partner.id" style="font-size:0.73rem;">
+                                        <div class="text-muted" style="font-size:0.67rem;line-height:1.2;margin-top:2px;">
+                                            Opsional. Pisahkan koma jika lebih dari satu akun/domain.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -378,22 +433,66 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                             <?php endif; ?>
 
-                            <!-- Button Pembatasan Khusus Daftar Hadir -->
-                            <div class="mt-auto pt-3">
-                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
-                                        data-bs-toggle="modal" data-bs-target="#modalResDaftarHadirS4"
-                                        style="background:#ECFDF5;border:1.5px solid #A7F3D0;border-radius:10px;padding:0.45rem 0.75rem;color:#065F46;min-height:52px;transition:all 0.2s;">
+                            <!-- Kontrol Proteksi Akses Berkas Daftar Hadir (Switch On/Off Kiri Kanan) -->
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background:#ECFDF5;border:1px solid #A7F3D0;">
                                     <div class="d-flex align-items-center gap-2 min-w-0 me-1">
-                                        <i class="bi bi-shield-lock-fill text-success fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0" style="line-height:1.2;">
-                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#065F46;">Proteksi Akses</div>
-                                            <div class="text-truncate" style="font-size:0.72rem;color:#047857;">Berkas Daftar Hadir</div>
+                                        <div style="width:28px;height:28px;border-radius:6px;background:<?= $res_daftar_hadir_is_restricted ? 'rgba(16,185,129,0.15)' : '#E2E8F0' ?>;color:<?= $res_daftar_hadir_is_restricted ? '#10B981' : '#64748B' ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="iconBoxDHS4">
+                                            <i class="bi bi-shield-lock-fill" style="font-size:0.85rem;"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="fw-bold text-dark text-truncate" style="font-size:0.78rem;">Proteksi Akses</div>
+                                            <div class="text-muted text-truncate" id="statusLabelDHS4" style="font-size:0.7rem;">
+                                                <?= $res_daftar_hadir_is_restricted ? '<span class="text-success fw-bold">Dibatasi</span>' : 'Bebas / Publik' ?>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="badge flex-shrink-0" id="badgeDaftarHadirStatusS4" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_daftar_hadir_is_restricted ? 'background:#10B981;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
-                                        <?= $res_daftar_hadir_is_restricted ? 'Dibatasi (' . $res_daftar_hadir_max_pages . ' Hal)' : 'Bebas / Publik' ?>
-                                    </span>
-                                </button>
+                                    <div class="form-check form-switch m-0 flex-shrink-0">
+                                        <input class="form-check-input ami-protect-toggle" type="checkbox" role="switch" 
+                                               id="toggleDHS4" name="daftar_hadir_is_restricted" value="1" 
+                                               <?= $res_daftar_hadir_is_restricted ? 'checked' : '' ?>
+                                               data-panel="panelDHS4"
+                                               data-icon="iconBoxDHS4"
+                                               data-label="statusLabelDHS4"
+                                               data-color="#10B981"
+                                               style="width:2.4rem;height:1.25rem;cursor:pointer;">
+                                    </div>
+                                </div>
+                                <div id="panelDHS4" class="mt-2 p-2 rounded-2 border bg-light" style="display:<?= $res_daftar_hadir_is_restricted ? 'block' : 'none' ?>;font-size:0.75rem;">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-file-earmark-ruled text-success me-1"></i>Batas Pratinjau Publik:
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" max="50" class="form-control text-center fw-bold" name="daftar_hadir_max_preview_pages" value="<?= $res_daftar_hadir_max_pages ?>" style="max-width:70px;">
+                                            <span class="input-group-text bg-white small">Hal</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-person-check text-success me-1"></i>Izin Akses Penuh:
+                                        </label>
+                                        <div class="d-flex flex-column gap-1">
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="daftar_hadir_allowed_domains_arr[]" value="@unika.ac.id" <?= (strpos($res_daftar_hadir_allowed_domains, '@unika.ac.id') !== false || !$res_daftar_hadir_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Dosen / Tendik</span>
+                                            </label>
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="daftar_hadir_allowed_domains_arr[]" value="@student.unika.ac.id" <?= (strpos($res_daftar_hadir_allowed_domains, '@student.unika.ac.id') !== false || !$res_daftar_hadir_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Mahasiswa</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-top">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-at text-info me-1"></i>Akun / Domain Khusus:
+                                        </label>
+                                        <input type="text" class="form-control form-control-sm" name="daftar_hadir_custom_domains" value="<?= e(extractCustomDomains($res_daftar_hadir_allowed_domains)) ?>" placeholder="Contoh: @gmail.com, auditor@partner.id" style="font-size:0.73rem;">
+                                        <div class="text-muted" style="font-size:0.67rem;line-height:1.2;margin-top:2px;">
+                                            Opsional. Pisahkan koma jika lebih dari satu akun/domain.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -417,135 +516,112 @@ require_once __DIR__ . '/includes/admin-header.php';
                             </div>
                             <?php endif; ?>
 
-                            <!-- Button Pembatasan Khusus Berita Acara -->
-                            <div class="mt-auto pt-3">
-                                <button type="button" class="btn btn-sm w-100 d-flex align-items-center justify-content-between text-start" 
-                                        data-bs-toggle="modal" data-bs-target="#modalResBeritaAcaraS4"
-                                        style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:0.45rem 0.75rem;color:#1E40AF;min-height:52px;transition:all 0.2s;">
+                            <!-- Kontrol Proteksi Akses Berkas Berita Acara (Switch On/Off Kiri Kanan) -->
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background:#EFF6FF;border:1px solid #BFDBFE;">
                                     <div class="d-flex align-items-center gap-2 min-w-0 me-1">
-                                        <i class="bi bi-shield-lock-fill text-primary fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0" style="line-height:1.2;">
-                                            <div class="fw-bold text-truncate" style="font-size:0.8rem;color:#1E40AF;">Proteksi Akses</div>
-                                            <div class="text-truncate" style="font-size:0.72rem;color:#2563EB;">Berkas Berita Acara</div>
+                                        <div style="width:28px;height:28px;border-radius:6px;background:<?= $res_berita_acara_is_restricted ? 'rgba(59,130,246,0.15)' : '#E2E8F0' ?>;color:<?= $res_berita_acara_is_restricted ? '#3B82F6' : '#64748B' ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="iconBoxBAS4">
+                                            <i class="bi bi-shield-lock-fill" style="font-size:0.85rem;"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="fw-bold text-dark text-truncate" style="font-size:0.78rem;">Proteksi Akses</div>
+                                            <div class="text-muted text-truncate" id="statusLabelBAS4" style="font-size:0.7rem;">
+                                                <?= $res_berita_acara_is_restricted ? '<span class="text-primary fw-bold">Dibatasi</span>' : 'Bebas / Publik' ?>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="badge flex-shrink-0" id="badgeBeritaAcaraStatusS4" style="font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;white-space:nowrap;<?= $res_berita_acara_is_restricted ? 'background:#3B82F6;color:#fff;' : 'background:#E2E8F0;color:#475569;' ?>">
-                                        <?= $res_berita_acara_is_restricted ? 'Dibatasi (' . $res_berita_acara_max_pages . ' Hal)' : 'Bebas / Publik' ?>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal Pengaturan Pembatasan Berkas Undangan -->
-                    <div class="modal fade" id="modalResUndanganS4" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content rounded-4 border-0 shadow">
-                                <div class="modal-header border-bottom py-3" style="background:#FFFBEB;">
-                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
-                                        <i class="bi bi-shield-lock-fill text-warning fs-5"></i> Pengaturan Pembatasan: Undangan
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <div class="form-check form-switch m-0 flex-shrink-0">
+                                        <input class="form-check-input ami-protect-toggle" type="checkbox" role="switch" 
+                                               id="toggleBAS4" name="berita_acara_is_restricted" value="1" 
+                                               <?= $res_berita_acara_is_restricted ? 'checked' : '' ?>
+                                               data-panel="panelBAS4"
+                                               data-icon="iconBoxBAS4"
+                                               data-label="statusLabelBAS4"
+                                               data-color="#3B82F6"
+                                               style="width:2.4rem;height:1.25rem;cursor:pointer;">
+                                    </div>
                                 </div>
-                                <div class="modal-body p-4">
-                                    <?php
-                                    $res_prefix          = 'undangan';
-                                    $res_title           = 'Batasi / Proteksi Berkas Undangan';
-                                    $res_is_restricted   = $res_undangan_is_restricted;
-                                    $res_max_pages       = $res_undangan_max_pages;
-                                    $res_allowed_domains = $res_undangan_allowed_domains;
-                                    require __DIR__ . '/includes/file-restriction-field.php';
-                                    ?>
-                                </div>
-                                <div class="modal-footer border-top py-2 bg-light">
-                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
-                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal Pengaturan Pembatasan Berkas Daftar Hadir -->
-                    <div class="modal fade" id="modalResDaftarHadirS4" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content rounded-4 border-0 shadow">
-                                <div class="modal-header border-bottom py-3" style="background:#ECFDF5;">
-                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
-                                        <i class="bi bi-shield-lock-fill text-success fs-5"></i> Pengaturan Pembatasan: Daftar Hadir
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body p-4">
-                                    <?php
-                                    $res_prefix          = 'daftar_hadir';
-                                    $res_title           = 'Batasi / Proteksi Berkas Daftar Hadir';
-                                    $res_is_restricted   = $res_daftar_hadir_is_restricted;
-                                    $res_max_pages       = $res_daftar_hadir_max_pages;
-                                    $res_allowed_domains = $res_daftar_hadir_allowed_domains;
-                                    require __DIR__ . '/includes/file-restriction-field.php';
-                                    ?>
-                                </div>
-                                <div class="modal-footer border-top py-2 bg-light">
-                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
-                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
-                                    </button>
+                                <div id="panelBAS4" class="mt-2 p-2 rounded-2 border bg-light" style="display:<?= $res_berita_acara_is_restricted ? 'block' : 'none' ?>;font-size:0.75rem;">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-file-earmark-ruled text-primary me-1"></i>Batas Pratinjau Publik:
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" max="50" class="form-control text-center fw-bold" name="berita_acara_max_preview_pages" value="<?= $res_berita_acara_max_pages ?>" style="max-width:70px;">
+                                            <span class="input-group-text bg-white small">Hal</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-person-check text-success me-1"></i>Izin Akses Penuh:
+                                        </label>
+                                        <div class="d-flex flex-column gap-1">
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="berita_acara_allowed_domains_arr[]" value="@unika.ac.id" <?= (strpos($res_berita_acara_allowed_domains, '@unika.ac.id') !== false || !$res_berita_acara_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Dosen / Tendik</span>
+                                            </label>
+                                            <label class="form-check m-0 d-flex align-items-center gap-1 cursor-pointer">
+                                                <input class="form-check-input m-0" type="checkbox" name="berita_acara_allowed_domains_arr[]" value="@student.unika.ac.id" <?= (strpos($res_berita_acara_allowed_domains, '@student.unika.ac.id') !== false || !$res_berita_acara_is_restricted) ? 'checked' : '' ?>>
+                                                <span class="small" style="font-size:0.72rem;">Mahasiswa</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-top">
+                                        <label class="form-label fw-bold text-dark mb-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-at text-info me-1"></i>Akun / Domain Khusus:
+                                        </label>
+                                        <input type="text" class="form-control form-control-sm" name="berita_acara_custom_domains" value="<?= e(extractCustomDomains($res_berita_acara_allowed_domains)) ?>" placeholder="Contoh: @gmail.com, auditor@partner.id" style="font-size:0.73rem;">
+                                        <div class="text-muted" style="font-size:0.67rem;line-height:1.2;margin-top:2px;">
+                                            Opsional. Pisahkan koma jika lebih dari satu akun/domain.
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Modal Pengaturan Pembatasan Berkas Berita Acara -->
-                    <div class="modal fade" id="modalResBeritaAcaraS4" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content rounded-4 border-0 shadow">
-                                <div class="modal-header border-bottom py-3" style="background:#EFF6FF;">
-                                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" style="font-size:1.05rem;">
-                                        <i class="bi bi-shield-lock-fill text-primary fs-5"></i> Pengaturan Pembatasan: Berita Acara
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body p-4">
-                                    <?php
-                                    $res_prefix          = 'berita_acara';
-                                    $res_title           = 'Batasi / Proteksi Berkas Berita Acara';
-                                    $res_is_restricted   = $res_berita_acara_is_restricted;
-                                    $res_max_pages       = $res_berita_acara_max_pages;
-                                    $res_allowed_domains = $res_berita_acara_allowed_domains;
-                                    require __DIR__ . '/includes/file-restriction-field.php';
-                                    ?>
-                                </div>
-                                <div class="modal-footer border-top py-2 bg-light">
-                                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill" data-bs-dismiss="modal">
-                                        <i class="bi bi-check2 me-1"></i> Selesai &amp; Terapkan
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 4. Upload Foto Dokumentasi (Multiple + Cropper Support) -->
+                    <!-- 4. Upload Foto Dokumentasi (Drag & Drop + Ctrl Multi-Select) -->
                     <div class="col-12">
                         <div class="p-3 border rounded bg-white">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                 <label class="form-label fw-bold small mb-0">
                                     <i class="bi bi-images text-purple me-1"></i> Unggah Foto-Foto Kegiatan Audit Lapangan
                                 </label>
-                                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold d-none" id="btnOpenCropperS4" style="border-radius:8px;">
-                                    <i class="bi bi-crop me-1"></i> Edit &amp; Crop Foto Pilihan
-                                </button>
+                                <span class="badge bg-light text-muted border" id="photoCountBadgeS4">0 foto baru dipilih</span>
                             </div>
-                            
-                            <input type="file" name="foto_kegiatan[]" id="fotoKegiatanInput" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
-                            <div class="form-text mt-1">
-                                <span class="badge bg-light text-dark border me-1"><i class="bi bi-hdd-fill text-warning me-1"></i>Batas Ukuran: Maksimal 10 MB per foto</span>
-                                Mendukung format JPG, PNG, dan WebP. Anda dapat memilih beberapa foto sekaligus. Gambar otomatis dikonversi ke WebP kualitas HD terkompresi.
+
+                            <!-- Dropzone Area -->
+                            <div id="fotoDropzoneS4" class="p-4 rounded-3 text-center position-relative" 
+                                 style="border:2px dashed #93C5FD;background:#F8FAFC;cursor:pointer;transition:all 0.2s ease;">
+                                <div class="mb-2">
+                                    <i class="bi bi-cloud-arrow-up-fill text-primary" style="font-size:2.5rem;"></i>
+                                </div>
+                                <div class="fw-bold text-dark" style="font-size:0.95rem;">
+                                    Tarik &amp; Lepas (Drag &amp; Drop) Foto di Sini
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    atau <span class="text-primary fw-bold text-decoration-underline">Klik untuk Memilih File</span> (Bisa langsung pilih banyak foto sekaligus dengan <strong>Ctrl + Klik</strong> atau <strong>Ctrl + A</strong>)
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-white text-muted border me-1" style="font-size:0.72rem;">JPG, PNG, WebP</span>
+                                    <span class="badge bg-white text-muted border" style="font-size:0.72rem;">Maks 10 MB per foto</span>
+                                </div>
+                            </div>
+                            <input type="file" name="foto_kegiatan[]" id="fotoKegiatanInput" class="d-none" accept="image/jpeg,image/png,image/webp" multiple>
+
+                            <!-- Live Preview Foto Baru yang Dipilih -->
+                            <div id="selectedPhotosContainerS4" class="mt-3 d-none">
+                                <div class="small fw-bold text-primary mb-2 d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> Foto Baru yang Siap Diunggah:</span>
+                                    <button type="button" class="btn btn-xs btn-outline-danger py-0 px-2" id="btnClearAllNewPhotosS4" style="font-size:0.72rem;">Hapus Semua Pilihan</button>
+                                </div>
+                                <div class="row g-2" id="selectedPhotosGridS4"></div>
                             </div>
 
                             <!-- Kontainer Hasil Foto Tambahan dari Editor Crop -->
                             <div id="croppedPhotosContainer" class="mt-3 d-none">
                                 <div class="small fw-bold text-success mb-2">
-                                    <i class="bi bi-check-circle-fill me-1"></i> Foto Hasil Edit Siap Disimpan:
+                                    <i class="bi bi-crop text-warning me-1"></i> Foto Hasil Crop / Penyesuaian:
                                 </div>
                                 <div class="row g-2" id="croppedPhotosGrid"></div>
                             </div>
@@ -674,12 +750,18 @@ var selectedProdi = <?= json_encode($cur_prodi) ?>;
 
 function handleTingkatChange() {
     var tingkat = document.getElementById('tingkatSelect').value;
+    var fakultasGroup = document.getElementById('fakultasGroup');
     var prodiGroup = document.getElementById('prodiGroup');
-    if (tingkat === 'prodi') {
-        prodiGroup.style.display = 'block';
+    if (tingkat === 'universitas') {
+        if (fakultasGroup) fakultasGroup.style.display = 'none';
+        if (prodiGroup) prodiGroup.style.display = 'none';
+    } else if (tingkat === 'fakultas') {
+        if (fakultasGroup) fakultasGroup.style.display = 'block';
+        if (prodiGroup) prodiGroup.style.display = 'none';
+    } else if (tingkat === 'prodi') {
+        if (fakultasGroup) fakultasGroup.style.display = 'block';
+        if (prodiGroup) prodiGroup.style.display = 'block';
         handleFakultasChange();
-    } else {
-        prodiGroup.style.display = 'none';
     }
 }
 
@@ -740,42 +822,202 @@ document.addEventListener('DOMContentLoaded', function() {
     var currentTargetExistingIdx  = null;
     var currentTargetExistingPath = null;
 
-    function initCropper() {
-        if (cropper) cropper.destroy();
-        scaleX = 1;
-        scaleY = 1;
-        cropper = new Cropper(cropperSourceImg, {
-            aspectRatio: currentRatio,
-            viewMode: 2,
-            autoCropArea: 0.95,
-            responsive: true,
-            guides: true
+    // =========================================================================
+    // 1. Switch Proteksi Dokumen (On/Off Kiri Kanan)
+    // =========================================================================
+    document.querySelectorAll('.ami-protect-toggle').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            var panel = document.getElementById(this.dataset.panel);
+            var iconBox = document.getElementById(this.dataset.icon);
+            var statusLabel = document.getElementById(this.dataset.label);
+            var color = this.dataset.color || '#D97706';
+
+            if (this.checked) {
+                if (panel) panel.style.display = 'block';
+                if (iconBox) {
+                    iconBox.style.background = color + '25';
+                    iconBox.style.color = color;
+                }
+                if (statusLabel) {
+                    statusLabel.innerHTML = '<span class="fw-bold" style="color:' + color + ';">Dibatasi</span>';
+                }
+            } else {
+                if (panel) panel.style.display = 'none';
+                if (iconBox) {
+                    iconBox.style.background = '#E2E8F0';
+                    iconBox.style.color = '#64748B';
+                }
+                if (statusLabel) {
+                    statusLabel.textContent = 'Bebas / Publik';
+                }
+            }
+        });
+    });
+
+    // =========================================================================
+    // 2. Drag & Drop Multi-Foto + Ctrl Multi-Select
+    // =========================================================================
+    var selectedFiles = [];
+    var dropzone = document.getElementById('fotoDropzoneS4');
+    var badgeCount = document.getElementById('photoCountBadgeS4');
+    var previewContainer = document.getElementById('selectedPhotosContainerS4');
+    var previewGrid = document.getElementById('selectedPhotosGridS4');
+    var btnClearAll = document.getElementById('btnClearAllNewPhotosS4');
+
+    function syncInputFilesAndRenderPreviews() {
+        var dt = new DataTransfer();
+        selectedFiles.forEach(function(f) {
+            dt.items.add(f);
+        });
+        fotoInput.files = dt.files;
+
+        if (badgeCount) {
+            badgeCount.textContent = selectedFiles.length + ' foto baru dipilih';
+            badgeCount.className = selectedFiles.length > 0 ? 'badge bg-primary text-white' : 'badge bg-light text-muted border';
+        }
+
+        if (selectedFiles.length === 0) {
+            if (previewContainer) previewContainer.classList.add('d-none');
+            if (previewGrid) previewGrid.innerHTML = '';
+            return;
+        }
+
+        if (previewContainer) previewContainer.classList.remove('d-none');
+        if (previewGrid) {
+            previewGrid.innerHTML = '';
+            selectedFiles.forEach(function(file, idx) {
+                var col = document.createElement('div');
+                col.className = 'col-6 col-sm-4 col-md-3';
+
+                var card = document.createElement('div');
+                card.className = 'card p-1 border position-relative h-100 shadow-sm';
+
+                var imgBox = document.createElement('div');
+                imgBox.style.cssText = 'height:110px;border-radius:4px;overflow:hidden;background:#0F172A;display:flex;align-items:center;justify-content:center;';
+
+                var img = document.createElement('img');
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                img.src = URL.createObjectURL(file);
+                imgBox.appendChild(img);
+
+                var info = document.createElement('div');
+                info.className = 'p-1';
+                var sizeKb = Math.round(file.size / 1024);
+                var sizeStr = sizeKb > 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+                info.innerHTML = '<div class="small fw-bold text-truncate" title="' + file.name + '" style="font-size:0.75rem;">' + file.name + '</div>' +
+                                 '<div class="text-muted" style="font-size:0.68rem;"><i class="bi bi-file-earmark-image me-1"></i>' + sizeStr + '</div>';
+
+                // Tombol Hapus per item
+                var btnDel = document.createElement('button');
+                btnDel.type = 'button';
+                btnDel.className = 'btn btn-xs btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center';
+                btnDel.style.cssText = 'width:22px;height:22px;line-height:1;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,0.3);';
+                btnDel.innerHTML = '&times;';
+                btnDel.title = 'Hapus foto ini dari daftar unggah';
+                btnDel.onclick = function(e) {
+                    e.stopPropagation();
+                    selectedFiles.splice(idx, 1);
+                    syncInputFilesAndRenderPreviews();
+                };
+
+                // Tombol Crop per item opsional
+                var btnCrop = document.createElement('button');
+                btnCrop.type = 'button';
+                btnCrop.className = 'btn btn-xs btn-outline-primary w-100 mt-1 py-1 d-flex align-items-center justify-content-center gap-1';
+                btnCrop.style.fontSize = '0.72rem';
+                btnCrop.innerHTML = '<i class="bi bi-crop text-warning"></i> Crop / Edit';
+                btnCrop.onclick = function(e) {
+                    e.stopPropagation();
+                    openCropForSelectedFile(file, idx);
+                };
+
+                card.appendChild(btnDel);
+                card.appendChild(imgBox);
+                card.appendChild(info);
+                card.appendChild(btnCrop);
+                col.appendChild(card);
+                previewGrid.appendChild(col);
+            });
+        }
+    }
+
+    function addFilesToSelection(fileList) {
+        if (!fileList || fileList.length === 0) return;
+        for (var i = 0; i < fileList.length; i++) {
+            var f = fileList[i];
+            if (f.type.match(/^image\//)) {
+                var exists = selectedFiles.some(function(item) {
+                    return item.name === f.name && item.size === f.size;
+                });
+                if (!exists) {
+                    selectedFiles.push(f);
+                }
+            }
+        }
+        syncInputFilesAndRenderPreviews();
+    }
+
+    // Klik Dropzone untuk membuka file chooser (bisa Ctrl-Klik / Ctrl-A)
+    if (dropzone) {
+        dropzone.addEventListener('click', function() {
+            fotoInput.click();
+        });
+
+        ['dragenter', 'dragover'].forEach(function(evtName) {
+            dropzone.addEventListener(evtName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.style.background = '#EFF6FF';
+                dropzone.style.borderColor = '#2563EB';
+                dropzone.style.transform = 'scale(1.01)';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function(evtName) {
+            dropzone.addEventListener(evtName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.style.background = '#F8FAFC';
+                dropzone.style.borderColor = '#93C5FD';
+                dropzone.style.transform = 'scale(1)';
+            });
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+            if (e.dataTransfer && e.dataTransfer.files) {
+                addFilesToSelection(e.dataTransfer.files);
+            }
         });
     }
 
-    fotoInput.addEventListener('change', function(e) {
-        if (this.files && this.files.length > 0) {
-            currentTargetExistingIdx = null;
-            currentTargetExistingPath = null;
-            var file = this.files[0];
-            if (file.type.match(/^image\//)) {
-                var reader = new FileReader();
-                reader.onload = function(evt) {
-                    cropperSourceImg.src = evt.target.result;
-                    if (btnOpenCropper) {
-                        btnOpenCropper.classList.remove('d-none');
-                        btnOpenCropper.innerHTML = '<i class="bi bi-crop me-1"></i> Sesuaikan Foto Baru Dipilih';
-                    }
-                    bsModal.show();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    fotoInput.addEventListener('change', function() {
+        addFilesToSelection(this.files);
     });
 
-    btnOpenCropper?.addEventListener('click', function() {
-        if (cropperSourceImg.src) bsModal.show();
-    });
+    if (btnClearAll) {
+        btnClearAll.addEventListener('click', function() {
+            selectedFiles = [];
+            syncInputFilesAndRenderPreviews();
+        });
+    }
+
+    // =========================================================================
+    // 3. Cropper Integration (Opsional Manual)
+    // =========================================================================
+    var currentTargetNewIdx = null;
+
+    function openCropForSelectedFile(file, idx) {
+        currentTargetNewIdx = idx;
+        currentTargetExistingIdx = null;
+        currentTargetExistingPath = null;
+
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            cropperSourceImg.src = evt.target.result;
+            bsModal.show();
+        };
+        reader.readAsDataURL(file);
+    }
 
     // Sesuaikan Foto yang Sudah Terupload / Tersimpan
     document.querySelectorAll('.btn-crop-existing-s4').forEach(function(btn) {
@@ -785,12 +1027,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var idx = this.getAttribute('data-idx');
             currentTargetExistingIdx = idx;
             currentTargetExistingPath = path;
+            currentTargetNewIdx = null;
 
             cropperSourceImg.src = url;
-            if (btnOpenCropper) {
-                btnOpenCropper.classList.remove('d-none');
-                btnOpenCropper.innerHTML = '<i class="bi bi-crop me-1"></i> Sesuaikan Foto Terpilih';
-            }
             bsModal.show();
         });
     });
@@ -853,6 +1092,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     cardOld.style.opacity = '0.45';
                     cardOld.style.borderColor = '#EF4444';
                 }
+            } else if (currentTargetNewIdx !== null) {
+                // Jika mengedit salah satu foto baru yang dipilih, hapus file aslinya dari selectedFiles
+                selectedFiles.splice(currentTargetNewIdx, 1);
+                syncInputFilesAndRenderPreviews();
             }
 
             col.innerHTML = '<div class="card p-1 border position-relative shadow-sm">' +
@@ -882,44 +1125,8 @@ document.addEventListener('DOMContentLoaded', function() {
             containerGrid.appendChild(col);
             containerWrap.classList.remove('d-none');
 
-            // Kosongkan file input asli jika berasal dari pemilihan file baru
-            if (linkedIdx === null) {
-                fotoInput.value = '';
-                if (btnOpenCropper) btnOpenCropper.classList.add('d-none');
-            }
-
             bsModal.hide();
         }
-    });
-
-    // Sinkronisasi badge status pembatasan per berkas Siklus 4
-    var docPrefixesS4 = [
-        { prefix: 'undangan', badgeId: 'badgeUndanganStatusS4', color: '#F59E0B' },
-        { prefix: 'daftar_hadir', badgeId: 'badgeDaftarHadirStatusS4', color: '#10B981' },
-        { prefix: 'berita_acara', badgeId: 'badgeBeritaAcaraStatusS4', color: '#3B82F6' }
-    ];
-
-    docPrefixesS4.forEach(function(item) {
-        var toggle = document.querySelector('input[name="' + item.prefix + '_is_restricted"]');
-        var pagesInput = document.querySelector('input[name="' + item.prefix + '_max_preview_pages"]');
-        var badge = document.getElementById(item.badgeId);
-
-        function updateBadge() {
-            if (!badge || !toggle) return;
-            if (toggle.checked) {
-                var pages = pagesInput ? pagesInput.value : '3';
-                badge.innerText = 'Dibatasi (' + pages + ' Hal)';
-                badge.style.background = item.color;
-                badge.style.color = '#ffffff';
-            } else {
-                badge.innerText = 'Publik / Bebas';
-                badge.style.background = '#E2E8F0';
-                badge.style.color = '#475569';
-            }
-        }
-
-        if (toggle) toggle.addEventListener('change', updateBadge);
-        if (pagesInput) pagesInput.addEventListener('input', updateBadge);
     });
 });
 </script>

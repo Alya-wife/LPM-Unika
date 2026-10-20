@@ -141,6 +141,11 @@ function parseSubmittedAllowedDomains(string $field_prefix = ''): string {
         foreach ($parts as $p) {
             $p = trim(strtolower($p));
             if ($p !== '') {
+                // Bersihkan jika ada @ ganda misalnya @user@gmail.com
+                if ($p[0] === '@' && strpos($p, '@', 1) !== false) {
+                    $p = substr($p, 1);
+                }
+                // Jika domain polos tanpa @ (contoh: gmail.com), tambahkan @ di depan
                 if ($p[0] !== '@' && strpos($p, '@') === false) {
                     $p = '@' . $p;
                 }
@@ -154,6 +159,26 @@ function parseSubmittedAllowedDomains(string $field_prefix = ''): string {
         return '@unika.ac.id,@student.unika.ac.id';
     }
     return implode(',', $domains);
+}
+
+/**
+ * Ekstrak domain atau akun kustom di luar default civitas (@unika.ac.id & @student.unika.ac.id)
+ */
+function extractCustomAllowedDomains(?string $domains_str): string {
+    if (!$domains_str) return '';
+    $arr = array_map('trim', explode(',', strtolower($domains_str)));
+    $custom = [];
+    foreach ($arr as $d) {
+        if ($d && $d !== '@unika.ac.id' && $d !== '@student.unika.ac.id') {
+            $custom[] = $d;
+        }
+    }
+    return implode(', ', $custom);
+}
+if (!function_exists('extractCustomDomains')) {
+    function extractCustomDomains(?string $domains_str): string {
+        return extractCustomAllowedDomains($domains_str);
+    }
 }
 
 // 3. Otomatisasi Guard Izin Akses Halaman Berdasarkan Skrip yang Dijalankan

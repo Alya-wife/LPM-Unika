@@ -763,7 +763,10 @@ require_once __DIR__ . '/includes/admin-header.php';
                     ?>
                     <tr>
                         <td>
-                            <?php if ($item['tingkat'] === 'prodi'): ?>
+                            <?php if ($item['tingkat'] === 'universitas'): ?>
+                            <span class="badge bg-danger px-2 py-1 mb-1">Tingkat Universitas</span>
+                            <div class="fw-bold small" style="color:var(--navy);">Universitas</div>
+                            <?php elseif ($item['tingkat'] === 'prodi'): ?>
                             <span class="badge bg-purple px-2 py-1 mb-1">Tingkat Prodi</span>
                             <div class="fw-bold small" style="color:var(--navy);"><?= e($item['prodi']) ?></div>
                             <div class="text-muted" style="font-size:0.75rem;">Fakultas: <?= e($item['fakultas']) ?></div>

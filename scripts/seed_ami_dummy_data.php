@@ -170,6 +170,18 @@ $stmtDt4 = $db->prepare("INSERT INTO `ami_siklus4_dokumentasi` (`periode`, `ting
 $dokumentasi4 = [
     [
         '2025/2026',
+        'universitas',
+        '',
+        '',
+        'Audit Lapangan Tata Kelola Lembaga & Unit Pendukung Tingkat Universitas',
+        '',
+        'ami/siklus4/ba_fik_2025.pdf',
+        'ami/siklus4/presensi_fik_2025.pdf',
+        'ami/siklus4/undangan_audit_2025.pdf',
+        json_encode(['ami/siklus5/foto_rtm_univ.webp'])
+    ],
+    [
+        '2025/2026',
         'fakultas',
         'Fakultas Ilmu Komputer',
         '',
@@ -178,7 +190,7 @@ $dokumentasi4 = [
         'ami/siklus4/ba_fik_2025.pdf',
         'ami/siklus4/presensi_fik_2025.pdf',
         'ami/siklus4/undangan_audit_2025.pdf',
-        json_encode(['ami/siklus4/foto_audit_fik.webp'])
+        json_encode(['ami/siklus4/foto_audit_fik.webp', 'ami/siklus4/foto_audit_ti.webp', 'ami/siklus4/foto_audit_manajemen.webp', 'ami/siklus1/opening_meeting_2025.webp'])
     ],
     [
         '2025/2026',
@@ -186,6 +198,18 @@ $dokumentasi4 = [
         'Fakultas Ilmu Komputer',
         'S1 Teknik Informatika',
         'Visitasi Audit Mutu Akademik Program Studi S1 Teknik Informatika',
+        '',
+        'ami/siklus4/ba_fik_2025.pdf',
+        'ami/siklus4/presensi_fik_2025.pdf',
+        'ami/siklus4/undangan_audit_2025.pdf',
+        json_encode(['ami/siklus4/foto_audit_ti.webp'])
+    ],
+    [
+        '2025/2026',
+        'prodi',
+        'Fakultas Bahasa dan Seni',
+        'S1 Sastra Inggris',
+        'Visitasi Audit Lapangan Standar Pembelajaran S1 Sastra Inggris',
         '',
         'ami/siklus4/ba_fik_2025.pdf',
         'ami/siklus4/presensi_fik_2025.pdf',
@@ -238,6 +262,18 @@ $rtm5 = [
         'ami/siklus5/presensi_rtm_univ_2025.pdf',
         'ami/siklus5/undangan_rtm_2025.pdf',
         json_encode(['ami/siklus5/foto_rtm_fik.webp'])
+    ],
+    [
+        '2025/2026',
+        'prodi',
+        'Fakultas Bahasa dan Seni',
+        'S1 Sastra Inggris',
+        'RTM Tingkat Program Studi S1 Sastra Inggris',
+        '',
+        'ami/siklus5/notulensi_rtm_univ_2025.pdf',
+        'ami/siklus5/presensi_rtm_univ_2025.pdf',
+        'ami/siklus5/undangan_rtm_2025.pdf',
+        json_encode(['ami/siklus5/foto_rtm_akuntansi.webp'])
     ],
     [
         '2025/2026',

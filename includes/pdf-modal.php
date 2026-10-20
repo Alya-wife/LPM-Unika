@@ -295,13 +295,23 @@ function isUserAllowedForDoc(userEmail, allowedDomainsStr) {
     if (!userEmail) return false;
     if (!allowedDomainsStr) return true;
     const emailLower = userEmail.toLowerCase().trim();
+    const emailUser  = emailLower.split('@')[0];
     const domains = allowedDomainsStr.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
     if (domains.length === 0) return true;
     for (let dom of domains) {
+        // Normalisasi jika ada double @ misal @user@domain.com
+        if (dom.startsWith('@') && dom.indexOf('@', 1) !== -1) {
+            dom = dom.substring(1);
+        }
         if (dom.startsWith('@')) {
+            // Domain cocok (@gmail.com) atau username diawali @ (@john)
             if (emailLower.endsWith(dom)) return true;
-        } else if (emailLower.endsWith('@' + dom) || emailLower === dom) {
-            return true;
+            if (dom.substring(1) === emailUser) return true;
+        } else {
+            // Email lengkap (john@gmail.com), domain polos (gmail.com), atau username (john)
+            if (emailLower === dom || emailLower.endsWith('@' + dom) || emailUser === dom) {
+                return true;
+            }
         }
     }
     return false;

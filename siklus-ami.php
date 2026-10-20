@@ -337,6 +337,55 @@ try {
     box-shadow: 0 2px 8px rgba(11,31,68,0.18);
 }
 
+/* Accordion & Table Gaya Akreditasi untuk Siklus 4 & 5 */
+.accordion-lpm .accordion-button {
+    font-weight: 700;
+    color: var(--navy);
+    transition: all 0.2s ease;
+}
+.accordion-lpm .accordion-button:not(.collapsed) {
+    background-color: #f1f5f9 !important;
+    color: var(--navy);
+}
+.accordion-lpm .accordion-button:focus {
+    box-shadow: none;
+}
+.btn-filter-ami {
+    background: #ffffff;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    border-radius: 20px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+.btn-filter-ami:hover {
+    background: #F1F5F9;
+    border-color: #94A3B8;
+    color: #0F172A;
+}
+.btn-filter-ami.active {
+    background: var(--navy) !important;
+    border-color: var(--navy) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(10,25,47,0.25);
+}
+.ami-thumb-box {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.ami-thumb-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.ami-row {
+    transition: background-color 0.15s ease;
+}
+.ami-row:hover {
+    background-color: #F8FAFC;
+}
+
 /* Card Audit Lapangan (Siklus 4) & RTM (Siklus 5) Redesign */
 .ami-audit-card {
     background: #ffffff;
@@ -587,11 +636,9 @@ try {
                         <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'all' ? 'active' : '' ?>" data-tingkat="all" onclick="applyTingkatFilter('all', this)">
                             <i class="bi bi-grid-fill me-1"></i> Semua Tingkat
                         </button>
-                        <?php if ($active_siklus === 5): ?>
                         <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'universitas' ? 'active' : '' ?>" data-tingkat="universitas" onclick="applyTingkatFilter('universitas', this)">
-                            <i class="bi bi-building me-1 text-danger"></i> Tingkat Universitas
+                            <i class="bi bi-bank2 me-1 text-danger"></i> Tingkat Universitas
                         </button>
-                        <?php endif; ?>
                         <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'fakultas' ? 'active' : '' ?>" data-tingkat="fakultas" onclick="applyTingkatFilter('fakultas', this)">
                             <i class="bi bi-diagram-3 me-1 text-primary"></i> Tingkat Fakultas
                         </button>
@@ -655,6 +702,348 @@ try {
             </div>
             <?php endforeach; ?>
         </div>
+
+<?php
+// Helper render baris tabel dokumen kegiatan AMI (Gaya Akreditasi)
+if (!function_exists('renderAmiTableRow')) {
+    function renderAmiTableRow($item, $row_idx, $is_rtm, $doc3_name, $doc3_field) {
+        $item_tingkat = strtolower(trim($item['tingkat'] ?? 'fakultas'));
+        $photos = !empty($item['foto_kegiatan']) ? json_decode($item['foto_kegiatan'], true) : [];
+        if (!is_array($photos)) $photos = [];
+
+        $res_u_st = (int)($item['is_restricted_undangan'] ?? $item['is_restricted'] ?? 0);
+        $res_u_pg = (int)($item['max_preview_pages_undangan'] ?? $item['max_preview_pages'] ?? 3);
+        $res_u_dm = $item['allowed_domains_undangan'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+
+        $res_dh_st = (int)($item['is_restricted_daftar_hadir'] ?? $item['is_restricted'] ?? 0);
+        $res_dh_pg = (int)($item['max_preview_pages_daftar_hadir'] ?? $item['max_preview_pages'] ?? 3);
+        $res_dh_dm = $item['allowed_domains_daftar_hadir'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+
+        $res_3_st = (int)($item['is_restricted_' . ($is_rtm ? 'notulensi' : 'berita_acara')] ?? $item['is_restricted'] ?? 0);
+        $res_3_pg = (int)($item['max_preview_pages_' . ($is_rtm ? 'notulensi' : 'berita_acara')] ?? $item['max_preview_pages'] ?? 3);
+        $res_3_dm = $item['allowed_domains_' . ($is_rtm ? 'notulensi' : 'berita_acara')] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
+        ?>
+        <tr class="ami-row"
+            data-tingkat="<?= e($item_tingkat) ?>"
+            data-fakultas="<?= strtolower(e($item['fakultas'] ?? '')) ?>"
+            data-prodi="<?= strtolower(e($item['prodi'] ?? '')) ?>"
+            data-judul="<?= strtolower(e($item['judul'] ?? '')) ?>">
+            <td class="text-center text-muted fw-bold" style="font-size:0.85rem;vertical-align:middle;"><?= $row_idx ?></td>
+            <td class="px-3 py-3" style="vertical-align:middle;">
+                <?php if ($item_tingkat === 'universitas'): ?>
+                    <div class="fw-bold" style="color:var(--navy);font-size:0.95rem;">Universitas Katolik Soegijapranata</div>
+                    <span class="badge border mt-1" style="font-size:0.72rem;font-weight:700;background-color:#FEE2E2 !important;color:#991B1B !important;border-color:#FECACA !important;">
+                        <i class="bi bi-bank2 me-1"></i>Tingkat Universitas
+                    </span>
+                <?php elseif ($item_tingkat === 'fakultas'): ?>
+                    <div class="fw-bold" style="color:var(--navy);font-size:0.95rem;"><?= e($item['fakultas']) ?></div>
+                    <span class="badge border mt-1" style="font-size:0.72rem;font-weight:700;background-color:#DBEAFE !important;color:#1E40AF !important;border-color:#BFDBFE !important;">
+                        <i class="bi bi-diagram-3 me-1"></i>Tingkat Fakultas
+                    </span>
+                <?php else: ?>
+                    <div class="fw-bold" style="color:var(--navy);font-size:0.95rem;"><?= e($item['prodi']) ?></div>
+                    <div class="text-muted small mb-1"><?= e($item['fakultas']) ?></div>
+                    <span class="badge border" style="font-size:0.72rem;font-weight:700;background-color:#F3E8FF !important;color:#6B21A8 !important;border-color:#DDD6FE !important;">
+                        <i class="bi bi-mortarboard me-1"></i>Program Studi
+                    </span>
+                <?php endif; ?>
+            </td>
+            <td class="px-3 py-3" style="vertical-align:middle;">
+                <div class="fw-bold text-dark mb-1" style="font-size:0.92rem;line-height:1.45;"><?= e($item['judul']) ?></div>
+                <div class="text-muted small"><i class="bi bi-calendar-event me-1"></i>Periode <?= e($item['periode']) ?></div>
+            </td>
+            <td class="px-3 py-3" style="min-width:280px;vertical-align:middle;">
+                <div class="d-flex flex-column gap-2">
+                    <!-- 1. Undangan -->
+                    <?php if (!empty($item['file_undangan'])): ?>
+                    <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded-2 gap-2" style="background:#FFFBEB;border:1px solid #FDE68A;">
+                        <span class="fw-bold text-nowrap flex-shrink-0" style="color:#B45309;font-size:0.75rem;display:inline-flex;align-items:center;gap:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            Undangan
+                        </span>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#ffffff;color:#92400E;border:1px solid #FCD34D;border-radius:4px;font-weight:700;padding:0;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')" title="Lihat Pratinjau Undangan">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                Lihat
+                            </button>
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#D97706;color:#ffffff;border:1px solid transparent;border-radius:4px;font-weight:700;padding:0;" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')" title="Unduh Undangan">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Unduh
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- 2. Daftar Hadir -->
+                    <?php if (!empty($item['file_daftar_hadir'])): ?>
+                    <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded-2 gap-2" style="background:#F0FDF4;border:1px solid #BBF7D0;">
+                        <span class="fw-bold text-nowrap flex-shrink-0" style="color:#15803D;font-size:0.75rem;display:inline-flex;align-items:center;gap:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                            Daftar Hadir
+                        </span>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#ffffff;color:#166534;border:1px solid #86EFAC;border-radius:4px;font-weight:700;padding:0;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')" title="Lihat Pratinjau Daftar Hadir">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                Lihat
+                            </button>
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#15803D;color:#ffffff;border:1px solid transparent;border-radius:4px;font-weight:700;padding:0;" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')" title="Unduh Daftar Hadir">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Unduh
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- 3. Foto Kegiatan -->
+                    <?php if (!empty($photos)): ?>
+                    <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded-2 gap-2" style="background:#FAF5FF;border:1px solid #E9D5FF;">
+                        <span class="fw-bold text-nowrap flex-shrink-0" style="color:#7E22CE;font-size:0.75rem;display:inline-flex;align-items:center;gap:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            Foto
+                        </span>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center" style="width:68px;height:26px;font-size:0.72rem;background:#ffffff;color:#6B21A8;border:1px solid #C084FC;border-radius:4px;font-weight:700;padding:0;white-space:nowrap;" onclick="openAmiGallery(<?= htmlspecialchars(json_encode($photos)) ?>, '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['prodi'] ?: ($item['fakultas'] ?: 'Universitas'))) ?>')" title="Lihat <?= count($photos) ?> Foto Kegiatan">
+                                <?= count($photos) ?> Gambar
+                            </button>
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#7E22CE;color:#ffffff;border:1px solid transparent;border-radius:4px;font-weight:700;padding:0;" onclick="openAmiGallery(<?= htmlspecialchars(json_encode($photos)) ?>, '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['prodi'] ?: ($item['fakultas'] ?: 'Universitas'))) ?>')" title="Lihat <?= count($photos) ?> Foto Kegiatan">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                Lihat
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- 4. Berita Acara / Notulensi -->
+                    <?php if (!empty($item[$doc3_field])): ?>
+                    <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded-2 gap-2" style="background:#EFF6FF;border:1px solid #BFDBFE;">
+                        <span class="fw-bold text-nowrap flex-shrink-0" style="color:#1D4ED8;font-size:0.75rem;display:inline-flex;align-items:center;gap:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <?= $doc3_name ?>
+                        </span>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#ffffff;color:#1E40AF;border:1px solid #93C5FD;border-radius:4px;font-weight:700;padding:0;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item[$doc3_field]) ?>', '<?= $doc3_name ?> - <?= e(addslashes($item['judul'])) ?>', <?= $res_3_st ?>, <?= $res_3_pg ?>, '<?= e(addslashes($res_3_dm)) ?>')" title="Lihat Pratinjau <?= $doc3_name ?>">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                Lihat
+                            </button>
+                            <button type="button" class="btn btn-sm d-inline-flex align-items-center justify-content-center gap-1" style="width:68px;height:26px;font-size:0.72rem;background:#1D4ED8;color:#ffffff;border:1px solid transparent;border-radius:4px;font-weight:700;padding:0;" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item[$doc3_field]) ?>', '<?= $doc3_name ?> - <?= e(addslashes($item['judul'])) ?>', <?= $res_3_st ?>, <?= $res_3_pg ?>, '<?= e(addslashes($res_3_dm)) ?>')" title="Unduh <?= $doc3_name ?>">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Unduh
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if (empty($item['file_undangan']) && empty($item['file_daftar_hadir']) && empty($photos) && empty($item[$doc3_field])): ?>
+                        <span class="badge bg-light text-muted border px-2 py-1 text-center" style="font-size:0.72rem;font-weight:500;">
+                            Belum Ada Lampiran
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </td>
+        </tr>
+        <?php
+    }
+}
+
+// Helper render accordion bertingkat (Universitas -> Fakultas -> Prodi) gaya Akreditasi
+if (!function_exists('renderAmiDropdownHierarchy')) {
+    function renderAmiDropdownHierarchy($type, $items, $selected_periode) {
+        $is_rtm = ($type === 'rtm');
+        $doc3_name = $is_rtm ? 'Notulensi' : 'Berita Acara';
+        $doc3_field = $is_rtm ? 'file_notulensi' : 'file_berita_acara';
+        $prefix = $is_rtm ? 's5' : 's4';
+
+        // Pengelompokan data berjenjang: Universitas dan Fakultas (membawahi Prodi)
+        $univ_items = [];
+        $fakultas_groups = [];
+
+        foreach ($items as $item) {
+            $tingkat = strtolower(trim($item['tingkat'] ?? 'fakultas'));
+            if ($tingkat === 'universitas') {
+                $univ_items[] = $item;
+            } else {
+                $fak = !empty($item['fakultas']) ? trim($item['fakultas']) : 'Lainnya';
+                if (!isset($fakultas_groups[$fak])) {
+                    $fakultas_groups[$fak] = [
+                        'fakultas_items' => [],
+                        'prodi_items'    => []
+                    ];
+                }
+                if ($tingkat === 'fakultas' || empty($item['prodi'])) {
+                    $fakultas_groups[$fak]['fakultas_items'][] = $item;
+                } else {
+                    $fakultas_groups[$fak]['prodi_items'][] = $item;
+                }
+            }
+        }
+        ksort($fakultas_groups);
+
+        $total_items = count($items);
+        $total_fak_items = 0;
+        $total_prodi_items = 0;
+        foreach ($fakultas_groups as $g) {
+            $total_fak_items += count($g['fakultas_items']);
+            $total_prodi_items += count($g['prodi_items']);
+        }
+        ?>
+
+        <!-- Search Bar & Controls Gaya Akreditasi -->
+        <div class="p-3 mb-4 rounded-4" style="background:#F8FAFC;border:1px solid #E2E8F0;">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-7">
+                    <div class="position-relative">
+                        <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="pointer-events:none;">
+                            <i class="bi bi-search" style="font-size:1.1rem;"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-lg ps-5 pe-5 ami-search-input" placeholder="Ketik nama unit, fakultas, prodi, atau judul kegiatan..." style="font-size:0.95rem;border-radius:12px;border:1.5px solid #CBD5E1;box-shadow:none;background:#ffffff;">
+                        <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted p-0 pe-3 d-none ami-clear-search" style="text-decoration:none;" title="Hapus pencarian">
+                            <i class="bi bi-x-circle-fill" style="font-size:1.15rem;"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+                    <span class="badge px-3 py-2 ami-counter-badge" style="font-size:0.85rem;border-radius:20px;background:var(--navy);color:#fff;">
+                        Menampilkan <?= $total_items ?> dari <?= $total_items ?> Kegiatan
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ami-toggle-all-btn" style="border-radius:20px;font-size:0.8rem;white-space:nowrap;padding:0.45rem 0.9rem;">
+                        <i class="bi bi-arrows-expand me-1"></i> <span class="toggle-text">Buka Semua</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Filter Chips: Semua, Universitas, Fakultas, Program Studi -->
+            <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top align-items-center">
+                <span class="text-muted small fw-semibold me-1"><i class="bi bi-funnel me-1"></i>Filter Tingkat:</span>
+                <button type="button" class="btn btn-sm btn-filter-ami active" data-filter="all">Semua (<?= $total_items ?>)</button>
+                <button type="button" class="btn btn-sm btn-filter-ami" data-filter="universitas"><i class="bi bi-bank2 me-1 text-danger"></i>Universitas (<?= count($univ_items) ?>)</button>
+                <button type="button" class="btn btn-sm btn-filter-ami" data-filter="fakultas"><i class="bi bi-diagram-3 me-1 text-primary"></i>Fakultas (<?= $total_fak_items ?>)</button>
+                <button type="button" class="btn btn-sm btn-filter-ami" data-filter="prodi"><i class="bi bi-mortarboard me-1 text-purple"></i>Program Studi (<?= $total_prodi_items ?>)</button>
+            </div>
+        </div>
+
+        <!-- Alert Jika Pencarian Kosong -->
+        <div class="alert alert-warning text-center p-4 d-none rounded-4 ami-no-results-alert" role="alert">
+            <i class="bi bi-search me-2" style="font-size:1.5rem;"></i>
+            <h6 class="fw-bold mb-1 mt-2">Tidak Ada Data yang Sesuai</h6>
+            <p class="small text-muted mb-2">Tidak ditemukan dokumen audit / RTM dengan kata kunci atau filter yang Anda pilih.</p>
+            <button type="button" class="btn btn-sm btn-outline-dark ami-reset-search-btn" style="border-radius:20px;">
+                Reset Pencarian
+            </button>
+        </div>
+
+        <?php if ($total_items === 0): ?>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-folder2-open fs-1 text-muted opacity-50 mb-2 d-block"></i>
+                Belum ada data <?= $is_rtm ? 'Rapat Tinjauan Manajemen (RTM)' : 'audit lapangan' ?> untuk periode <?= e($selected_periode) ?>.
+            </div>
+        <?php else: ?>
+            <!-- Accordion List: Tingkat Universitas & Fakultas (di dalamnya Prodi) -->
+            <div class="accordion accordion-lpm" id="accordionAmi_<?= $prefix ?>">
+                
+                <!-- 1. TINGKAT UNIVERSITAS (Jika ada) -->
+                <?php if (!empty($univ_items)): ?>
+                <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm ami-accordion-item" style="overflow:hidden;border:1px solid #E2E8F0 !important;" data-tingkat="universitas" data-fakultas="universitas">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAmiUniv_<?= $prefix ?>" style="background-color:#f8f9fc;color:var(--navy);box-shadow:none;">
+                            <div class="d-flex align-items-center w-100 justify-content-between pe-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-bank2 text-danger fs-5"></i>
+                                    <span class="fakultas-title-text">Universitas Katolik Soegijapranata</span>
+                                </div>
+                                <span class="badge rounded-pill px-3 py-2 ami-count-badge" style="background:#FEE2E2;color:#991B1B;font-weight:700;font-size:0.8rem;">
+                                    <?= count($univ_items) ?> Kegiatan Universitas
+                                </span>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapseAmiUniv_<?= $prefix ?>" class="accordion-collapse collapse show">
+                        <div class="accordion-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead style="background-color:#f8fafc;border-bottom:2px solid #E2E8F0;">
+                                        <tr>
+                                            <th class="py-3 px-3 fw-bold text-center" width="45" style="color:#64748B;font-size:0.85rem;">#</th>
+                                            <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;min-width:180px;">Tingkat / Unit</th>
+                                            <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;">Judul Kegiatan</th>
+                                            <th class="py-3 px-3 fw-bold text-center" width="280" style="color:#475569;font-size:0.85rem;">Lampiran</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $u_idx = 0;
+                                        foreach ($univ_items as $item) {
+                                            renderAmiTableRow($item, ++$u_idx, $is_rtm, $doc3_name, $doc3_field);
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- 2. TINGKAT FAKULTAS (DI DALAMNYA ADA PRODI MASING-MASING) -->
+                <?php 
+                $f_count = 0;
+                foreach ($fakultas_groups as $fak => $g): 
+                    $f_count++;
+                    $collapse_id = 'collapseAmi_' . $prefix . '_' . $f_count;
+                    $items_in_fak = count($g['fakultas_items']) + count($g['prodi_items']);
+                    $is_open = (empty($univ_items) && $f_count === 1);
+                ?>
+                <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm ami-accordion-item" style="overflow:hidden;border:1px solid #E2E8F0 !important;" data-tingkat="fakultas" data-fakultas="<?= strtolower(e($fak)) ?>">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-bold py-3 <?= $is_open ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#<?= $collapse_id ?>" style="background-color:#f8f9fc;color:var(--navy);box-shadow:none;">
+                            <div class="d-flex align-items-center w-100 justify-content-between pe-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-building text-primary fs-5"></i>
+                                    <span class="fakultas-title-text"><?= htmlspecialchars($fak) ?></span>
+                                </div>
+                                <span class="badge rounded-pill px-3 py-2 ami-count-badge" style="background:#EDE7F6;color:#4A148C;font-weight:700;font-size:0.8rem;">
+                                    <?= count($g['prodi_items']) ?> Prodi &bull; <?= $items_in_fak ?> Kegiatan
+                                </span>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="<?= $collapse_id ?>" class="accordion-collapse collapse <?= $is_open ? 'show' : '' ?>">
+                        <div class="accordion-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead style="background-color:#f8fafc;border-bottom:2px solid #E2E8F0;">
+                                        <tr>
+                                            <th class="py-3 px-3 fw-bold text-center" width="45" style="color:#64748B;font-size:0.85rem;">#</th>
+                                            <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;min-width:180px;">Program Studi / Unit</th>
+                                            <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;">Judul Kegiatan</th>
+                                            <th class="py-3 px-3 fw-bold text-center" width="280" style="color:#475569;font-size:0.85rem;">Lampiran</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $row_idx = 0;
+                                        // 1. Dokumen Tingkat Fakultas
+                                        foreach ($g['fakultas_items'] as $item) {
+                                            renderAmiTableRow($item, ++$row_idx, $is_rtm, $doc3_name, $doc3_field);
+                                        }
+                                        // 2. Dokumen Tingkat Program Studi di dalam Fakultas
+                                        foreach ($g['prodi_items'] as $item) {
+                                            renderAmiTableRow($item, ++$row_idx, $is_rtm, $doc3_name, $doc3_field);
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+
+            </div>
+        <?php endif; ?>
+        <?php
+    }
+}
+?>
 
         <!-- TAB BODY CONTENT -->
 
@@ -971,195 +1360,14 @@ try {
                 </div>
             </div>
 
-            <!-- 4.2 Dokumentasi Audit Lapangan (Tingkat Fakultas & Prodi) -->
-            <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white">
+            <!-- 4.2 Dokumentasi Audit Lapangan (Tingkat Universitas, Fakultas & Prodi) -->
+            <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white ami-accordion-container" id="s4Container">
                 <div class="pb-3 mb-4 border-bottom">
-                    <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-journal-text text-purple me-2"></i>Dokumentasi Audit Lapangan Fakultas &amp; Program Studi</h4>
-                    <div class="text-muted small">Dokumentasi hasil audit lapangan, berkas berita acara, presensi kehadiran, undangan, dan galeri foto kegiatan.</div>
+                    <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-journal-text text-purple me-2"></i>Dokumentasi Audit Lapangan</h4>
+                    <div class="text-muted small">Daftar lengkap berkas berita acara, presensi kehadiran, undangan, dan foto kegiatan audit mutu lapangan per tingkatan satuan kerja.</div>
                 </div>
 
-                <?php if (empty($s4_dokumentasi)): ?>
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-folder2-open fs-1 text-muted opacity-50 mb-2 d-block"></i>
-                    Belum ada dokumentasi audit lapangan untuk periode <?= e($selected_periode) ?>.
-                </div>
-                <?php else: ?>
-                <div class="row g-4" id="s4DokumentasiGrid">
-                    <?php foreach ($s4_dokumentasi as $item): ?>
-                    <?php 
-                    $photos = !empty($item['foto_kegiatan']) ? json_decode($item['foto_kegiatan'], true) : [];
-                    $main_photo = !empty($photos) ? $photos[0] : '';
-                    $tingkat_cls = ($item['tingkat'] === 'prodi') ? 'tingkat-prodi' : 'tingkat-fakultas';
-                    ?>
-                    <div class="col-lg-6 s4-item <?= $tingkat_cls ?>" data-tingkat="<?= e($item['tingkat']) ?>">
-                        <div class="ami-audit-card">
-                            <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
-                            <?php if (!empty($photos)): ?>
-                                <?php if (count($photos) > 1): 
-                                    $cid4 = 'carousel_s4_' . $item['id'];
-                                ?>
-                                <div id="<?= $cid4 ?>" class="carousel slide ami-card-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true" data-bs-pause="hover">
-                                    <div class="carousel-indicators">
-                                        <?php foreach ($photos as $pidx => $p): ?>
-                                        <button type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide-to="<?= $pidx ?>" class="<?= $pidx === 0 ? 'active' : '' ?>" aria-current="<?= $pidx === 0 ? 'true' : 'false' ?>" aria-label="Foto <?= $pidx + 1 ?>"></button>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <div class="carousel-inner">
-                                        <?php foreach ($photos as $pidx => $p): ?>
-                                        <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
-                                            <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($item['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($item['fakultas'])) ?>')">
-                                                <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($item['judul']) ?>" class="d-block w-100" loading="lazy">
-                                                <div class="ami-card-cover-overlay">
-                                                    <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide="prev" onclick="event.stopPropagation();" title="Foto Sebelumnya">
-                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Sebelumnya</span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#<?= $cid4 ?>" data-bs-slide="next" onclick="event.stopPropagation();" title="Foto Selanjutnya">
-                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Selanjutnya</span>
-                                    </button>
-                                    <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm" style="z-index:4;pointer-events:none;">
-                                        <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
-                                    </span>
-                                </div>
-                                <?php else: ?>
-                                <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($item['judul'])) ?>', '<?= e(addslashes($item['fakultas'])) ?>')">
-                                    <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi Audit Lapangan" loading="lazy">
-                                    <div class="ami-card-cover-overlay">
-                                        <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                            <?php else: ?>
-                            <div class="ami-card-cover d-flex align-items-center justify-content-center" style="background:linear-gradient(135deg, #0B1F44 0%, #1E3A8A 100%);">
-                                <div class="text-center text-white-50">
-                                    <i class="bi bi-journal-check fs-1 text-white opacity-50 mb-1 d-block"></i>
-                                    <span class="small">Dokumentasi Audit Lapangan</span>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- 2. Judul & Informasi Unit di Tengah -->
-                            <div class="ami-card-body">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                    <span class="badge <?= $item['tingkat'] === 'prodi' ? 'bg-purple' : 'bg-primary' ?> px-2 py-1" style="font-size:0.75rem;">
-                                        <?= $item['tingkat'] === 'prodi' ? '<i class="bi bi-mortarboard me-1"></i>Tingkat Program Studi' : '<i class="bi bi-diagram-3 me-1"></i>Tingkat Fakultas' ?>
-                                    </span>
-                                    <span class="text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Periode <?= e($item['periode']) ?></span>
-                                </div>
-
-                                <h5 class="fw-bold mb-2" style="color:var(--navy);font-size:1.05rem;line-height:1.45;"><?= e($item['judul']) ?></h5>
-
-                                <div class="text-muted small mb-1">
-                                    <strong><i class="bi bi-building me-1"></i><?= e($item['fakultas']) ?></strong>
-                                    <?php if (!empty($item['prodi'])): ?>
-                                    <span> • <?= e($item['prodi']) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <!-- 3. Lampiran Dokumen di Bagian Bawah: 1. Undangan, 2. Daftar Hadir, 3. Berita Acara -->
-                            <div class="ami-card-footer">
-                                <div class="small fw-bold text-muted mb-2"><i class="bi bi-paperclip me-1"></i>Lampiran Dokumen Resmi:</div>
-                                <div class="vstack gap-2">
-                                    <!-- 1. Undangan -->
-                                    <?php if (!empty($item['file_undangan'])): ?>
-                                    <div class="ami-attach-row">
-                                        <div class="d-flex align-items-center gap-2 min-w-0">
-                                            <i class="bi bi-envelope-paper-fill text-purple fs-5 flex-shrink-0"></i>
-                                            <div class="min-w-0">
-                                                <div class="fw-bold small text-dark text-truncate">Undangan</div>
-                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_undangan']) ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <?php
-                                            $res_u_st = (int)($item['is_restricted_undangan'] ?? $item['is_restricted'] ?? 0);
-                                            $res_u_pg = (int)($item['max_preview_pages_undangan'] ?? $item['max_preview_pages'] ?? 3);
-                                            $res_u_dm = $item['allowed_domains_undangan'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                            ?>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
-                                                <i class="bi bi-eye me-1"></i> Pratinjau
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_undangan']) ?>', 'Undangan - <?= e(addslashes($item['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
-                                                <i class="bi bi-download"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- 2. Daftar Hadir -->
-                                    <?php if (!empty($item['file_daftar_hadir'])): ?>
-                                    <div class="ami-attach-row">
-                                        <div class="d-flex align-items-center gap-2 min-w-0">
-                                            <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
-                                            <div class="min-w-0">
-                                                <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
-                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_daftar_hadir']) ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <?php
-                                            $res_dh_st = (int)($item['is_restricted_daftar_hadir'] ?? $item['is_restricted'] ?? 0);
-                                            $res_dh_pg = (int)($item['max_preview_pages_daftar_hadir'] ?? $item['max_preview_pages'] ?? 3);
-                                            $res_dh_dm = $item['allowed_domains_daftar_hadir'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                            ?>
-                                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
-                                                <i class="bi bi-eye me-1"></i> Pratinjau
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($item['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
-                                                <i class="bi bi-download"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <!-- 3. Berita Acara -->
-                                    <?php if (!empty($item['file_berita_acara'])): ?>
-                                    <div class="ami-attach-row">
-                                        <div class="d-flex align-items-center gap-2 min-w-0">
-                                            <i class="bi bi-file-earmark-check-fill text-primary fs-5 flex-shrink-0"></i>
-                                            <div class="min-w-0">
-                                                <div class="fw-bold small text-dark text-truncate">Berita Acara</div>
-                                                <div class="text-muted" style="font-size:0.72rem;"><?= basename($item['file_berita_acara']) ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <?php
-                                            $res_ba_st = (int)($item['is_restricted_berita_acara'] ?? $item['is_restricted'] ?? 0);
-                                            $res_ba_pg = (int)($item['max_preview_pages_berita_acara'] ?? $item['max_preview_pages'] ?? 3);
-                                            $res_ba_dm = $item['allowed_domains_berita_acara'] ?? $item['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                            ?>
-                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= $res_ba_st ?>, <?= $res_ba_pg ?>, '<?= e(addslashes($res_ba_dm)) ?>')">
-                                                <i class="bi bi-eye me-1"></i> Pratinjau
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Berita Acara" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($item['file_berita_acara']) ?>', 'Berita Acara - <?= e(addslashes($item['judul'])) ?>', <?= $res_ba_st ?>, <?= $res_ba_pg ?>, '<?= e(addslashes($res_ba_dm)) ?>')">
-                                                <i class="bi bi-download"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                    <?php if (empty($item['file_undangan']) && empty($item['file_daftar_hadir']) && empty($item['file_berita_acara'])): ?>
-                                    <div class="text-muted small text-center py-2 bg-white rounded-3 border">Belum ada lampiran dokumen</div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-                <div id="s4EmptyFilterNotice" class="text-center py-5 text-muted" style="display:none;">
-                    <i class="bi bi-filter-circle fs-1 text-muted opacity-50 mb-2 d-block"></i>
-                    Tidak ada dokumen audit lapangan untuk tingkatan yang dipilih pada periode ini.
-                </div>
-                <?php endif; ?>
+                <?php renderAmiDropdownHierarchy('audit_lapangan', $s4_dokumentasi, $selected_periode); ?>
             </div>
         </div>
 
@@ -1167,201 +1375,13 @@ try {
         <!-- ============================================== -->
         <!-- SIKLUS 5: RAPAT TINJAUAN MANAJEMEN (RTM)       -->
         <!-- ============================================== -->
-        <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white mb-5">
+        <div class="card p-4 p-md-5 border-0 shadow-sm rounded-4 bg-white mb-5 ami-accordion-container" id="s5Container">
             <div class="pb-3 mb-4 border-bottom">
                 <h4 class="fw-bold mb-1" style="color:var(--navy);"><i class="bi bi-people-fill text-purple me-2"></i>Rapat Tinjauan Manajemen (RTM)</h4>
                 <div class="text-muted small">Penyampaian hasil audit, perumusan kebijakan mutu, dan komitmen tindak lanjut tingkat Universitas, Fakultas, dan Prodi.</div>
             </div>
 
-            <?php if (empty($s5_rtm)): ?>
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-chat-square-quote fs-1 text-muted opacity-50 mb-2 d-block"></i>
-                Belum ada data Rapat Tinjauan Manajemen untuk periode <?= e($selected_periode) ?>.
-            </div>
-            <?php else: ?>
-            <div class="row g-4" id="s5RtmGrid">
-                <?php foreach ($s5_rtm as $rtm): ?>
-                <?php 
-                $photos = !empty($rtm['foto_kegiatan']) ? json_decode($rtm['foto_kegiatan'], true) : [];
-                $main_photo = !empty($photos) ? $photos[0] : '';
-                $t_cls = 'rtm-' . $rtm['tingkat'];
-                ?>
-                <div class="col-lg-6 s5-item <?= $t_cls ?>" data-tingkat="<?= e($rtm['tingkat']) ?>">
-                    <div class="ami-audit-card">
-                        <!-- 1. Foto Kegiatan di Bagian Atas (Bisa Multi-Foto & Auto-Sliding Carousel) -->
-                        <?php if (!empty($photos)): ?>
-                            <?php if (count($photos) > 1): 
-                                $cid5 = 'carousel_s5_' . $rtm['id'];
-                            ?>
-                            <div id="<?= $cid5 ?>" class="carousel slide ami-card-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true" data-bs-pause="hover">
-                                <div class="carousel-indicators">
-                                    <?php foreach ($photos as $pidx => $p): ?>
-                                    <button type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide-to="<?= $pidx ?>" class="<?= $pidx === 0 ? 'active' : '' ?>" aria-current="<?= $pidx === 0 ? 'true' : 'false' ?>" aria-label="Foto <?= $pidx + 1 ?>"></button>
-                                    <?php endforeach; ?>
-                                </div>
-                                <div class="carousel-inner">
-                                    <?php foreach ($photos as $pidx => $p): ?>
-                                    <div class="carousel-item <?= $pidx === 0 ? 'active' : '' ?>">
-                                        <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($p) ?>', '<?= e(addslashes($rtm['judul'])) ?> (Foto <?= $pidx + 1 ?>/<?= count($photos) ?>)', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
-                                            <img src="<?= SITE_URL ?>/uploads/<?= e($p) ?>" alt="<?= e($rtm['judul']) ?>" class="d-block w-100" loading="lazy">
-                                            <div class="ami-card-cover-overlay">
-                                                <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide="prev" onclick="event.stopPropagation();" title="Foto Sebelumnya">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Sebelumnya</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#<?= $cid5 ?>" data-bs-slide="next" onclick="event.stopPropagation();" title="Foto Selanjutnya">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Selanjutnya</span>
-                                </button>
-                                <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 px-2 py-1 shadow-sm" style="z-index:4;pointer-events:none;">
-                                    <i class="bi bi-images me-1 text-warning"></i> <?= count($photos) ?> Foto
-                                </span>
-                            </div>
-                            <?php else: ?>
-                            <div class="ami-card-cover" onclick="openPhotoModal('<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>', '<?= e(addslashes($rtm['judul'])) ?>', '<?= e(addslashes($rtm['fakultas'] ?: 'Universitas')) ?>')">
-                                <img src="<?= SITE_URL ?>/uploads/<?= e($photos[0]) ?>" alt="Dokumentasi RTM" loading="lazy">
-                                <div class="ami-card-cover-overlay">
-                                    <span class="badge bg-dark bg-opacity-75"><i class="bi bi-zoom-in me-1"></i> Klik untuk memperbesar foto</span>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                        <?php else: ?>
-                        <div class="ami-card-cover d-flex align-items-center justify-content-center" style="background:linear-gradient(135deg, #0B1F44 0%, #3B0764 100%);">
-                            <div class="text-center text-white-50">
-                                <i class="bi bi-people fs-1 text-white opacity-50 mb-1 d-block"></i>
-                                <span class="small">Dokumentasi RTM</span>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <!-- 2. Judul & Informasi Unit di Tengah -->
-                        <div class="ami-card-body">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                <?php if ($rtm['tingkat'] === 'universitas'): ?>
-                                <span class="badge bg-danger px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-building me-1"></i>Tingkat Universitas</span>
-                                <?php elseif ($rtm['tingkat'] === 'fakultas'): ?>
-                                <span class="badge bg-primary px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-diagram-3 me-1"></i>Tingkat Fakultas</span>
-                                <?php else: ?>
-                                <span class="badge bg-purple px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-mortarboard me-1"></i>Tingkat Program Studi</span>
-                                <?php endif; ?>
-                                <span class="text-muted small fw-bold"><i class="bi bi-calendar-event me-1"></i>Periode <?= e($rtm['periode']) ?></span>
-                            </div>
-
-                            <h5 class="fw-bold mb-2" style="color:var(--navy);font-size:1.05rem;line-height:1.45;"><?= e($rtm['judul']) ?></h5>
-
-                            <div class="text-muted small mb-1">
-                                <?php if ($rtm['tingkat'] === 'universitas'): ?>
-                                <strong><i class="bi bi-building me-1"></i>Universitas Katolik Soegijapranata</strong>
-                                <?php elseif ($rtm['tingkat'] === 'fakultas'): ?>
-                                <strong><i class="bi bi-building me-1"></i><?= e($rtm['fakultas']) ?></strong>
-                                <?php else: ?>
-                                <strong><i class="bi bi-mortarboard me-1"></i><?= e($rtm['prodi']) ?></strong> (Fakultas <?= e($rtm['fakultas']) ?>)
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- 3. Lampiran Dokumen di Bagian Bawah: 1. Undangan, 2. Daftar Hadir, 3. Notulensi -->
-                        <div class="ami-card-footer">
-                            <div class="small fw-bold text-muted mb-2"><i class="bi bi-paperclip me-1"></i>Lampiran Dokumen Resmi:</div>
-                            <div class="vstack gap-2">
-                                <!-- 1. Undangan -->
-                                <?php if (!empty($rtm['file_undangan'])): ?>
-                                <div class="ami-attach-row">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="bi bi-envelope-paper-fill text-purple fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold small text-dark text-truncate">Undangan</div>
-                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_undangan']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php
-                                        $res_u_st = (int)($rtm['is_restricted_undangan'] ?? $rtm['is_restricted'] ?? 0);
-                                        $res_u_pg = (int)($rtm['max_preview_pages_undangan'] ?? $rtm['max_preview_pages'] ?? 3);
-                                        $res_u_dm = $rtm['allowed_domains_undangan'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                        ?>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
-                                            <i class="bi bi-eye me-1"></i> Pratinjau
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-secondary py-1 px-2" style="font-size:0.75rem;" title="Unduh Undangan" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_undangan']) ?>', 'Undangan - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_u_st ?>, <?= $res_u_pg ?>, '<?= e(addslashes($res_u_dm)) ?>')">
-                                            <i class="bi bi-download"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-
-                                <!-- 2. Daftar Hadir -->
-                                <?php if (!empty($rtm['file_daftar_hadir'])): ?>
-                                <div class="ami-attach-row">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="bi bi-card-checklist text-success fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold small text-dark text-truncate">Daftar Hadir</div>
-                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_daftar_hadir']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php
-                                        $res_dh_st = (int)($rtm['is_restricted_daftar_hadir'] ?? $rtm['is_restricted'] ?? 0);
-                                        $res_dh_pg = (int)($rtm['max_preview_pages_daftar_hadir'] ?? $rtm['max_preview_pages'] ?? 3);
-                                        $res_dh_dm = $rtm['allowed_domains_daftar_hadir'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                        ?>
-                                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
-                                            <i class="bi bi-eye me-1"></i> Pratinjau
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-success text-white py-1 px-2" style="font-size:0.75rem;" title="Unduh Daftar Hadir" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_daftar_hadir']) ?>', 'Daftar Hadir - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_dh_st ?>, <?= $res_dh_pg ?>, '<?= e(addslashes($res_dh_dm)) ?>')">
-                                            <i class="bi bi-download"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-
-                                <!-- 3. Notulensi -->
-                                <?php if (!empty($rtm['file_notulensi'])): ?>
-                                <div class="ami-attach-row">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <i class="bi bi-file-earmark-text-fill text-primary fs-5 flex-shrink-0"></i>
-                                        <div class="min-w-0">
-                                            <div class="fw-bold small text-dark text-truncate">Notulensi</div>
-                                            <div class="text-muted" style="font-size:0.72rem;"><?= basename($rtm['file_notulensi']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <?php
-                                        $res_n_st = (int)($rtm['is_restricted_notulensi'] ?? $rtm['is_restricted'] ?? 0);
-                                        $res_n_pg = (int)($rtm['max_preview_pages_notulensi'] ?? $rtm['max_preview_pages'] ?? 3);
-                                        $res_n_dm = $rtm['allowed_domains_notulensi'] ?? $rtm['allowed_domains'] ?? '@unika.ac.id,@student.unika.ac.id';
-                                        ?>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:0.75rem;" onclick="openAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_n_st ?>, <?= $res_n_pg ?>, '<?= e(addslashes($res_n_dm)) ?>')">
-                                            <i class="bi bi-eye me-1"></i> Pratinjau
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:0.75rem;" title="Unduh Notulensi" onclick="downloadAmiDocWithCheck('<?= SITE_URL ?>/uploads/<?= e($rtm['file_notulensi']) ?>', 'Notulensi - <?= e(addslashes($rtm['judul'])) ?>', <?= $res_n_st ?>, <?= $res_n_pg ?>, '<?= e(addslashes($res_n_dm)) ?>')">
-                                            <i class="bi bi-download"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (empty($rtm['file_undangan']) && empty($rtm['file_daftar_hadir']) && empty($rtm['file_notulensi'])): ?>
-                                <div class="text-muted small text-center py-2 bg-white rounded-3 border">Belum ada lampiran dokumen</div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <div id="s5EmptyFilterNotice" class="text-center py-5 text-muted" style="display:none;">
-                <i class="bi bi-filter-circle fs-1 text-muted opacity-50 mb-2 d-block"></i>
-                Tidak ada data RTM untuk tingkatan yang dipilih pada periode ini.
-            </div>
-            <?php endif; ?>
+            <?php renderAmiDropdownHierarchy('rtm', $s5_rtm, $selected_periode); ?>
         </div>
 
         <?php endif; ?>
@@ -1372,19 +1392,22 @@ try {
 
 </section>
 
-<!-- Modal Lightbox Pratinjau Foto -->
+<!-- Modal Lightbox Pratinjau Galeri Foto (Grid Semua Foto Sekaligus Tanpa Slide & Scroll) -->
 <div class="modal fade" id="photoLightboxModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background:#0F172A;">
             <div class="modal-header border-0 bg-dark text-white p-3">
-                <div class="min-w-0">
-                    <h6 class="modal-title fw-bold text-truncate" id="photoModalTitle">Pratinjau Foto</h6>
+                <div class="min-w-0 me-3">
+                    <h6 class="modal-title fw-bold text-truncate" id="photoModalTitle">Dokumentasi Foto Kegiatan</h6>
                     <small class="text-white-50" id="photoModalSub"></small>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <span id="photoModalCounter" class="badge rounded-pill text-white px-3 py-1" style="font-size:0.75rem;background:#7E22CE !important;"></span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
-            <div class="modal-body p-0 bg-black text-center" style="max-height:80vh;display:flex;align-items:center;justify-content:center;">
-                <img id="photoModalImg" src="" alt="Pratinjau Foto" style="max-width:100%;max-height:75vh;object-fit:contain;">
+            <div class="modal-body p-3 p-md-4" style="min-height:320px;max-height:85vh;overflow-y:auto;background:#090D16;display:flex;align-items:center;justify-content:center;">
+                <div id="photoGalleryContainer" style="width:100%;"></div>
             </div>
         </div>
     </div>
@@ -1444,18 +1467,101 @@ try {
 </div>
 
 <script>
-// Modal Lightbox Foto
-function openPhotoModal(imgSrc, title, subtitle) {
-    document.getElementById('photoModalImg').src = imgSrc;
-    document.getElementById('photoModalTitle').textContent = title || 'Dokumentasi Kegiatan AMI';
-    document.getElementById('photoModalSub').textContent = subtitle || '';
-    
+// =========================================================================
+// Galeri Foto: Menampilkan Semua 1, 2, 3, 4 Foto Sekaligus Tanpa Slide & Scroll
+// =========================================================================
+function openAmiGallery(photos, title, subtitle) {
+    if (!photos) return;
+    if (typeof photos === 'string') {
+        try {
+            photos = JSON.parse(photos);
+        } catch(e) {
+            photos = [photos];
+        }
+    }
+    if (!Array.isArray(photos)) photos = [photos];
+    if (photos.length === 0) return;
+
     var modalEl = document.getElementById('photoLightboxModal');
-    var modal = new bootstrap.Modal(modalEl);
+    var titleEl = document.getElementById('photoModalTitle');
+    var subEl = document.getElementById('photoModalSub');
+    var badgeEl = document.getElementById('photoModalCounter');
+    var container = document.getElementById('photoGalleryContainer');
+
+    if (titleEl) titleEl.textContent = title || 'Dokumentasi Foto Kegiatan';
+    if (subEl) subEl.textContent = subtitle || '';
+    if (badgeEl) {
+        badgeEl.style.display = 'inline-block';
+        badgeEl.textContent = photos.length + ' Foto Kegiatan';
+    }
+
+    if (container) {
+        container.innerHTML = '';
+        var n = photos.length;
+
+        // Layout konsisten 2x2 berasio 16:9 untuk 1, 2, 3, 4 foto
+        container.style.cssText = 'display:grid;grid-template-columns:repeat(2, 1fr);gap:14px;width:100%;max-width:960px;margin:0 auto;';
+
+        photos.forEach(function(photo, idx) {
+            var fullUrl = (photo.indexOf('http') === 0 || photo.indexOf('<?= SITE_URL ?>') === 0) 
+                          ? photo 
+                          : ('<?= SITE_URL ?>/uploads/' + photo);
+
+            var itemDiv = document.createElement('div');
+            itemDiv.className = 'ami-grid-photo-item position-relative rounded-3 overflow-hidden shadow';
+            
+            // Jika hanya 1 foto, pusatkan dengan ukuran setara satu kolom 16:9
+            var singleStyle = (n === 1) ? 'grid-column:1 / -1;max-width:540px;margin:0 auto;' : '';
+            itemDiv.style.cssText = 'aspect-ratio:16/9;width:100%;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;' + singleStyle;
+
+            var img = document.createElement('img');
+            img.src = fullUrl;
+            img.alt = (title || 'Foto') + ' (' + (idx + 1) + ')';
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;transition:transform 0.25s ease;';
+            img.loading = 'lazy';
+
+            itemDiv.onmouseenter = function() { img.style.transform = 'scale(1.03)'; };
+            itemDiv.onmouseleave = function() { img.style.transform = 'scale(1)'; };
+
+            // Badge nomor foto
+            var numBadge = document.createElement('span');
+            numBadge.className = 'position-absolute bottom-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white px-2 py-1 shadow-sm';
+            numBadge.style.fontSize = '0.72rem';
+            numBadge.style.pointerEvents = 'none';
+            numBadge.innerHTML = '<i class="bi bi-camera me-1 text-warning"></i> Foto ' + (idx + 1);
+
+            // Overlay informasi klik buka tab baru
+            var overlay = document.createElement('div');
+            overlay.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-white';
+            overlay.style.cssText = 'background:rgba(0,0,0,0.35);opacity:0;transition:opacity 0.2s ease;pointer-events:none;';
+            overlay.innerHTML = '<span class="badge bg-dark bg-opacity-75 px-3 py-2 rounded-pill"><i class="bi bi-arrows-fullscreen me-1"></i> Buka Resolusi Penuh</span>';
+            itemDiv.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; });
+            itemDiv.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; });
+
+            itemDiv.appendChild(img);
+            itemDiv.appendChild(numBadge);
+            itemDiv.appendChild(overlay);
+
+            itemDiv.onclick = function() {
+                window.open(fullUrl, '_blank');
+            };
+
+            container.appendChild(itemDiv);
+        });
+    }
+
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 }
 
+// Legacy single photo modal
+function openPhotoModal(imgSrc, title, subtitle) {
+    openAmiGallery([imgSrc], title, subtitle);
+}
+
+// =========================================================================
 // Modal Pratinjau Dokumen (Preview Sebelum Unduh)
+// =========================================================================
 function openDocModal(docUrl, docTitle, docSubtitle, isRestricted, maxPages, allowedDomains) {
     var ext = (docUrl.split('.').pop() || '').toLowerCase();
     if (ext === 'pdf' && typeof openPdfViewer === 'function') {
@@ -1539,11 +1645,185 @@ document.getElementById('docPreviewModal').addEventListener('hidden.bs.modal', f
     document.getElementById('docModalIframe').src = '';
 });
 
-// Filter Tingkat Satuan Kerja (Terhubung dengan Filter Periode & Button Filter)
+// =========================================================================
+// Filter Engine Accordion Bertingkat Gaya Akreditasi
+// =========================================================================
+function filterContainer(container) {
+    if (!container) return;
+    var searchInput = container.querySelector('.ami-search-input');
+    var q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    var activeChip = container.querySelector('.btn-filter-ami.active');
+    var filterTingkat = activeChip ? activeChip.getAttribute('data-filter') : 'all';
+
+    var clearBtn = container.querySelector('.ami-clear-search');
+    if (clearBtn) {
+        clearBtn.classList.toggle('d-none', q === '');
+    }
+
+    var allRows = container.querySelectorAll('.ami-row');
+    var totalVisible = 0;
+    var totalAll = allRows.length;
+
+    var accordionItems = container.querySelectorAll('.ami-accordion-item');
+    accordionItems.forEach(function(accItem) {
+        var rowsInItem = accItem.querySelectorAll('.ami-row');
+        var visibleInItem = 0;
+
+        rowsInItem.forEach(function(row) {
+            var rowTingkat = row.getAttribute('data-tingkat') || '';
+            var rowFak = row.getAttribute('data-fakultas') || '';
+            var rowProdi = row.getAttribute('data-prodi') || '';
+            var rowJudul = row.getAttribute('data-judul') || '';
+
+            var matchesTingkat = (filterTingkat === 'all' || rowTingkat === filterTingkat);
+            var matchesQuery = (q === '') || 
+                               (rowJudul.indexOf(q) !== -1) || 
+                               (rowFak.indexOf(q) !== -1) || 
+                               (rowProdi.indexOf(q) !== -1) || 
+                               (rowTingkat.indexOf(q) !== -1);
+
+            if (matchesTingkat && matchesQuery) {
+                row.style.display = '';
+                visibleInItem++;
+                totalVisible++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        var countBadge = accItem.querySelector('.ami-count-badge');
+        if (visibleInItem > 0) {
+            accItem.style.display = '';
+            if (countBadge) {
+                countBadge.textContent = visibleInItem + ' Kegiatan';
+            }
+            // Buka otomatis accordion jika pengguna sedang mengetik pencarian
+            if (q !== '') {
+                var collapseEl = accItem.querySelector('.accordion-collapse');
+                if (collapseEl && !collapseEl.classList.contains('show')) {
+                    var bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                    bsCollapse.show();
+                }
+            }
+        } else {
+            accItem.style.display = 'none';
+        }
+    });
+
+    var counterBadge = container.querySelector('.ami-counter-badge');
+    if (counterBadge) {
+        counterBadge.textContent = 'Menampilkan ' + totalVisible + ' dari ' + totalAll + ' Kegiatan';
+    }
+
+    var emptyAlert = container.querySelector('.ami-no-results-alert');
+    if (emptyAlert) {
+        emptyAlert.classList.toggle('d-none', totalVisible > 0);
+    }
+}
+
+function initAmiAccordionFilters() {
+    var containers = document.querySelectorAll('.ami-accordion-container');
+    containers.forEach(function(container) {
+        // 1. Search Input
+        var searchInput = container.querySelector('.ami-search-input');
+        if (searchInput && !searchInput.dataset.bound) {
+            searchInput.dataset.bound = 'true';
+            searchInput.addEventListener('input', function() {
+                filterContainer(container);
+            });
+        }
+
+        // 2. Clear Search Button
+        var clearBtn = container.querySelector('.ami-clear-search');
+        if (clearBtn && !clearBtn.dataset.bound) {
+            clearBtn.dataset.bound = 'true';
+            clearBtn.addEventListener('click', function() {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                }
+                filterContainer(container);
+            });
+        }
+
+        // 3. Reset Button on Alert
+        var resetBtn = container.querySelector('.ami-reset-search-btn');
+        if (resetBtn && !resetBtn.dataset.bound) {
+            resetBtn.dataset.bound = 'true';
+            resetBtn.addEventListener('click', function() {
+                if (searchInput) searchInput.value = '';
+                var allChips = container.querySelectorAll('.btn-filter-ami');
+                allChips.forEach(function(c) { c.classList.remove('active'); });
+                var allBtn = container.querySelector('.btn-filter-ami[data-filter="all"]');
+                if (allBtn) allBtn.classList.add('active');
+                filterContainer(container);
+            });
+        }
+
+        // 4. Quick Filter Chips
+        var filterChips = container.querySelectorAll('.btn-filter-ami');
+        filterChips.forEach(function(chip) {
+            if (!chip.dataset.bound) {
+                chip.dataset.bound = 'true';
+                chip.addEventListener('click', function() {
+                    filterChips.forEach(function(c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    var filterVal = chip.getAttribute('data-filter');
+                    
+                    // Sinkronkan dengan tombol filter tingkat di header atas
+                    var topBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat');
+                    topBtns.forEach(function(b) {
+                        b.classList.toggle('active', b.getAttribute('data-tingkat') === filterVal);
+                    });
+
+                    filterContainer(container);
+                });
+            }
+        });
+
+        // 5. Toggle All Button (Buka Semua / Tutup Semua)
+        var toggleAllBtn = container.querySelector('.ami-toggle-all-btn');
+        if (toggleAllBtn && !toggleAllBtn.dataset.bound) {
+            toggleAllBtn.dataset.bound = 'true';
+            toggleAllBtn.addEventListener('click', function() {
+                var collapseEls = container.querySelectorAll('.accordion-collapse');
+                var anyClosed = false;
+                collapseEls.forEach(function(c) {
+                    if (!c.classList.contains('show')) anyClosed = true;
+                });
+
+                collapseEls.forEach(function(c) {
+                    var inst = bootstrap.Collapse.getOrCreateInstance(c, { toggle: false });
+                    if (anyClosed) {
+                        inst.show();
+                    } else {
+                        inst.hide();
+                    }
+                });
+
+                var toggleText = toggleAllBtn.querySelector('.toggle-text');
+                var toggleIcon = toggleAllBtn.querySelector('i');
+                if (anyClosed) {
+                    if (toggleText) toggleText.textContent = 'Tutup Semua';
+                    if (toggleIcon) toggleIcon.className = 'bi bi-arrows-collapse me-1';
+                } else {
+                    if (toggleText) toggleText.textContent = 'Buka Semua';
+                    if (toggleIcon) toggleIcon.className = 'bi bi-arrows-expand me-1';
+                }
+            });
+        }
+
+        // Jalankan kalkulasi awal
+        filterContainer(container);
+    });
+}
+
+// Filter Tingkat Satuan Kerja (Terhubung dengan Header Atas & Accordion Chips)
 function applyTingkatFilter(tingkat, btn) {
     if (!tingkat) tingkat = 'all';
 
-    // 1. Update status aktif pada tombol filter
+    // 1. Update status aktif pada tombol filter atas
     var allFilterBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat');
     allFilterBtns.forEach(function(b) {
         if (b.getAttribute('data-tingkat') === tingkat) {
@@ -1553,41 +1833,19 @@ function applyTingkatFilter(tingkat, btn) {
         }
     });
 
-    // 2. Filter Siklus 4 Items
-    var s4Items = document.querySelectorAll('.s4-item');
-    var s4VisibleCount = 0;
-    s4Items.forEach(function(item) {
-        var itemTingkat = item.getAttribute('data-tingkat');
-        if (tingkat === 'all' || itemTingkat === tingkat) {
-            item.style.display = '';
-            s4VisibleCount++;
-        } else {
-            item.style.display = 'none';
+    // 2. Hubungkan dengan filter chips di dalam accordion container
+    var containers = document.querySelectorAll('.ami-accordion-container');
+    containers.forEach(function(cont) {
+        var chip = cont.querySelector('.btn-filter-ami[data-filter="' + tingkat + '"]');
+        if (chip) {
+            var allChips = cont.querySelectorAll('.btn-filter-ami');
+            allChips.forEach(function(c) { c.classList.remove('active'); });
+            chip.classList.add('active');
         }
+        filterContainer(cont);
     });
-    var s4Empty = document.getElementById('s4EmptyFilterNotice');
-    if (s4Empty) {
-        s4Empty.style.display = (s4VisibleCount === 0 && s4Items.length > 0) ? 'block' : 'none';
-    }
 
-    // 3. Filter Siklus 5 Items
-    var s5Items = document.querySelectorAll('.s5-item');
-    var s5VisibleCount = 0;
-    s5Items.forEach(function(item) {
-        var itemTingkat = item.getAttribute('data-tingkat');
-        if (tingkat === 'all' || itemTingkat === tingkat) {
-            item.style.display = '';
-            s5VisibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    var s5Empty = document.getElementById('s5EmptyFilterNotice');
-    if (s5Empty) {
-        s5Empty.style.display = (s5VisibleCount === 0 && s5Items.length > 0) ? 'block' : 'none';
-    }
-
-    // 4. Update query string tanpa reload halaman
+    // 3. Update query string tanpa reload halaman
     if (window.history && window.history.replaceState) {
         var u = new URL(window.location.href);
         if (tingkat === 'all') {
@@ -1604,8 +1862,10 @@ function applyTingkatFilter(tingkat, btn) {
     }
 }
 
-// Inisialisasi filter awal jika ada parameter tingkat
+// Inisialisasi awal saat halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
+    initAmiAccordionFilters();
+
     var initTingkat = '<?= e($selected_tingkat) ?>';
     if (initTingkat && initTingkat !== 'all') {
         applyTingkatFilter(initTingkat);
@@ -1675,6 +1935,9 @@ function loadAmiAjax(targetUrl, pushState) {
         } else {
             dynamicContainer.innerHTML = html;
         }
+
+        // Inisialisasi filter accordion untuk konten baru yang dimuat
+        initAmiAccordionFilters();
 
         // Bersihkan parameter ajax=1 untuk URL browser
         var cleanUrl = new URL(targetUrl, window.location.href);

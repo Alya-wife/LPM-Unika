@@ -599,18 +599,17 @@ try {
 
     <div class="container position-relative" id="amiDynamicContainer" data-periode="<?= e($selected_periode) ?>" data-siklus="<?= $active_siklus ?>" data-tingkat="<?= e($selected_tingkat) ?>">
 
-        <!-- Panel Filter Terpadu: Periode Terlebih Dahulu, Lalu Filter Tingkat -->
+        <!-- Panel Pemilihan Periode Audit -->
         <div class="card p-3 p-md-4 border-0 shadow-sm rounded-4 bg-white mb-4">
-            <!-- 1. Filter Periode Audit -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 <?= ($active_siklus === 4 || $active_siklus === 5) ? 'pb-3 border-bottom' : '' ?>">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-1-circle-fill me-1"></i>Langkah 1</span>
+                        <i class="bi bi-calendar-range text-primary fs-5"></i>
                         <span class="text-uppercase fw-bold text-dark small" style="letter-spacing:0.5px;">Pilih Periode Audit:</span>
                     </div>
                     <div class="periode-filter-box">
                         <?php foreach ($periodes as $p): ?>
-                        <a href="?siklus=<?= $active_siklus ?>&periode=<?= urlencode($p['nama_periode']) ?><?= ($selected_tingkat !== 'all' && ($active_siklus === 4 || $active_siklus === 5)) ? '&tingkat='.urlencode($selected_tingkat) : '' ?>#siklusContent" class="periode-pill <?= $selected_periode === $p['nama_periode'] ? 'active' : '' ?>" data-periode="<?= e($p['nama_periode']) ?>">
+                        <a href="?siklus=<?= $active_siklus ?>&periode=<?= urlencode($p['nama_periode']) ?>#siklusContent" class="periode-pill <?= $selected_periode === $p['nama_periode'] ? 'active' : '' ?>" data-periode="<?= e($p['nama_periode']) ?>">
                             <i class="bi bi-calendar2-check me-1"></i><?= e($p['nama_periode']) ?>
                         </a>
                         <?php endforeach; ?>
@@ -623,36 +622,6 @@ try {
                     </span>
                 </div>
             </div>
-
-            <!-- 2. Filter Tingkat Unit (Khusus Siklus 4 & 5) -->
-            <?php if ($active_siklus === 4 || $active_siklus === 5): ?>
-            <div class="pt-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge bg-purple rounded-pill px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-2-circle-fill me-1"></i>Langkah 2</span>
-                        <span class="text-uppercase fw-bold text-dark small" style="letter-spacing:0.5px;">Filter Tingkat Satuan Kerja:</span>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2" id="tingkatFilterBox">
-                        <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'all' ? 'active' : '' ?>" data-tingkat="all" onclick="applyTingkatFilter('all', this)">
-                            <i class="bi bi-grid-fill me-1"></i> Semua Tingkat
-                        </button>
-                        <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'universitas' ? 'active' : '' ?>" data-tingkat="universitas" onclick="applyTingkatFilter('universitas', this)">
-                            <i class="bi bi-bank2 me-1 text-danger"></i> Tingkat Universitas
-                        </button>
-                        <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'fakultas' ? 'active' : '' ?>" data-tingkat="fakultas" onclick="applyTingkatFilter('fakultas', this)">
-                            <i class="bi bi-diagram-3 me-1 text-primary"></i> Tingkat Fakultas
-                        </button>
-                        <button type="button" class="btn-filter-tingkat <?= $selected_tingkat === 'prodi' ? 'active' : '' ?>" data-tingkat="prodi" onclick="applyTingkatFilter('prodi', this)">
-                            <i class="bi bi-mortarboard me-1 text-purple"></i> Tingkat Program Studi
-                        </button>
-                    </div>
-                </div>
-
-                <div class="text-muted small fst-italic">
-                    <i class="bi bi-info-circle me-1"></i>Menampilkan dokumen audit sesuai tingkatan yang dipilih
-                </div>
-            </div>
-            <?php endif; ?>
         </div>
 
         <!-- 5 Tahapan Siklus AMI (Gaya Desain Foto Kedua) -->
@@ -689,7 +658,7 @@ try {
                 $is_curr = ($active_siklus === $s_num);
             ?>
             <div class="col">
-                <a href="?siklus=<?= $s_num ?>&periode=<?= urlencode($selected_periode) ?><?= ($selected_tingkat !== 'all' && ($s_num === 4 || $s_num === 5)) ? '&tingkat='.urlencode($selected_tingkat) : '' ?>#siklusContent" class="ami-stage-card <?= $is_curr ? 'active' : '' ?>" data-siklus="<?= $s_num ?>">
+                <a href="?siklus=<?= $s_num ?>&periode=<?= urlencode($selected_periode) ?>#siklusContent" class="ami-stage-card <?= $is_curr ? 'active' : '' ?>" data-siklus="<?= $s_num ?>">
                     <div class="ami-stage-number"><?= $st['num'] ?></div>
                     <div class="ami-stage-title"><?= e($st['title']) ?></div>
                     <p class="ami-stage-desc"><?= e($st['desc']) ?></p>
@@ -1769,14 +1738,6 @@ function initAmiAccordionFilters() {
                 chip.addEventListener('click', function() {
                     filterChips.forEach(function(c) { c.classList.remove('active'); });
                     chip.classList.add('active');
-                    var filterVal = chip.getAttribute('data-filter');
-                    
-                    // Sinkronkan dengan tombol filter tingkat di header atas
-                    var topBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat');
-                    topBtns.forEach(function(b) {
-                        b.classList.toggle('active', b.getAttribute('data-tingkat') === filterVal);
-                    });
-
                     filterContainer(container);
                 });
             }
@@ -1819,21 +1780,10 @@ function initAmiAccordionFilters() {
     });
 }
 
-// Filter Tingkat Satuan Kerja (Terhubung dengan Header Atas & Accordion Chips)
-function applyTingkatFilter(tingkat, btn) {
+// Filter Tingkat Satuan Kerja
+function applyTingkatFilter(tingkat) {
     if (!tingkat) tingkat = 'all';
 
-    // 1. Update status aktif pada tombol filter atas
-    var allFilterBtns = document.querySelectorAll('#tingkatFilterBox .btn-filter-tingkat');
-    allFilterBtns.forEach(function(b) {
-        if (b.getAttribute('data-tingkat') === tingkat) {
-            b.classList.add('active');
-        } else {
-            b.classList.remove('active');
-        }
-    });
-
-    // 2. Hubungkan dengan filter chips di dalam accordion container
     var containers = document.querySelectorAll('.ami-accordion-container');
     containers.forEach(function(cont) {
         var chip = cont.querySelector('.btn-filter-ami[data-filter="' + tingkat + '"]');

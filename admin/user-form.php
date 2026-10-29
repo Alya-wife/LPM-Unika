@@ -79,8 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_upd->execute([$nama_lengkap, $username, $email, $role, $perms_json, $status, $id]);
             $_SESSION['flash'] = "Data akun Google administrator '{$email}' berhasil diperbarui.";
         } else {
-            $stmt_ins = $db->prepare("INSERT INTO users (nama_lengkap, username, email, password, role, akses_halaman, status) VALUES (?, ?, ?, NULL, ?, ?, ?)");
-            $stmt_ins->execute([$nama_lengkap, $username, $email, $role, $perms_json, $status]);
+            // Password hash acak aman karena otentikasi login admin menggunakan Google OAuth (Single Sign-On).
+            // Ini untuk memenuhi constraint NOT NULL pada kolom 'password' di database MySQL server.
+            $dummy_password = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+            $stmt_ins = $db->prepare("INSERT INTO users (nama_lengkap, username, email, password, role, akses_halaman, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt_ins->execute([$nama_lengkap, $username, $email, $dummy_password, $role, $perms_json, $status]);
             $_SESSION['flash'] = "Akun Google '{$email}' berhasil didaftarkan sebagai administrator.";
         }
 

@@ -99,7 +99,8 @@ if (!$user && in_array($email, $allowed_bootstrap, true)) {
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
-        $db->prepare("INSERT INTO users (id, nama_lengkap, username, email, role, akses_halaman, status) VALUES (1, ?, ?, ?, 'superadmin', NULL, 1)")->execute([$name, explode('@', $email)[0], $email]);
+        $dummy_password = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+        $db->prepare("INSERT INTO users (id, nama_lengkap, username, email, password, role, akses_halaman, status) VALUES (1, ?, ?, ?, ?, 'superadmin', NULL, 1)")->execute([$name, explode('@', $email)[0], $email, $dummy_password]);
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
     }

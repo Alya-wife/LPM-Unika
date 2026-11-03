@@ -4,6 +4,34 @@ $admin_page_title = 'Rekapitulasi Evaluasi Kinerja Personel';
 $current_admin    = 'evaluasi-kinerja-rekap';
 $db = getDB();
 
+// Hak Akses Khusus: Hanya admin yang login dengan email lpm@unika.ac.id atau lpm.sekertaris@unika.ac.id
+$cur_admin_email = strtolower(trim($_SESSION['admin_email'] ?? ''));
+$allowed_rekap_emails = ['lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id'];
+
+if (!in_array($cur_admin_email, $allowed_rekap_emails, true)) {
+    require_once __DIR__ . '/includes/admin-header.php';
+    ?>
+    <div style="max-width:580px;margin:3.5rem auto;padding:2.5rem;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--border);text-align:center;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:2rem;">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        <h3 style="font-family:var(--font-heading);font-weight:700;color:var(--navy);margin-bottom:0.75rem;">Akses Terbatas</h3>
+        <p style="font-size:0.92rem;color:var(--text-muted);line-height:1.7;margin-bottom:1.5rem;">
+            Halaman Rekapitulasi &amp; Hasil Penilaian Evaluasi Kinerja bersifat rahasia dan <strong>hanya dapat diakses</strong> oleh Administrator yang login menggunakan akun email resmi:
+            <br><strong style="color:var(--navy);">lpm@unika.ac.id</strong> atau <strong style="color:var(--navy);">lpm.sekertaris@unika.ac.id</strong>.
+        </p>
+        <div class="p-3 mb-4 rounded-3 text-start" style="background:#F8FAFC;border:1px solid #E2E8F0;font-size:0.84rem;color:#64748B;">
+            <div>Email akun Anda saat ini: <strong style="color:#DC2626;"><?= e($cur_admin_email ?: 'Belum terhubung email / login non-Google') ?></strong></div>
+        </div>
+        <a href="<?= SITE_URL ?>/admin/dashboard.php" class="btn btn-outline-secondary px-4 py-2" style="font-size:0.88rem;border-radius:8px;">
+            <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+        </a>
+    </div>
+    <?php
+    require_once __DIR__ . '/includes/admin-footer.php';
+    exit;
+}
+
 // 1. Tahun Akademik Filter
 $tahun_aktif_setting = getPengaturan('evaluasi_tahun_akademik_aktif', '2025/2026');
 $ta_filter           = trim($_GET['ta'] ?? $tahun_aktif_setting);

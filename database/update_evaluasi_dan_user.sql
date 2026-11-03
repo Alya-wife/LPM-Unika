@@ -8,15 +8,16 @@
 ALTER TABLE `users` 
   MODIFY COLUMN `password` VARCHAR(255) NULL DEFAULT NULL;
 
--- Catatan: Jika kolom role / akses_halaman / status belum ada di users, jalankan:
--- ALTER TABLE `users` 
---   ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'admin' AFTER `nama_lengkap`,
---   ADD COLUMN `akses_halaman` LONGTEXT NULL AFTER `role`,
---   ADD COLUMN `status` TINYINT(1) NOT NULL DEFAULT 1 AFTER `akses_halaman`;
-
+-- Memastikan admin utama berstatus aktif dan memiliki hak akses superadmin
 UPDATE `users` 
 SET `role` = 'superadmin', `status` = 1 
 WHERE `id` = 1 OR `username` = 'admin';
+
+-- Tambahkan akun resmi admin rekapitulasi evaluasi jika belum ada
+INSERT INTO `users` (`nama_lengkap`, `username`, `email`, `password`, `role`, `status`) VALUES
+('Administrator LPM UNIKA', 'lpm', 'lpm@unika.ac.id', '$2y$10$Wq3vN2a5YmG6P4c0L9hYx.q6h0i2Y4a1a0q9x6b8n7m5k4l3j2h1g', 'superadmin', 1),
+('Sekretariat LPM UNIKA', 'lpm.sekertaris', 'lpm.sekertaris@unika.ac.id', '$2y$10$Wq3vN2a5YmG6P4c0L9hYx.q6h0i2Y4a1a0q9x6b8n7m5k4l3j2h1g', 'superadmin', 1)
+ON DUPLICATE KEY UPDATE `role` = 'superadmin', `status` = 1;
 
 
 -- ============================================================================
@@ -64,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `evaluasi_pertanyaan` (
 
 
 -- ============================================================================
--- 5. Tabel Jawaban Evaluasi Diri (Penilaian Pribadi)
+-- 5. Tabel Jawaban Evaluasi Diri (Penilaian Pribadi per Tahun Akademik)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS `evaluasi_diri_jawaban` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -133,17 +134,15 @@ CREATE TABLE IF NOT EXISTS `evaluasi_submission` (
 
 
 -- ============================================================================
--- 9. Seeding Data Akun Peserta Awal (Kepala & Personel LPM UNIKA)
+-- 9. Seeding Data Akun Peserta Resmi (5 Personel LPM UNIKA)
 -- ============================================================================
 INSERT INTO `evaluasi_peserta` (`nama`, `email`, `jabatan`, `peran`, `status`) VALUES
-('Stefani Lily Indarto, SE., MM., Ak., CA., CPA.', 'lily@unika.ac.id', 'Kepala Lembaga Penjaminan Mutu', 'kepala', 1),
+('Stefani Lily Indarto, SE., MM., Ak., CA., CPA.', 'sli@unika.ac.id', 'Kepala Lembaga Penjaminan Mutu', 'kepala', 1),
 ('Vera Retnowati, ST., MM.', 'vera@unika.ac.id', 'Sekretaris Lembaga Penjaminan Mutu', 'personel', 1),
-('Ir. I.M. Tri Hesti Mulyani, MT.', 'hesti@unika.ac.id', 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu', 'personel', 1),
-('dr. Maya Yanuarty, M.Biomed', 'maya@unika.ac.id', 'Ketua Pusat Audit Mutu Internal', 'personel', 1),
-('Ir. Lintang Jata Angghita, ST., M.Ling', 'lintang@unika.ac.id', 'Ketua Pusat Pemeringkatan', 'personel', 1),
-('Hermawan, S.M.', 'tu.lpm@unika.ac.id', 'Staf Tata Usaha LPM', 'personel', 1),
-('Ravy Whienelda (Tester / Dev)', 'ravywhienelda@gmail.com', 'Personel Tim LPM (Testing & Verifikasi)', 'personel', 1)
-ON DUPLICATE KEY UPDATE `jabatan` = VALUES(`jabatan`), `peran` = VALUES(`peran`);
+('Ir. Lintang Jata Angghita, ST., M.Ling', 'lintang.jata@unika.ac.id', 'Ketua Pusat Pemeringkatan', 'personel', 1),
+('Ir. I.M. Tri Hesti Mulyani, MT.', 'mulyani@unika.ac.id', 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu', 'personel', 1),
+('Hermawan, S.M.', 'hermawan@unika.ac.id', 'Staf Tata Usaha LPM', 'personel', 1)
+ON DUPLICATE KEY UPDATE `nama` = VALUES(`nama`), `jabatan` = VALUES(`jabatan`), `peran` = VALUES(`peran`), `status` = 1;
 
 
 -- ============================================================================

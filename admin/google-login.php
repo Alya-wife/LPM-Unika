@@ -90,7 +90,7 @@ $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Bootstrap fallback untuk akun developer / root kampus awal jika belum terdaftar
-$allowed_bootstrap = ['tu.lpm@unika.ac.id', 'ravywhienelda@gmail.com'];
+$allowed_bootstrap = ['tu.lpm@unika.ac.id', 'lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id', 'ravywhienelda@gmail.com'];
 if (!$user && in_array($email, $allowed_bootstrap, true)) {
     // Cari user id 1 untuk dihubungkan
     $root_user = $db->query("SELECT * FROM users WHERE id = 1 LIMIT 1")->fetch(PDO::FETCH_ASSOC);

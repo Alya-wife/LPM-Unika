@@ -369,31 +369,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;font-size:0.83rem;color:#64748B;text-align:left;">
-                        <div class="fw-bold mb-1 text-dark"><i class="bi bi-info-circle-fill text-primary me-1"></i> Informasi Akses &amp; Ketentuan:</div>
-                        <ul class="mb-0 ps-3" style="line-height:1.6;">
-                            <li>Hanya email yang telah terdaftar di database manajemen akun evaluasi yang diizinkan masuk.</li>
-                            <li>Tingkatan akun terdiri dari <strong>Kepala LPM</strong> dan <strong>Personel LPM</strong>.</li>
-                            <li>Bagi rekan kerja yang belum dapat mengakses, silakan menghubungi Administrator LPM UNIKA.</li>
-                        </ul>
-                    </div>
-
-                    <?php if ($isAdmin): ?>
-                    <!-- Quick Dev Login Shortcut untuk Admin yang sedang aktif -->
-                    <div class="mt-4 pt-3 border-top text-start">
-                        <div class="small fw-bold text-muted mb-2"><i class="bi bi-tools me-1"></i> Mode Admin (Pengujian Cepat):</div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <?php
-                            $testUsers = $db->query("SELECT id, nama, email, peran FROM evaluasi_peserta WHERE status = 1 ORDER BY peran ASC, id ASC LIMIT 6")->fetchAll(PDO::FETCH_ASSOC);
-                            foreach ($testUsers as $tu):
-                            ?>
-                            <a href="<?= SITE_URL ?>/evaluasi-kinerja.php?switch_peserta_id=<?= $tu['id'] ?>" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;">
-                                <i class="bi bi-person-badge me-1"></i> Masuk: <?= e(explode(' ', $tu['nama'])[0]) ?> (<?= e($tu['peran']) ?>)
-                            </a>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
+                    
 
                 </div>
             </div>

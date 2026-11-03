@@ -1,0 +1,194 @@
+-- ============================================================================
+-- SCRIPT PEMBARUAN DATABASE LPM UNIKA (HOSTING PRODUCTION)
+-- Salin dan jalankan seluruh query ini di phpMyAdmin hosting Anda.
+-- ============================================================================
+
+-- 1. Penyesuaian Kolom Tabel Users
+-- (Pastikan password bisa NULL & kolom hak akses role tersedia)
+ALTER TABLE `users` 
+  MODIFY COLUMN `password` VARCHAR(255) NULL DEFAULT NULL;
+
+-- Catatan: Jika kolom role / akses_halaman / status belum ada di users, jalankan:
+-- ALTER TABLE `users` 
+--   ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'admin' AFTER `nama_lengkap`,
+--   ADD COLUMN `akses_halaman` LONGTEXT NULL AFTER `role`,
+--   ADD COLUMN `status` TINYINT(1) NOT NULL DEFAULT 1 AFTER `akses_halaman`;
+
+UPDATE `users` 
+SET `role` = 'superadmin', `status` = 1 
+WHERE `id` = 1 OR `username` = 'admin';
+
+
+-- ============================================================================
+-- 2. Konfigurasi Pengaturan Evaluasi Kinerja
+-- ============================================================================
+INSERT INTO `pengaturan` (`kunci`, `nilai`) VALUES
+('evaluasi_kinerja_aktif', '1'),
+('evaluasi_tahun_akademik_aktif', '2025/2026'),
+('evaluasi_judul', 'Sistem Evaluasi Kinerja Personel LPM'),
+('evaluasi_petunjuk_umum', 'Sistem evaluasi kinerja internal berkala Lembaga Penjaminan Mutu (LPM) Universitas Katolik Soegijapranata. Penilaian mencakup evaluasi diri, evaluasi rekan sejawat (360 peer review), dan penilaian komprehensif oleh Kepala LPM guna menjamin mutu kerja profesional dan berintegritas.')
+ON DUPLICATE KEY UPDATE `nilai` = VALUES(`nilai`);
+
+
+-- ============================================================================
+-- 3. Tabel Peserta Evaluasi (Akun Google Terdaftar)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_peserta` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `nama` VARCHAR(150) NOT NULL,
+    `email` VARCHAR(191) NOT NULL UNIQUE,
+    `jabatan` VARCHAR(150) NOT NULL,
+    `peran` ENUM('kepala', 'personel') NOT NULL DEFAULT 'personel',
+    `avatar` VARCHAR(255) NULL,
+    `status` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 4. Tabel Master Pertanyaan
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_pertanyaan` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `kategori` ENUM('diri', 'antar_personel', 'kepala') NOT NULL,
+    `bagian` VARCHAR(100) NULL,
+    `nomor_urut` INT NOT NULL DEFAULT 1,
+    `pertanyaan` TEXT NOT NULL,
+    `tipe_jawaban` ENUM('teks', 'skala_3', 'skala_5') NOT NULL DEFAULT 'teks',
+    `keterangan` TEXT NULL,
+    `wajib` TINYINT(1) NOT NULL DEFAULT 1,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 5. Tabel Jawaban Evaluasi Diri (Penilaian Pribadi)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_diri_jawaban` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `peserta_id` INT NOT NULL,
+    `tahun_akademik` VARCHAR(20) NOT NULL,
+    `pertanyaan_id` INT NOT NULL,
+    `jawaban_teks` TEXT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_diri_ans` (`peserta_id`, `tahun_akademik`, `pertanyaan_id`),
+    INDEX `idx_diri_thn` (`tahun_akademik`, `peserta_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 6. Tabel Jawaban Evaluasi Antar Personel (Rekan Kerja 360)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_antar_jawaban` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `penilai_id` INT NOT NULL,
+    `dinilai_id` INT NOT NULL,
+    `tahun_akademik` VARCHAR(20) NOT NULL,
+    `pertanyaan_id` INT NOT NULL,
+    `skor` TINYINT NULL,
+    `jawaban_teks` TEXT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_antar_ans` (`penilai_id`, `dinilai_id`, `tahun_akademik`, `pertanyaan_id`),
+    INDEX `idx_antar_thn` (`tahun_akademik`, `dinilai_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 7. Tabel Jawaban Evaluasi Kepala LPM (Penilaian Personel oleh Kepala)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_kepala_jawaban` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `penilai_id` INT NOT NULL,
+    `dinilai_id` INT NOT NULL,
+    `tahun_akademik` VARCHAR(20) NOT NULL,
+    `pertanyaan_id` INT NOT NULL,
+    `skor` TINYINT NULL,
+    `catatan` TEXT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_kepala_ans` (`dinilai_id`, `tahun_akademik`, `pertanyaan_id`),
+    INDEX `idx_kepala_thn` (`tahun_akademik`, `dinilai_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 8. Tabel Status Submission Pengiriman Kuesioner
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `evaluasi_submission` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `tahun_akademik` VARCHAR(20) NOT NULL,
+    `penilai_id` INT NOT NULL,
+    `dinilai_id` INT NULL,
+    `tipe_evaluasi` ENUM('diri', 'antar_personel', 'kepala') NOT NULL,
+    `frekuensi_kerja` TINYINT NULL,
+    `status` ENUM('draft', 'submitted') NOT NULL DEFAULT 'submitted',
+    `submitted_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_sub` (`tahun_akademik`, `penilai_id`, `dinilai_id`, `tipe_evaluasi`),
+    INDEX `idx_sub_thn` (`tahun_akademik`, `penilai_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================================
+-- 9. Seeding Data Akun Peserta Awal (Kepala & Personel LPM UNIKA)
+-- ============================================================================
+INSERT INTO `evaluasi_peserta` (`nama`, `email`, `jabatan`, `peran`, `status`) VALUES
+('Stefani Lily Indarto, SE., MM., Ak., CA., CPA.', 'lily@unika.ac.id', 'Kepala Lembaga Penjaminan Mutu', 'kepala', 1),
+('Vera Retnowati, ST., MM.', 'vera@unika.ac.id', 'Sekretaris Lembaga Penjaminan Mutu', 'personel', 1),
+('Ir. I.M. Tri Hesti Mulyani, MT.', 'hesti@unika.ac.id', 'Ketua Pusat Pengembangan Sistem Penjaminan Mutu', 'personel', 1),
+('dr. Maya Yanuarty, M.Biomed', 'maya@unika.ac.id', 'Ketua Pusat Audit Mutu Internal', 'personel', 1),
+('Ir. Lintang Jata Angghita, ST., M.Ling', 'lintang@unika.ac.id', 'Ketua Pusat Pemeringkatan', 'personel', 1),
+('Hermawan, S.M.', 'tu.lpm@unika.ac.id', 'Staf Tata Usaha LPM', 'personel', 1),
+('Ravy Whienelda (Tester / Dev)', 'ravywhienelda@gmail.com', 'Personel Tim LPM (Testing & Verifikasi)', 'personel', 1)
+ON DUPLICATE KEY UPDATE `jabatan` = VALUES(`jabatan`), `peran` = VALUES(`peran`);
+
+
+-- ============================================================================
+-- 10. Seeding Bank Pertanyaan Evaluasi Kinerja (Diri, Antar Personel, & Kepala)
+-- ============================================================================
+-- A. Pertanyaan Evaluasi Diri (11 Butir)
+INSERT INTO `evaluasi_pertanyaan` (`kategori`, `bagian`, `nomor_urut`, `pertanyaan`, `tipe_jawaban`, `keterangan`, `wajib`, `is_active`) VALUES
+('diri', 'Bagian I. Capaian Kinerja', 1, 'Apakah Anda telah menyusun dan melaksanakan rencana kerja sesuai tanggung jawab jabatan, serta apa capaian utama yang dihasilkan selama periode evaluasi?', 'teks', 'Tuliskan bukti atau contoh konkret untuk mendukung jawaban Anda.', 1, 1),
+('diri', 'Bagian I. Capaian Kinerja', 2, 'Apakah pekerjaan diselesaikan tepat waktu, sesuai standar kualitas, dan didukung dokumentasi serta bukti pelaksanaan yang memadai?', 'teks', 'Tuliskan bukti atau contoh konkret untuk mendukung jawaban Anda.', 1, 1),
+('diri', 'Bagian II. Tanggung Jawab dan Profesionalitas', 3, 'Seberapa konsisten Anda menjalankan tanggung jawab jabatan serta menindaklanjuti penugasan dan keputusan rapat?', 'teks', 'Uraikan pelaksanaan tindak lanjut dan konsistensi Anda.', 1, 1),
+('diri', 'Bagian II. Tanggung Jawab dan Profesionalitas', 4, 'Seberapa proaktif Anda mengidentifikasi masalah, mengusulkan solusi, dan menyampaikan kendala sebelum berdampak pada pencapaian target?', 'teks', 'Tuliskan contoh inisiatif solusi yang telah Anda usulkan.', 1, 1),
+('diri', 'Bagian II. Tanggung Jawab dan Profesionalitas', 5, 'Bagaimana Anda memastikan pekerjaan tetap berjalan dan tanggung jawab terselesaikan ketika menghadapi hambatan?', 'teks', 'Jelaskan strategi atau tindakan nyata yang Anda tempuh.', 1, 1),
+('diri', 'Bagian III. Komunikasi dan Kerjasama', 6, 'Bagaimana Anda menjaga komunikasi, koordinasi, dan kerja sama dengan rekan kerja di lingkungan LPM, baik pimpinan, sekretaris, kepala pusat, maupun staf, dalam mendukung pelaksanaan tugas dan pencapaian tujuan bersama?', 'teks', 'Jelaskan pola komunikasi dan koordinasi yang Anda terapkan.', 1, 1),
+('diri', 'Bagian III. Komunikasi dan Kerjasama', 7, 'Bagaimana kontribusi Anda dalam pekerjaan lintas pusat, termasuk penyediaan informasi dan dokumen yang dibutuhkan secara tepat waktu?', 'teks', 'Uraikan keterlibatan Anda dalam sinergi kerja lintas pusat/bidang.', 1, 1),
+('diri', 'Bagian III. Komunikasi dan Kerjasama', 8, 'Apa kendala koordinasi yang Anda hadapi, bagaimana mengatasinya, dan apa kontribusi Anda dalam menciptakan suasana kerja yang profesional dan produktif?', 'teks', 'Tuliskan solusi konkret yang telah Anda terapkan.', 1, 1),
+('diri', 'Bagian IV. Pengembangan Diri', 9, 'Apa kelemahan atau kesenjangan kinerja yang Anda identifikasi, dan masukan apa yang telah diterima beserta tindak lanjutnya?', 'teks', 'Jelaskan proses refleksi dan langkah perbaikan yang diambil.', 1, 1),
+('diri', 'Bagian IV. Pengembangan Diri', 10, 'Kompetensi apa yang perlu Anda tingkatkan, dan apa tiga target perbaikan yang akan Anda capai pada periode berikutnya?', 'teks', 'Sebutkan 3 target spesifik peningkatan kompetensi Anda.', 1, 1),
+('diri', 'Bagian IV. Pengembangan Diri', 11, 'Dukungan apa yang Anda perlukan dari Kepala LPM atau universitas untuk mendukung pengembangan diri dan peningkatan kinerja?', 'teks', 'Tuliskan usulan kebutuhan fasilitas, pelatihan, atau pendampingan.', 1, 1);
+
+-- B. Pertanyaan Evaluasi Antar Personel (9 Butir Skala 1-3 & 3 Butir Terbuka)
+INSERT INTO `evaluasi_pertanyaan` (`kategori`, `bagian`, `nomor_urut`, `pertanyaan`, `tipe_jawaban`, `keterangan`, `wajib`, `is_active`) VALUES
+('antar_personel', 'A. Komunikasi dan Responsivitas', 1, 'Rekan kerja merespons komunikasi, terbuka terhadap koordinasi, dan bersedia memberikan klarifikasi terkait pekerjaan.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'A. Komunikasi dan Responsivitas', 2, 'Rekan kerja menyampaikan informasi yang diperlukan secara tepat waktu serta memberitahukan kendala atau perubahan rencana yang berdampak pada pihak lain.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'A. Komunikasi dan Responsivitas', 3, 'Rekan kerja menjaga komunikasi yang terbuka dan efektif untuk mendukung kelancaran pekerjaan bersama.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'B. Tanggung Jawab dan Keandalan', 4, 'Rekan kerja menyelesaikan tugas sesuai tanggung jawab, kesepakatan, dan tenggat waktu yang telah ditetapkan.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'B. Tanggung Jawab dan Keandalan', 5, 'Rekan kerja menindaklanjuti pekerjaan yang telah disepakati serta memastikan serah terima informasi dan dokumen berjalan dengan baik.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'B. Tanggung Jawab dan Keandalan', 6, 'Rekan kerja dapat diandalkan dalam memenuhi komitmen dan mendukung kelancaran pelaksanaan tugas bersama.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'C. Kolaborasi dan Kontribusi', 7, 'Rekan kerja bersedia membantu dan berbagi data, informasi, serta pengetahuan untuk mendukung penyelesaian pekerjaan bersama.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'C. Kolaborasi dan Kontribusi', 8, 'Rekan kerja berkontribusi terhadap pencapaian target LPM secara keseluruhan, tidak hanya berfokus pada tugas atau tanggung jawabnya sendiri.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'C. Kolaborasi dan Kontribusi', 9, 'Rekan kerja menyikapi perbedaan pendapat secara profesional dan mengutamakan penyelesaian masalah demi kepentingan bersama.', 'skala_3', 'Skala: (1) Sering, (2) Kadang-kadang, (3) Terbatas, atau N/A', 1, 1),
+('antar_personel', 'PERTANYAAN TERBUKA', 10, 'Apa kontribusi positif rekan kerja yang paling Anda rasakan dalam mendukung pekerjaan bersama?', 'teks', 'Tuliskan apresiasi atau kontribusi positif rekan kerja Anda.', 1, 1),
+('antar_personel', 'PERTANYAAN TERBUKA', 11, 'Aspek kerja apa yang perlu ditingkatkan oleh rekan kerja tersebut, dan apa contoh perilaku atau kejadian serta dampaknya terhadap proses atau hasil pekerjaan bersama?', 'teks', 'Berikan masukan konstruktif yang membangun.', 1, 1),
+('antar_personel', 'PERTANYAAN TERBUKA', 12, 'Apa saran konkret yang dapat Anda berikan agar kerja sama dengan rekan kerja tersebut menjadi lebih efektif?', 'teks', 'Tuliskan usulan solusi atau saran konkret perbaikan.', 1, 1);
+
+-- C. Pertanyaan Penilaian oleh Kepala LPM (12 Butir Aspek Skala 1-5 + Catatan Bukti)
+INSERT INTO `evaluasi_pertanyaan` (`kategori`, `bagian`, `nomor_urut`, `pertanyaan`, `tipe_jawaban`, `keterangan`, `wajib`, `is_active`) VALUES
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 1, 'Pencapaian target dan program kerja', 'skala_5', 'Skala 1 (Tanggung jawab utama tidak terlaksana secara memadai) s.d 5 (Konsisten melampaui harapan), atau N/A. Sertakan catatan bukti pendukung.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 2, 'Kualitas dan ketepatan waktu hasil kerja', 'skala_5', 'Kesesuaian standar mutu dan ketepatan tenggat waktu penyelesaian tugas.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 3, 'Konsistensi menjalankan tupoksi', 'skala_5', 'Tanggung jawab berkelanjutan atas tugas pokok dan fungsi jabatan.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 4, 'Tanggung jawab dan akuntabilitas', 'skala_5', 'Keberanian bertanggung jawab dan transparansi atas hasil pekerjaan.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 5, 'Inisiatif dan kemampuan menyelesaikan masalah', 'skala_5', 'Proaktif memecahkan kendala teknis dan menawarkan solusi konstruktif.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 6, 'Responsivitas terhadap komunikasi dan penugasan', 'skala_5', 'Kecepatan respon dan keterbukaan dalam koordinasi serta instruksi pimpinan.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 7, 'Pelaporan kemajuan dan penyampaian kendala', 'skala_5', 'Ketertiban memberikan update kemajuan pekerjaan dan early warning kendala.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 8, 'Koordinasi dan kerja sama lintas pusat', 'skala_5', 'Kemampuan berkolaborasi secara sinergis antar bidang di lingkungan LPM.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 9, 'Kontribusi terhadap program kerja bersama LPM', 'skala_5', 'Dukungan aktif terhadap kegiatan akreditasi, audit, pemeringkatan, dan agenda besar LPM.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 10, 'Keterbukaan terhadap masukan dan tindak lanjut perbaikan', 'skala_5', 'Sikap positif menerima saran dan konsistensi merealisasikan tindakan korektif.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 11, 'Dokumentasi dan pengelolaan bukti kerja', 'skala_5', 'Kerapian pengarsipan dokumen, notulensi, regulasi, dan arsip digital.', 1, 1),
+('kepala', 'Form Penilaian Kinerja Personel oleh Kepala LPM', 12, 'Perbaikan berkelanjutan dan pengembangan kompetensi', 'skala_5', 'Kemauan belajar, peningkatan keahlian profesional, dan inovasi kerja.', 1, 1);

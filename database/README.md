@@ -53,3 +53,4 @@ php scripts/run_migrations.php
 # Menyiapkan tabel Evaluasi Kinerja 360 LPM (jika belum ada)
 php scripts/setup_evaluasi_kinerja_tables.php
 ```
+

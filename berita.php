@@ -156,34 +156,58 @@ if (!function_exists('renderBeritaPaginationHtml')) {
 function renderBeritaPaginationHtml($cur_page, $total_p) {
     $cur_page = (int)$cur_page;
     $total_p  = (int)$total_p;
-    if ($total_p <= 1) return '';
+    if ($total_p <= 1) return "";
+
+    $items = [];
+    if ($cur_page > 1) {
+        $items[] = ["type" => "prev", "page" => $cur_page - 1, "label" => "&laquo;"];
+    }
+
+    if ($total_p <= 7) {
+        for ($i = 1; $i <= $total_p; $i++) {
+            $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+        }
+    } else {
+        if ($cur_page <= 4) {
+            for ($i = 1; $i <= 5; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+            $items[] = ["type" => "dots", "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        } elseif ($cur_page >= $total_p - 3) {
+            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
+            $items[] = ["type" => "dots", "label" => "..."];
+            for ($i = $total_p - 4; $i <= $total_p; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+        } else {
+            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
+            $items[] = ["type" => "dots", "label" => "..."];
+            for ($i = $cur_page - 1; $i <= $cur_page + 1; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+            $items[] = ["type" => "dots", "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        }
+    }
+
+    if ($cur_page < $total_p) {
+        $items[] = ["type" => "next", "page" => $cur_page + 1, "label" => "&raquo;"];
+    }
+
     ob_start();
     ?>
     <div class="pagination-lpm" style="margin:0;gap:4px;">
-        <?php if ($cur_page > 1): ?>
-            <button type="button" class="page-btn" data-page="<?= $cur_page - 1 ?>" title="Halaman Sebelumnya">&laquo;</button>
-        <?php endif; ?>
-
-        <?php
-        $start_p = max(1, $cur_page - 2);
-        $end_p   = min($total_p, $cur_page + 2);
-        if ($start_p > 1) {
-            echo '<button type="button" class="page-btn" data-page="1">1</button>';
-            if ($start_p > 2) echo '<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>';
-        }
-        for ($p = $start_p; $p <= $end_p; $p++) {
-            $active_cls = ($p === $cur_page) ? 'active' : '';
-            echo '<button type="button" class="page-btn ' . $active_cls . '" data-page="' . $p . '">' . $p . '</button>';
-        }
-        if ($end_p < $total_p) {
-            if ($end_p < $total_p - 1) echo '<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>';
-            echo '<button type="button" class="page-btn" data-page="' . $total_p . '">' . $total_p . '</button>';
-        }
-        ?>
-
-        <?php if ($cur_page < $total_p): ?>
-            <button type="button" class="page-btn" data-page="<?= $cur_page + 1 ?>" title="Halaman Selanjutnya">&raquo;</button>
-        <?php endif; ?>
+        <?php foreach ($items as $it): ?>
+            <?php if ($it["type"] === "dots"): ?>
+                <span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>
+            <?php else: 
+                $act = !empty($it["active"]) ? "active" : "";
+                $title = $it["type"] === "prev" ? ' title="Halaman Sebelumnya"' : ($it["type"] === "next" ? ' title="Halaman Selanjutnya"' : "");
+            ?>
+                <button type="button" class="page-btn <?= $act ?>" data-page="<?= $it["page"] ?>"<?= $title ?>><?= $it["label"] ?></button>
+            <?php endif; ?>
+        <?php endforeach; ?>
     </div>
     <?php
     return ob_get_clean();
@@ -439,40 +463,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const emptyState     = document.getElementById('filterEmptyState');
     const paginationWrap = document.getElementById('paginationWrap');
     const countInfo      = document.getElementById('countInfo');
+    let currentTotalPages = parseInt("<?= $total_pages ?>") || 1;
 
     function buildPaginationHtml(curPage, totalP) {
         curPage = parseInt(curPage) || 1;
         totalP  = parseInt(totalP) || 1;
         if (totalP <= 1) return '';
+
         let html = '';
         if (curPage > 1) {
             html += `<button type="button" class="page-btn" data-page="${curPage - 1}" title="Halaman Sebelumnya">&laquo;</button>`;
         }
-        const startP = Math.max(1, curPage - 2);
-        const endP   = Math.min(totalP, curPage + 2);
-        if (startP > 1) {
-            html += `<button type="button" class="page-btn" data-page="1">1</button>`;
-            if (startP > 2) html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+
+        if (totalP <= 7) {
+            for (let i = 1; i <= totalP; i++) {
+                const act = (i === curPage) ? 'active' : '';
+                html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
+            }
+        } else {
+            if (curPage <= 4) {
+                for (let i = 1; i <= 5; i++) {
+                    const act = (i === curPage) ? 'active' : '';
+                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
+                }
+                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+                html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
+            } else if (curPage >= totalP - 3) {
+                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
+                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+                for (let i = totalP - 4; i <= totalP; i++) {
+                    const act = (i === curPage) ? 'active' : '';
+                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
+                }
+            } else {
+                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
+                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+                for (let i = curPage - 1; i <= curPage + 1; i++) {
+                    const act = (i === curPage) ? 'active' : '';
+                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
+                }
+                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+                html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
+            }
         }
-        for (let p = startP; p <= endP; p++) {
-            const activeCls = (p === curPage) ? 'active' : '';
-            html += `<button type="button" class="page-btn ${activeCls}" data-page="${p}">${p}</button>`;
-        }
-        if (endP < totalP) {
-            if (endP < totalP - 1) html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
-            html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
-        }
+
         if (curPage < totalP) {
             html += `<button type="button" class="page-btn" data-page="${curPage + 1}" title="Halaman Selanjutnya">&raquo;</button>`;
         }
+
         return `<div class="pagination-lpm" style="margin:0;gap:4px;">${html}</div>`;
     }
 
     // Sync initial pagination state if opened directly with ?page=
     if (paginationWrap && currentPage > 1) {
-        const initTotalP = parseInt("<?= $total_pages ?>") || 1;
-        paginationWrap.innerHTML = buildPaginationHtml(currentPage, initTotalP);
-        paginationWrap.style.display = (initTotalP > 1) ? 'flex' : 'none';
+        paginationWrap.innerHTML = buildPaginationHtml(currentPage, currentTotalPages);
+        paginationWrap.style.display = (currentTotalPages > 1) ? 'flex' : 'none';
     }
 
     function fetchBerita(page = 1, showFade = true) {
@@ -490,6 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const ajaxUrl = new URL(url.toString());
         ajaxUrl.searchParams.set('ajax', '1');
+        ajaxUrl.searchParams.set('_t', Date.now());
         const cacheKey = ajaxUrl.toString();
 
         const applyData = (data) => {
@@ -503,11 +549,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 emptyState.style.display = 'block';
             }
 
+            if (data.total_pages !== undefined) {
+                currentTotalPages = parseInt(data.total_pages) || 1;
+            }
+
             if (paginationWrap) {
-                const totalP = parseInt(data.total_pages) || 1;
-                const curP   = parseInt(data.page) || currentPage || 1;
-                paginationWrap.innerHTML = buildPaginationHtml(curP, totalP);
-                paginationWrap.style.display = (data.total_pages > 1) ? 'flex' : 'none';
+                const curP = parseInt(data.page) || currentPage || 1;
+                paginationWrap.innerHTML = buildPaginationHtml(curP, currentTotalPages);
+                paginationWrap.style.display = (currentTotalPages > 1) ? 'flex' : 'none';
             }
 
             if (countInfo) {
@@ -544,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(err => {
                 if (grid) grid.style.opacity = '1';
-                console.error(err);
+                console.error('Fetch error:', err);
             });
     }
 
@@ -583,23 +632,27 @@ document.addEventListener('DOMContentLoaded', function() {
     taButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            currentTA = this.getAttribute('data-val') || '';
+            const val = this.getAttribute('data-val') || '';
+            if (currentTA === val) return;
+            currentTA = val;
             taButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === currentTA));
             fetchBerita(1, true);
         });
     });
 
-    // Kategori Buttons click (Seamless switch!)
+    // Category Buttons click (Seamless switch!)
     catButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            currentTipe = this.getAttribute('data-val') || '';
+            const val = this.getAttribute('data-val') || '';
+            if (currentTipe === val) return;
+            currentTipe = val;
             catButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === currentTipe));
             fetchBerita(1, true);
         });
     });
 
-    // Pagination Buttons click (Seamless page switch!)
+    // Pagination Buttons click (Instant UI update + Async Fetch)
     if (paginationWrap) {
         paginationWrap.addEventListener('click', function(e) {
             const btn = e.target.closest('.page-btn');
@@ -607,11 +660,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetPage = parseInt(btn.getAttribute('data-page'));
             if (targetPage && targetPage !== currentPage) {
-                // Immediate active styling feedback on clicked button
-                paginationWrap.querySelectorAll('.page-btn').forEach(b => {
-                    const p = parseInt(b.getAttribute('data-page'));
-                    b.classList.toggle('active', p === targetPage);
-                });
+                // Immediately rebuild the entire pagination bar so buttons 1, 2, 3, 4, 5, 6, prev & next update instantly!
+                paginationWrap.innerHTML = buildPaginationHtml(targetPage, currentTotalPages);
                 fetchBerita(targetPage, true);
                 const section = document.getElementById('beritaSection');
                 if (section) {
@@ -622,17 +672,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-    }
-
-    // Reset all filters
-    function resetAll() {
-        currentTA = '';
-        currentTipe = '';
-        currentSearch = '';
-        if (searchInput) searchInput.value = '';
-        taButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === ''));
-        catButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === ''));
-        fetchBerita(1, true);
     }
 
     if (resetBtn) resetBtn.addEventListener('click', resetAll);

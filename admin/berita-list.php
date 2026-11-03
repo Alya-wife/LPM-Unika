@@ -235,34 +235,58 @@ function renderAdminBeritaRowsHtml($list, $offset, $cur_status_filter = '') {
 function renderAdminBeritaPaginationHtml($cur_page, $total_p) {
     $cur_page = (int)$cur_page;
     $total_p  = (int)$total_p;
-    if ($total_p <= 1) return '';
+    if ($total_p <= 1) return "";
+
+    $items = [];
+    if ($cur_page > 1) {
+        $items[] = ["type" => "prev", "page" => $cur_page - 1, "label" => "&laquo;"];
+    }
+
+    if ($total_p <= 7) {
+        for ($i = 1; $i <= $total_p; $i++) {
+            $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+        }
+    } else {
+        if ($cur_page <= 4) {
+            for ($i = 1; $i <= 5; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+            $items[] = ["type" => "dots", "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        } elseif ($cur_page >= $total_p - 3) {
+            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
+            $items[] = ["type" => "dots", "label" => "..."];
+            for ($i = $total_p - 4; $i <= $total_p; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+        } else {
+            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
+            $items[] = ["type" => "dots", "label" => "..."];
+            for ($i = $cur_page - 1; $i <= $cur_page + 1; $i++) {
+                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+            }
+            $items[] = ["type" => "dots", "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        }
+    }
+
+    if ($cur_page < $total_p) {
+        $items[] = ["type" => "next", "page" => $cur_page + 1, "label" => "&raquo;"];
+    }
+
     ob_start();
     ?>
     <div class="pagination-lpm" style="margin:0;gap:4px;">
-        <?php if ($cur_page > 1): ?>
-            <button type="button" class="page-btn" data-page="<?= $cur_page - 1 ?>" style="width:32px;height:32px;font-size:0.75rem;" title="Sebelumnya">&laquo;</button>
-        <?php endif; ?>
-
-        <?php
-        $start_p = max(1, $cur_page - 2);
-        $end_p   = min($total_p, $cur_page + 2);
-        if ($start_p > 1) {
-            echo '<button type="button" class="page-btn" data-page="1" style="width:32px;height:32px;font-size:0.75rem;">1</button>';
-            if ($start_p > 2) echo '<span style="align-self:center;padding:0 4px;font-size:0.75rem;color:var(--text-muted);">...</span>';
-        }
-        for ($p = $start_p; $p <= $end_p; $p++) {
-            $active_cls = ($p === $cur_page) ? 'active' : '';
-            echo '<button type="button" class="page-btn ' . $active_cls . '" data-page="' . $p . '" style="width:32px;height:32px;font-size:0.75rem;">' . $p . '</button>';
-        }
-        if ($end_p < $total_p) {
-            if ($end_p < $total_p - 1) echo '<span style="align-self:center;padding:0 4px;font-size:0.75rem;color:var(--text-muted);">...</span>';
-            echo '<button type="button" class="page-btn" data-page="' . $total_p . '" style="width:32px;height:32px;font-size:0.75rem;">' . $total_p . '</button>';
-        }
-        ?>
-
-        <?php if ($cur_page < $total_p): ?>
-            <button type="button" class="page-btn" data-page="<?= $cur_page + 1 ?>" style="width:32px;height:32px;font-size:0.75rem;" title="Selanjutnya">&raquo;</button>
-        <?php endif; ?>
+        <?php foreach ($items as $it): ?>
+            <?php if ($it["type"] === "dots"): ?>
+                <span style="align-self:center;padding:0 4px;font-size:0.75rem;color:var(--text-muted);font-weight:bold;">...</span>
+            <?php else: 
+                $act = !empty($it["active"]) ? "active" : "";
+                $title = $it["type"] === "prev" ? ' title="Sebelumnya"' : ($it["type"] === "next" ? ' title="Selanjutnya"' : "");
+            ?>
+                <button type="button" class="page-btn <?= $act ?>" data-page="<?= $it["page"] ?>" style="width:32px;height:32px;font-size:0.75rem;"<?= $title ?>><?= $it["label"] ?></button>
+            <?php endif; ?>
+        <?php endforeach; ?>
     </div>
     <?php
     return ob_get_clean();

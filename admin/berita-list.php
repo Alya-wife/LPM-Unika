@@ -233,6 +233,8 @@ function renderAdminBeritaRowsHtml($list, $offset, $cur_status_filter = '') {
 
 // Render Pagination HTML
 function renderAdminBeritaPaginationHtml($cur_page, $total_p) {
+    $cur_page = (int)$cur_page;
+    $total_p  = (int)$total_p;
     if ($total_p <= 1) return '';
     ob_start();
     ?>
@@ -268,7 +270,10 @@ function renderAdminBeritaPaginationHtml($cur_page, $total_p) {
 
 // Handle AJAX Request (Instant live typing & seamless filters)
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     echo json_encode([
         'total_records'   => $total_records,
         'total_pages'     => $total_pages,

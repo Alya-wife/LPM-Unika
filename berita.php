@@ -73,6 +73,7 @@ $stmt->execute($params);
 $all_berita = $stmt->fetchAll();
 
 // URL Helper for Pagination & Filters
+if (!function_exists('buildBeritaUrl')) {
 function buildBeritaUrl($new_params = []) {
     $current = [
         'ta'   => $_GET['ta'] ?? '',
@@ -91,6 +92,8 @@ function buildBeritaUrl($new_params = []) {
 }
 
 // Render HTML for Cards Grid
+}
+if (!function_exists('renderBeritaCardsHtml')) {
 function renderBeritaCardsHtml($berita_items) {
     if (empty($berita_items)) return '';
     ob_start();
@@ -145,9 +148,14 @@ function renderBeritaCardsHtml($berita_items) {
     <?php endforeach;
     return ob_get_clean();
 }
+}
+
 
 // Render HTML for Pagination Bar
+if (!function_exists('renderBeritaPaginationHtml')) {
 function renderBeritaPaginationHtml($cur_page, $total_p) {
+    $cur_page = (int)$cur_page;
+    $total_p  = (int)$total_p;
     if ($total_p <= 1) return '';
     ob_start();
     ?>
@@ -180,6 +188,8 @@ function renderBeritaPaginationHtml($cur_page, $total_p) {
     <?php
     return ob_get_clean();
 }
+}
+
 
 // Filter description tags
 $filter_descs = [];
@@ -189,7 +199,10 @@ if ($tipe_filter) $filter_descs[] = e($tipe_filter);
 
 // Handle AJAX Request (Zero latency, Seamless Live Swapping)
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     echo json_encode([
         'total_records'   => $total_records,
         'total_pages'     => $total_pages,
@@ -427,6 +440,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const paginationWrap = document.getElementById('paginationWrap');
     const countInfo      = document.getElementById('countInfo');
 
+    function buildPaginationHtml(curPage, totalP) {
+        curPage = parseInt(curPage) || 1;
+        totalP  = parseInt(totalP) || 1;
+        if (totalP <= 1) return '';
+        let html = '';
+        if (curPage > 1) {
+            html += `<button type="button" class="page-btn" data-page="${curPage - 1}" title="Halaman Sebelumnya">&laquo;</button>`;
+        }
+        const startP = Math.max(1, curPage - 2);
+        const endP   = Math.min(totalP, curPage + 2);
+        if (startP > 1) {
+            html += `<button type="button" class="page-btn" data-page="1">1</button>`;
+            if (startP > 2) html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+        }
+        for (let p = startP; p <= endP; p++) {
+            const activeCls = (p === curPage) ? 'active' : '';
+            html += `<button type="button" class="page-btn ${activeCls}" data-page="${p}">${p}</button>`;
+        }
+        if (endP < totalP) {
+            if (endP < totalP - 1) html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+            html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
+        }
+        if (curPage < totalP) {
+            html += `<button type="button" class="page-btn" data-page="${curPage + 1}" title="Halaman Selanjutnya">&raquo;</button>`;
+        }
+        return `<div class="pagination-lpm" style="margin:0;gap:4px;">${html}</div>`;
+    }
+
+    // Sync initial pagination state if opened directly with ?page=
+    if (paginationWrap && currentPage > 1) {
+        const initTotalP = parseInt("<?= $total_pages ?>") || 1;
+        paginationWrap.innerHTML = buildPaginationHtml(currentPage, initTotalP);
+        paginationWrap.style.display = (initTotalP > 1) ? 'flex' : 'none';
+    }
+
     function fetchBerita(page = 1, showFade = true) {
         currentPage = page;
 
@@ -456,7 +504,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (paginationWrap) {
-                paginationWrap.innerHTML = data.pagination_html;
+                const totalP = parseInt(data.total_pages) || 1;
+                const curP   = parseInt(data.page) || currentPage || 1;
+                paginationWrap.innerHTML = buildPaginationHtml(curP, totalP);
                 paginationWrap.style.display = (data.total_pages > 1) ? 'flex' : 'none';
             }
 
@@ -557,6 +607,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetPage = parseInt(btn.getAttribute('data-page'));
             if (targetPage && targetPage !== currentPage) {
+                // Immediate active styling feedback on clicked button
+                paginationWrap.querySelectorAll('.page-btn').forEach(b => {
+                    const p = parseInt(b.getAttribute('data-page'));
+                    b.classList.toggle('active', p === targetPage);
+                });
                 fetchBerita(targetPage, true);
                 const section = document.getElementById('beritaSection');
                 if (section) {
@@ -582,6 +637,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (resetBtn) resetBtn.addEventListener('click', resetAll);
     if (emptyResetBtn) emptyResetBtn.addEventListener('click', resetAll);
+
+    // Browser navigation (Back / Forward history)
+    window.addEventListener('popstate', function() {
+        const params = new URLSearchParams(window.location.search);
+        currentTA     = params.get('ta') || '';
+        currentTipe   = params.get('tipe') || '';
+        currentSearch = params.get('q') || '';
+        const pageFromUrl = parseInt(params.get('page')) || 1;
+
+        if (searchInput) searchInput.value = currentSearch;
+        taButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === currentTA));
+        catButtons.forEach(b => b.classList.toggle('active', (b.getAttribute('data-val') || '') === currentTipe));
+
+        fetchBerita(pageFromUrl, true);
+    });
 });
 </script>
 

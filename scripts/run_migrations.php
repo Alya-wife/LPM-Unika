@@ -674,5 +674,10 @@ if (empty($dokTanggalRilis)) {
     echo "Added tanggal_rilis column to dokumen table.\n";
 }
 
+// 17. Tabel & Pengaturan Evaluasi Kinerja LPM
+if (file_exists(__DIR__ . '/setup_evaluasi_kinerja_tables.php')) {
+    include_once __DIR__ . '/setup_evaluasi_kinerja_tables.php';
+}
+
 echo "All migrations finished successfully!\n";
 

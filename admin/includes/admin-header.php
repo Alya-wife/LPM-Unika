@@ -384,7 +384,7 @@ $accred_nav_alerts = checkAccreditationExpirations();
             $unread_feedback  = (int)$db_inst->query("SELECT COUNT(*) FROM feedback WHERE status = 'Belum Dibaca' AND is_archived = 0")->fetchColumn();
             $unread_kunjungan = (int)$db_inst->query("SELECT COUNT(*) FROM permohonan_kunjungan WHERE status = 'Belum Dibaca' AND is_archived = 0")->fetchColumn();
         } catch (Exception $e) {}
-        $grp_layanan = in_array($current_admin, ['kunjungan-list','feedback-kunjungan-list','feedback-kunjungan-detail','feedback-list','kunjungan-unit','feedback-kunjungan-pertanyaan','layanan-form-setting']);
+        $grp_layanan = in_array($current_admin, ['kunjungan-list','feedback-kunjungan-list','feedback-kunjungan-detail','feedback-list','kunjungan-unit','feedback-kunjungan-pertanyaan','layanan-form-setting','evaluasi-kinerja-rekap','evaluasi-kinerja-detail','evaluasi-kinerja-pertanyaan','evaluasi-kinerja-akses','evaluasi-kinerja-setting']);
         ?>
         <div class="admin-nav-dropdown <?= $grp_layanan ? 'open' : '' ?>">
             <button type="button" class="admin-dropdown-toggle <?= $grp_layanan ? 'active' : '' ?>" onclick="toggleAdminNav(this)">
@@ -437,6 +437,23 @@ $accred_nav_alerts = checkAccreditationExpirations();
                 </a>
                 <a href="<?= SITE_URL ?>/admin/layanan-form-setting.php?tab=feedback" class="admin-subnav-link <?= ($current_admin === 'layanan-form-setting' && ($_GET['tab'] ?? '') === 'feedback') ? 'active' : '' ?>">
                     <span>• Pengaturan Form Survei</span>
+                </a>
+
+                <!-- Sub Menu 4: Evaluasi Kinerja -->
+                <div style="padding:0.6rem 1rem 0.15rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;font-weight:700;">
+                    4. Evaluasi Kinerja
+                </div>
+                <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-rekap.php" class="admin-subnav-link <?= in_array($current_admin, ['evaluasi-kinerja-rekap', 'evaluasi-kinerja-detail']) ? 'active' : '' ?>">
+                    <span>• Rekap Penilaian</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-pertanyaan.php" class="admin-subnav-link <?= $current_admin === 'evaluasi-kinerja-pertanyaan' ? 'active' : '' ?>">
+                    <span>• Kelola Pertanyaan</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php" class="admin-subnav-link <?= $current_admin === 'evaluasi-kinerja-akses' ? 'active' : '' ?>">
+                    <span>• Kelola Akun Google</span>
+                </a>
+                <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-setting.php" class="admin-subnav-link <?= $current_admin === 'evaluasi-kinerja-setting' ? 'active' : '' ?>">
+                    <span>• Pengaturan Evaluasi</span>
                 </a>
             </div>
         </div>

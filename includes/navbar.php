@@ -291,7 +291,7 @@ try {
                 <!-- 8. Layanan & Feedback (Whimsical Dropdown CTA) -->
                 <?php if (isPageNavVisible('layanan')): ?>
                 <li class="nav-item dropdown nav-hover-dropdown">
-                    <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'survei-kepuasan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link nav-cta dropdown-toggle <?= in_array($current_page, ['layanan', 'kunjungan', 'pelatihan-eksternal', 'pelatihan', 'survei-kepuasan', 'feedback-kunjungan', 'kritik-saran', 'evaluasi-kinerja']) ? 'active' : '' ?>" href="<?= SITE_URL ?>/layanan.php" id="navbarLayanan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14" style="margin-right:4px;vertical-align:-1px;">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                         </svg>
@@ -321,7 +321,7 @@ try {
                                 </div>
                             </a>
                             <!-- Sub Menu 3: Survey Kepuasan Layanan LPM -->
-                            <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="whimsical-item <?= in_array($current_page, ['survei-kepuasan', 'feedback-kunjungan', 'kritik-saran', 'layanan']) ? 'active' : '' ?>">
+                            <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="whimsical-item <?= in_array($current_page, ['survei-kepuasan', 'feedback-kunjungan', 'kritik-saran', 'evaluasi-kinerja', 'layanan']) ? 'active' : '' ?>">
                                 <div class="whimsical-icon-wrap" style="background:rgba(16,185,129,0.12);color:#059669;">
                                     <i class="bi bi-emoji-smile-fill"></i>
                                 </div>
@@ -329,6 +329,17 @@ try {
                                     <div class="whimsical-item-title">Survey Kepuasan Layanan LPM</div>
                                 </div>
                             </a>
+                            <!-- Sub Menu 4: Evaluasi Kinerja (Hanya jika diaktifkan admin) -->
+                            <?php if (getPengaturan('evaluasi_kinerja_aktif', '1') == '1'): ?>
+                            <a href="<?= SITE_URL ?>/evaluasi-kinerja.php" class="whimsical-item <?= $current_page === 'evaluasi-kinerja' ? 'active' : '' ?>">
+                                <div class="whimsical-icon-wrap" style="background:rgba(234,88,12,0.12);color:#EA580C;">
+                                    <i class="bi bi-person-check-fill"></i>
+                                </div>
+                                <div class="whimsical-item-body">
+                                    <div class="whimsical-item-title">Evaluasi Kinerja</div>
+                                </div>
+                            </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </li>

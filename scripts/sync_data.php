@@ -222,7 +222,8 @@ if (empty($colAmi)) {
 }
 
 // Extract INSERT INTO `berita` from lpm_scu.sql
-$sqlContent = file_get_contents(__DIR__ . '/../lpm_scu.sql');
+$sqlDumpPath = file_exists(__DIR__ . '/../database/lpm_scu.sql') ? __DIR__ . '/../database/lpm_scu.sql' : __DIR__ . '/../lpm_scu.sql';
+$sqlContent = file_exists($sqlDumpPath) ? file_get_contents($sqlDumpPath) : '';
 if (preg_match('/INSERT INTO `berita`\s*\([^)]+\)\s*VALUES\s*([\s\S]*?);/i', $sqlContent, $matches)) {
     $insertBerita = "REPLACE INTO `berita` (`id`, `judul`, `tipe`, `slug`, `konten`, `gambar`, `tanggal_publikasi`, `tampil_di_ami`, `created_at`) VALUES " . $matches[1] . ";";
     $db->exec($insertBerita);

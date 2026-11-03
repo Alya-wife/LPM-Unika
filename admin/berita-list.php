@@ -242,30 +242,32 @@ function renderAdminBeritaPaginationHtml($cur_page, $total_p) {
         $items[] = ["type" => "prev", "page" => $cur_page - 1, "label" => "&laquo;"];
     }
 
-    if ($total_p <= 7) {
+    if ($total_p <= 4) {
         for ($i = 1; $i <= $total_p; $i++) {
             $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
         }
     } else {
-        if ($cur_page <= 4) {
-            for ($i = 1; $i <= 5; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
-            $items[] = ["type" => "dots", "label" => "..."];
-            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
-        } elseif ($cur_page >= $total_p - 3) {
-            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
-            $items[] = ["type" => "dots", "label" => "..."];
-            for ($i = $total_p - 4; $i <= $total_p; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
+        if ($cur_page <= 2) {
+            $start = 1;
+            $end = 3;
+        } elseif ($cur_page >= $total_p - 1) {
+            $start = $total_p - 2;
+            $end = $total_p;
         } else {
-            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
-            $items[] = ["type" => "dots", "label" => "..."];
-            for ($i = $cur_page - 1; $i <= $cur_page + 1; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
-            $items[] = ["type" => "dots", "label" => "..."];
+            $start = $cur_page - 1;
+            $end = $cur_page + 1;
+        }
+
+        if ($start > 1) {
+            $items[] = ["type" => "dots", "page" => $start - 1, "label" => "..."];
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+        }
+        if ($end < $total_p - 1) {
+            $items[] = ["type" => "dots", "page" => $end + 1, "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        } elseif ($end < $total_p) {
             $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
         }
     }
@@ -279,7 +281,7 @@ function renderAdminBeritaPaginationHtml($cur_page, $total_p) {
     <div class="pagination-lpm" style="margin:0;gap:4px;">
         <?php foreach ($items as $it): ?>
             <?php if ($it["type"] === "dots"): ?>
-                <span style="align-self:center;padding:0 4px;font-size:0.75rem;color:var(--text-muted);font-weight:bold;">...</span>
+                <button type="button" class="page-btn page-ellipsis" data-page="<?= $it["page"] ?>" title="Halaman <?= $it["page"] ?>" style="background:transparent;border-color:transparent;color:var(--text-muted);font-weight:bold;cursor:pointer;padding:0 4px;font-size:0.75rem;">...</button>
             <?php else: 
                 $act = !empty($it["active"]) ? "active" : "";
                 $title = $it["type"] === "prev" ? ' title="Sebelumnya"' : ($it["type"] === "next" ? ' title="Selanjutnya"' : "");

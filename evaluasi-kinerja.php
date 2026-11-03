@@ -209,8 +209,85 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
+<style>
+/* UNIKA Brand Theme Styles for Evaluasi Kinerja */
+.nav-pills .nav-link {
+    color: var(--navy);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.nav-pills .nav-link.active, 
+.nav-pills .show > .nav-link {
+    background: linear-gradient(135deg, var(--purple) 0%, #5B21B6 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(106, 27, 154, 0.25) !important;
+}
+.nav-pills .nav-link:hover:not(.active) {
+    background: rgba(106, 27, 154, 0.06);
+    color: var(--purple);
+}
+.btn-evaluasi-primary {
+    background: linear-gradient(135deg, var(--purple) 0%, #5B21B6 100%);
+    border: none;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(106, 27, 154, 0.22);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-evaluasi-primary:hover {
+    background: linear-gradient(135deg, #5B21B6 0%, #4C1D95 100%);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(106, 27, 154, 0.32);
+}
+.btn-evaluasi-outline {
+    border: 1.5px solid var(--purple);
+    color: var(--purple) !important;
+    font-weight: 600;
+    background: #ffffff;
+    transition: all 0.2s;
+}
+.btn-evaluasi-outline:hover {
+    background: var(--purple);
+    color: #ffffff !important;
+}
+.section-evaluasi-header {
+    background: rgba(106, 27, 154, 0.05);
+    border-left: 4px solid var(--purple);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: var(--purple);
+    font-weight: 700;
+}
+.google-signin-btn-styled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1.5px solid #DADCE0;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #3C4043;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+.google-signin-btn-styled:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    color: #1E293B;
+}
+</style>
+
+
 <!-- Banner Utama -->
-<div class="page-banner" style="background:linear-gradient(135deg, var(--navy) 0%, #1E3A8A 100%);">
+<div class="page-banner" style="background:linear-gradient(135deg, var(--navy) 0%, #152238 60%, var(--purple) 100%);">
     <div class="container position-relative">
         <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-2 rounded-pill" style="background:rgba(255,255,255,0.12);color:var(--gold);font-size:0.8rem;font-weight:600;letter-spacing:0.5px;">
             <i class="bi bi-shield-check"></i> INTERNAL PENJAMINAN MUTU
@@ -274,8 +351,22 @@ require_once __DIR__ . '/includes/navbar.php';
                     <div id="evaluasiAuthAlert" class="alert alert-danger mb-4 text-start" style="display:none;font-size:0.88rem;border-radius:8px;"></div>
 
                     <!-- GIS Google Sign-in Button Container -->
-                    <div class="d-flex justify-content-center mb-4">
-                        <div id="g_id_signin_evaluasi"></div>
+                    <div class="d-flex flex-column align-items-center justify-content-center mb-4">
+                        <div id="g_id_signin_evaluasi" style="min-height:48px;display:flex;align-items:center;justify-content:center;">
+                            <!-- Pre-rendered visible Google Button -->
+                            <button type="button" id="btnGoogleEvaluasiFallback" onclick="triggerEvaluasiGoogleSignIn()" class="google-signin-btn-styled">
+                                <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.346l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                                </svg>
+                                <span>Lanjutkan dengan Akun Google</span>
+                            </button>
+                        </div>
+                        <div id="evaluasiLoginLoading" style="display:none;font-size:0.83rem;color:var(--purple);font-weight:600;margin-top:8px;">
+                            <span class="spinner-border spinner-border-sm me-1"></span> Menghubungkan ke Google...
+                        </div>
                     </div>
 
                     <div class="p-3 rounded-3" style="background:#F8FAFC;border:1px solid #E2E8F0;font-size:0.83rem;color:#64748B;text-align:left;">
@@ -312,35 +403,80 @@ require_once __DIR__ . '/includes/navbar.php';
     <!-- Script Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const clientId = "<?= GOOGLE_CLIENT_ID ?>";
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.id && clientId) {
-            google.accounts.id.initialize({
-                client_id: clientId,
-                callback: handleEvaluasiCredentialResponse
-            });
-            google.accounts.id.renderButton(
-                document.getElementById('g_id_signin_evaluasi'),
-                { theme: 'filled_blue', size: 'large', text: 'signin_with', shape: 'pill', width: 280 }
-            );
-        }
-    });
+    const googleClientId = "<?= GOOGLE_CLIENT_ID ?>";
+    let googleInitRetries = 0;
 
-    function handleEvaluasiCredentialResponse(response) {
-        const alertBox = document.getElementById('evaluasiAuthAlert');
-        if (alertBox) alertBox.style.display = 'none';
-
-        if (!response || !response.credential) {
-            if (alertBox) {
-                alertBox.textContent = 'Gagal menerima kredensial dari Google. Silakan coba kembali.';
-                alertBox.style.display = 'block';
+    function initEvaluasiGoogleAuth() {
+        if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
+            googleInitRetries++;
+            if (googleInitRetries < 50) {
+                setTimeout(initEvaluasiGoogleAuth, 200);
             }
             return;
         }
 
-        fetch('<?= SITE_URL ?>/auth-evaluasi.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        try {
+            google.accounts.id.initialize({
+                client_id: googleClientId,
+                callback: handleEvaluasiCredentialResponse,
+                auto_select: false
+            });
+
+            const btnContainer = document.getElementById("g_id_signin_evaluasi");
+            if (btnContainer && googleClientId) {
+                btnContainer.innerHTML = "";
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: "outline",
+                    size: "large",
+                    text: "continue_with",
+                    shape: "pill",
+                    logo_alignment: "left",
+                    width: 280
+                });
+            }
+
+            // Prompt One Tap jika tersedia
+            try { google.accounts.id.prompt(); } catch(e) {}
+        } catch (e) {
+            console.warn("Google init error:", e);
+        }
+    }
+
+    function triggerEvaluasiGoogleSignIn() {
+        const loadingBox = document.getElementById("evaluasiLoginLoading");
+        if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
+            try {
+                google.accounts.id.prompt();
+            } catch (e) {
+                console.warn(e);
+            }
+        } else {
+            if (loadingBox) loadingBox.style.display = "block";
+            initEvaluasiGoogleAuth();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", initEvaluasiGoogleAuth);
+    window.addEventListener("load", initEvaluasiGoogleAuth);
+
+    function handleEvaluasiCredentialResponse(response) {
+        const alertBox   = document.getElementById("evaluasiAuthAlert");
+        const loadingBox = document.getElementById("evaluasiLoginLoading");
+        if (alertBox) alertBox.style.display = "none";
+        if (loadingBox) loadingBox.style.display = "block";
+
+        if (!response || !response.credential) {
+            if (loadingBox) loadingBox.style.display = "none";
+            if (alertBox) {
+                alertBox.textContent = "Gagal menerima kredensial dari Google. Silakan coba kembali.";
+                alertBox.style.display = "block";
+            }
+            return;
+        }
+
+        fetch("<?= SITE_URL ?>/auth-evaluasi.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ credential: response.credential })
         })
         .then(res => res.json())
@@ -348,16 +484,18 @@ require_once __DIR__ . '/includes/navbar.php';
             if (data.success) {
                 window.location.reload();
             } else {
+                if (loadingBox) loadingBox.style.display = "none";
                 if (alertBox) {
-                    alertBox.innerHTML = `<strong>Akses Ditolak:</strong><br>${data.message || 'Akun Google Anda tidak memiliki wewenang akses.'}`;
-                    alertBox.style.display = 'block';
+                    alertBox.innerHTML = `<strong>Akses Ditolak:</strong><br>${data.message || "Akun Google Anda tidak memiliki wewenang akses."}`;
+                    alertBox.style.display = "block";
                 }
             }
         })
         .catch(err => {
+            if (loadingBox) loadingBox.style.display = "none";
             if (alertBox) {
-                alertBox.textContent = 'Terjadi gangguan jaringan saat memverifikasi kredensial Google.';
-                alertBox.style.display = 'block';
+                alertBox.textContent = "Terjadi gangguan jaringan saat memverifikasi kredensial Google.";
+                alertBox.style.display = "block";
             }
         });
     }
@@ -552,7 +690,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <?php endforeach; ?>
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <button type="submit" class="btn btn-hero-primary px-4 py-2" style="border-radius:8px;">
+                            <button type="submit" class="btn btn-evaluasi-primary px-4 py-2" style="border-radius:8px;">
                                 <i class="bi bi-send-fill me-1"></i> Simpan &amp; Kirim Evaluasi Diri
                             </button>
                         </div>
@@ -598,7 +736,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                     </div>
                                 </div>
                                 <div>
-                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-outline-primary' : 'btn-primary' ?> px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalNilaiRekan_<?= $rekan['id'] ?>" style="border-radius:8px;font-size:0.83rem;">
+                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-evaluasi-outline' : 'btn-evaluasi-primary' ?> px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalNilaiRekan_<?= $rekan['id'] ?>" style="border-radius:8px;font-size:0.83rem;">
                                         <i class="bi <?= $isDone ? 'bi-pencil-square' : 'bi-pencil-fill' ?> me-1"></i> <?= $isDone ? 'Ubah' : 'Nilai' ?>
                                     </button>
                                 </div>
@@ -665,7 +803,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                             $noUrutAntar = 1;
                                             foreach ($groupedAntar as $bJudul => $bItems):
                                             ?>
-                                                <div class="p-2 px-3 mb-3 rounded-2 fw-bold" style="background:rgba(2,132,199,0.08);color:#0284C7;font-size:0.95rem;">
+                                                <div class="p-2 px-3 mb-3 rounded-2 fw-bold" style="background:rgba(106,27,154,0.06);color:var(--purple);border-left:3px solid var(--purple);font-size:0.95rem;">
                                                     <?= e($bJudul) ?>
                                                 </div>
 
@@ -710,7 +848,7 @@ require_once __DIR__ . '/includes/navbar.php';
 
                                             <div class="modal-footer border-top px-0 pb-0 mt-4">
                                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Tutup</button>
-                                                <button type="submit" class="btn btn-primary px-4">
+                                                <button type="submit" class="btn btn-evaluasi-primary px-4">
                                                     <i class="bi bi-save-fill me-1"></i> Simpan Penilaian Rekan Kerja
                                                 </button>
                                             </div>
@@ -934,7 +1072,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <?php endforeach; ?>
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <button type="submit" class="btn btn-hero-primary px-4 py-2" style="border-radius:8px;">
+                            <button type="submit" class="btn btn-evaluasi-primary px-4 py-2" style="border-radius:8px;">
                                 <i class="bi bi-send-fill me-1"></i> Simpan Evaluasi Diri
                             </button>
                         </div>

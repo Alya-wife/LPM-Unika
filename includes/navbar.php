@@ -321,7 +321,7 @@ try {
                                 </div>
                             </a>
                             <!-- Sub Menu 3: Survey Kepuasan Layanan LPM -->
-                            <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="whimsical-item <?= in_array($current_page, ['survei-kepuasan', 'feedback-kunjungan', 'kritik-saran', 'evaluasi-kinerja', 'layanan']) ? 'active' : '' ?>">
+                            <a href="<?= SITE_URL ?>/survei-kepuasan.php" class="whimsical-item <?= in_array($current_page, ['survei-kepuasan', 'feedback-kunjungan', 'kritik-saran']) ? 'active' : '' ?>">
                                 <div class="whimsical-icon-wrap" style="background:rgba(16,185,129,0.12);color:#059669;">
                                     <i class="bi bi-emoji-smile-fill"></i>
                                 </div>
@@ -332,7 +332,7 @@ try {
                             <!-- Sub Menu 4: Evaluasi Kinerja (Hanya jika diaktifkan admin) -->
                             <?php if (getPengaturan('evaluasi_kinerja_aktif', '1') == '1'): ?>
                             <a href="<?= SITE_URL ?>/evaluasi-kinerja.php" class="whimsical-item <?= $current_page === 'evaluasi-kinerja' ? 'active' : '' ?>">
-                                <div class="whimsical-icon-wrap" style="background:rgba(234,88,12,0.12);color:#EA580C;">
+                                <div class="whimsical-icon-wrap" style="background:rgba(106,27,154,0.12);color:var(--purple);">
                                     <i class="bi bi-person-check-fill"></i>
                                 </div>
                                 <div class="whimsical-item-body">

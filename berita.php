@@ -163,30 +163,32 @@ function renderBeritaPaginationHtml($cur_page, $total_p) {
         $items[] = ["type" => "prev", "page" => $cur_page - 1, "label" => "&laquo;"];
     }
 
-    if ($total_p <= 7) {
+    if ($total_p <= 4) {
         for ($i = 1; $i <= $total_p; $i++) {
             $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
         }
     } else {
-        if ($cur_page <= 4) {
-            for ($i = 1; $i <= 5; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
-            $items[] = ["type" => "dots", "label" => "..."];
-            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
-        } elseif ($cur_page >= $total_p - 3) {
-            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
-            $items[] = ["type" => "dots", "label" => "..."];
-            for ($i = $total_p - 4; $i <= $total_p; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
+        if ($cur_page <= 2) {
+            $start = 1;
+            $end = 3;
+        } elseif ($cur_page >= $total_p - 1) {
+            $start = $total_p - 2;
+            $end = $total_p;
         } else {
-            $items[] = ["type" => "page", "page" => 1, "label" => "1", "active" => false];
-            $items[] = ["type" => "dots", "label" => "..."];
-            for ($i = $cur_page - 1; $i <= $cur_page + 1; $i++) {
-                $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
-            }
-            $items[] = ["type" => "dots", "label" => "..."];
+            $start = $cur_page - 1;
+            $end = $cur_page + 1;
+        }
+
+        if ($start > 1) {
+            $items[] = ["type" => "dots", "page" => $start - 1, "label" => "..."];
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $items[] = ["type" => "page", "page" => $i, "label" => (string)$i, "active" => ($i === $cur_page)];
+        }
+        if ($end < $total_p - 1) {
+            $items[] = ["type" => "dots", "page" => $end + 1, "label" => "..."];
+            $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
+        } elseif ($end < $total_p) {
             $items[] = ["type" => "page", "page" => $total_p, "label" => (string)$total_p, "active" => false];
         }
     }
@@ -200,7 +202,7 @@ function renderBeritaPaginationHtml($cur_page, $total_p) {
     <div class="pagination-lpm" style="margin:0;gap:4px;">
         <?php foreach ($items as $it): ?>
             <?php if ($it["type"] === "dots"): ?>
-                <span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>
+                <button type="button" class="page-btn page-ellipsis" data-page="<?= $it["page"] ?>" title="Halaman <?= $it["page"] ?>" style="background:transparent;border-color:transparent;color:var(--text-muted);font-weight:bold;cursor:pointer;">...</button>
             <?php else: 
                 $act = !empty($it["active"]) ? "active" : "";
                 $title = $it["type"] === "prev" ? ' title="Halaman Sebelumnya"' : ($it["type"] === "next" ? ' title="Halaman Selanjutnya"' : "");
@@ -475,34 +477,35 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<button type="button" class="page-btn" data-page="${curPage - 1}" title="Halaman Sebelumnya">&laquo;</button>`;
         }
 
-        if (totalP <= 7) {
+        if (totalP <= 4) {
             for (let i = 1; i <= totalP; i++) {
                 const act = (i === curPage) ? 'active' : '';
                 html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
             }
         } else {
-            if (curPage <= 4) {
-                for (let i = 1; i <= 5; i++) {
-                    const act = (i === curPage) ? 'active' : '';
-                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
-                }
-                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
-                html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
-            } else if (curPage >= totalP - 3) {
-                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
-                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
-                for (let i = totalP - 4; i <= totalP; i++) {
-                    const act = (i === curPage) ? 'active' : '';
-                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
-                }
+            let start, end;
+            if (curPage <= 2) {
+                start = 1;
+                end = 3;
+            } else if (curPage >= totalP - 1) {
+                start = totalP - 2;
+                end = totalP;
             } else {
-                html += `<button type="button" class="page-btn" data-page="1">1</button>`;
-                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
-                for (let i = curPage - 1; i <= curPage + 1; i++) {
-                    const act = (i === curPage) ? 'active' : '';
-                    html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
-                }
-                html += `<span class="px-2 align-self-center text-muted" style="font-weight:bold;">...</span>`;
+                start = curPage - 1;
+                end = curPage + 1;
+            }
+
+            if (start > 1) {
+                html += `<button type="button" class="page-btn page-ellipsis" data-page="${start - 1}" title="Halaman ${start - 1}" style="background:transparent;border-color:transparent;color:var(--text-muted);font-weight:bold;cursor:pointer;">...</button>`;
+            }
+            for (let i = start; i <= end; i++) {
+                const act = (i === curPage) ? 'active' : '';
+                html += `<button type="button" class="page-btn ${act}" data-page="${i}">${i}</button>`;
+            }
+            if (end < totalP - 1) {
+                html += `<button type="button" class="page-btn page-ellipsis" data-page="${end + 1}" title="Halaman ${end + 1}" style="background:transparent;border-color:transparent;color:var(--text-muted);font-weight:bold;cursor:pointer;">...</button>`;
+                html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
+            } else if (end < totalP) {
                 html += `<button type="button" class="page-btn" data-page="${totalP}">${totalP}</button>`;
             }
         }

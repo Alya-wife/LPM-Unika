@@ -148,6 +148,9 @@ ON DUPLICATE KEY UPDATE `nama` = VALUES(`nama`), `jabatan` = VALUES(`jabatan`), 
 -- ============================================================================
 -- 10. Seeding Bank Pertanyaan Evaluasi Kinerja (Diri, Antar Personel, & Kepala)
 -- ============================================================================
+-- Mengosongkan tabel pertanyaan sebelum seeding untuk mencegah duplikasi butir pertanyaan
+TRUNCATE TABLE `evaluasi_pertanyaan`;
+
 -- A. Pertanyaan Evaluasi Diri (11 Butir)
 INSERT INTO `evaluasi_pertanyaan` (`kategori`, `bagian`, `nomor_urut`, `pertanyaan`, `tipe_jawaban`, `keterangan`, `wajib`, `is_active`) VALUES
 ('diri', 'Bagian I. Capaian Kinerja', 1, 'Apakah Anda telah menyusun dan melaksanakan rencana kerja sesuai tanggung jawab jabatan, serta apa capaian utama yang dihasilkan selama periode evaluasi?', 'teks', 'Tuliskan bukti atau contoh konkret untuk mendukung jawaban Anda.', 1, 1),

@@ -124,6 +124,8 @@ INSERT INTO `evaluasi_peserta` (`id`, `nama`, `email`, `jabatan`, `peran`, `stat
 
 
 -- 10. Seeding Bank Pertanyaan Lengkap
+TRUNCATE TABLE `evaluasi_pertanyaan`;
+
 -- A. Evaluasi Diri (11 Butir)
 INSERT INTO `evaluasi_pertanyaan` (`kategori`, `bagian`, `nomor_urut`, `pertanyaan`, `tipe_jawaban`, `keterangan`, `wajib`, `is_active`) VALUES
 ('diri', 'Bagian I. Capaian Kinerja', 1, 'Apakah Anda telah menyusun dan melaksanakan rencana kerja sesuai tanggung jawab jabatan, serta apa capaian utama yang dihasilkan selama periode evaluasi?', 'teks', 'Tuliskan bukti atau contoh konkret untuk mendukung jawaban Anda.', 1, 1),

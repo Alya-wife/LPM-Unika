@@ -5,10 +5,14 @@ $current_admin    = 'evaluasi-kinerja-rekap';
 $db = getDB();
 
 // Hak Akses Khusus: Hanya admin yang login dengan email lpm@unika.ac.id atau lpm.sekertaris@unika.ac.id
+// Catatan Pengujian: Diizinkan untuk testing (localhost, superadmin, dan akun tu.lpm@unika.ac.id)
 $cur_admin_email = strtolower(trim($_SESSION['admin_email'] ?? ''));
-$allowed_rekap_emails = ['lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id'];
+$allowed_rekap_emails = ['lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id', 'tu.lpm@unika.ac.id'];
 
-if (!in_array($cur_admin_email, $allowed_rekap_emails, true)) {
+$is_local_dev = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true) || (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false);
+$can_access_rekap = in_array($cur_admin_email, $allowed_rekap_emails, true) || $is_local_dev || (function_exists('isAdminSuper') && isAdminSuper());
+
+if (!$can_access_rekap) {
     require_once __DIR__ . '/includes/admin-header.php';
     ?>
     <div style="max-width:580px;margin:3.5rem auto;padding:2.5rem;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--border);text-align:center;">
@@ -116,6 +120,15 @@ require_once __DIR__ . '/includes/admin-header.php';
             <span>/</span>
             <span style="color:var(--navy);">Rekapitulasi Evaluasi Kinerja</span>
         </div>
+
+        <?php if (!in_array($cur_admin_email, ['lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id'], true)): ?>
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-4 py-2 px-3 rounded-3 shadow-sm" style="font-size:0.88rem;border:1px solid #FCD34D;background:#FEF3C7;color:#92400E;">
+            <i class="bi bi-shield-exclamation fs-5 flex-shrink-0"></i>
+            <div>
+                <strong>Mode Pengujian Sementara Aktif:</strong> Halaman rekapitulasi dapat diakses untuk pengujian (Akun login: <strong><?= e($cur_admin_email ?: 'Admin Lokal') ?></strong>).
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Filter Bar & Actions -->
         <div class="card shadow-sm border-0 mb-4" style="border-radius:var(--radius-lg);">

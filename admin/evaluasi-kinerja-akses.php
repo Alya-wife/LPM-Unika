@@ -134,7 +134,7 @@ require_once __DIR__ . '/includes/admin-header.php';
         <?php endif; ?>
 
         <div class="admin-table-wrap p-4 mb-4">
-            <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom flex-wrap gap-2">
+            <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom flex-wrap gap-3">
                 <div>
                     <h4 class="fw-bold mb-1" style="color:var(--navy);">
                         <i class="bi bi-person-badge-fill text-primary me-2"></i> Manajemen Akses Akun Google Peserta Evaluasi
@@ -143,30 +143,30 @@ require_once __DIR__ . '/includes/admin-header.php';
                         Hanya akun Google yang terdaftar aktif di bawah ini yang dapat login ke portal Evaluasi Kinerja LPM.
                     </p>
                 </div>
-                <div class="d-flex gap-2">
-                    <form method="POST" action="" onsubmit="return confirm('Sinkronkan seluruh data personel dari tabel Tim LPM?');">
+                <div class="d-flex align-items-center gap-2">
+                    <form method="POST" action="" onsubmit="return confirm('Sinkronkan seluruh data personel dari tabel Tim LPM?');" class="m-0">
                         <input type="hidden" name="action" value="sync_tim_lpm">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
-                            <i class="bi bi-arrow-repeat me-1"></i> Sinkronisasi dari Tim LPM
+                        <button type="submit" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 px-3 py-2" style="border-radius:8px;font-weight:600;font-size:0.83rem;">
+                            <i class="bi bi-arrow-repeat"></i> Sinkronisasi dari Tim LPM
                         </button>
                     </form>
-                    <button type="button" class="btn btn-sm btn-hero-primary" data-bs-toggle="modal" data-bs-target="#modalTambahAkun" style="border-radius:8px;">
-                        <i class="bi bi-plus-circle me-1"></i> Tambah Akun Google
+                    <button type="button" class="btn btn-sm text-white d-inline-flex align-items-center gap-1 px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalTambahAkun" style="background:var(--navy);border:none;border-radius:8px;font-weight:600;font-size:0.83rem;box-shadow:0 2px 6px rgba(10,25,47,0.2);">
+                        <i class="bi bi-plus-circle"></i> Tambah Akun Google
                     </button>
                 </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table align-middle table-hover">
+                <table class="table align-middle table-hover mb-0" style="min-width:980px;">
                     <thead class="table-light text-uppercase small text-muted" style="letter-spacing:0.5px;">
                         <tr>
-                            <th style="width:50px;">No</th>
-                            <th>Nama Lengkap</th>
-                            <th>Email Google</th>
-                            <th>Jabatan / Posisi</th>
-                            <th class="text-center" style="width:140px;">Tingkatan Peran</th>
-                            <th class="text-center" style="width:110px;">Status</th>
-                            <th class="text-end" style="width:130px;">Aksi</th>
+                            <th style="width:50px;" class="text-center py-3">No</th>
+                            <th style="min-width:280px;" class="py-3">Nama Lengkap</th>
+                            <th style="min-width:220px;" class="py-3">Email Google</th>
+                            <th style="min-width:220px;" class="py-3">Jabatan / Posisi</th>
+                            <th class="text-center py-3" style="width:150px;">Tingkatan Peran</th>
+                            <th class="text-center py-3" style="width:110px;">Status</th>
+                            <th class="text-center py-3" style="width:100px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -182,54 +182,54 @@ require_once __DIR__ . '/includes/admin-header.php';
                             foreach ($pesertaList as $p):
                         ?>
                         <tr>
-                            <td class="text-muted fw-bold"><?= $no++ ?></td>
+                            <td class="text-center text-muted fw-bold"><?= $no++ ?></td>
                             <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div style="width:36px;height:36px;border-radius:50%;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:0.9rem;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="width:38px;height:38px;min-width:38px;max-width:38px;border-radius:50%;background:#EEF2F6;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:0.92rem;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
                                         <?php if (!empty($p['avatar'])): ?>
                                             <img src="<?= e($p['avatar']) ?>" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
                                         <?php else: ?>
                                             <?= strtoupper(substr($p['nama'], 0, 1)) ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="fw-bold" style="color:var(--navy);"><?= e($p['nama']) ?></div>
+                                    <div class="fw-bold" style="color:var(--navy);font-size:0.92rem;line-height:1.45;"><?= e($p['nama']) ?></div>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border font-monospace" style="font-size:0.83rem;font-weight:500;">
-                                    <i class="bi bi-google text-danger me-1"></i> <?= e($p['email']) ?>
+                                <span class="badge bg-light text-dark border font-monospace px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size:0.82rem;font-weight:500;border-radius:6px;">
+                                    <i class="bi bi-google text-danger"></i> <?= e($p['email']) ?>
                                 </span>
                             </td>
-                            <td class="text-muted small"><?= e($p['jabatan']) ?></td>
+                            <td class="text-muted" style="font-size:0.86rem;line-height:1.4;"><?= e($p['jabatan']) ?></td>
                             <td class="text-center">
                                 <?php if ($p['peran'] === 'kepala'): ?>
-                                    <span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:0.75rem;">
-                                        <i class="bi bi-star-fill me-1"></i> Kepala LPM
+                                    <span class="badge d-inline-flex align-items-center gap-1 px-2.5 py-1.5" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:0.75rem;font-weight:600;border-radius:6px;">
+                                        <i class="bi bi-star-fill text-warning"></i> Kepala LPM
                                     </span>
                                 <?php else: ?>
-                                    <span class="badge" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;font-size:0.75rem;">
-                                        <i class="bi bi-person-fill me-1"></i> Personel LPM
+                                    <span class="badge d-inline-flex align-items-center gap-1 px-2.5 py-1.5" style="background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE;font-size:0.75rem;font-weight:600;border-radius:6px;">
+                                        <i class="bi bi-person-fill text-primary"></i> Personel LPM
                                     </span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
                                 <?php if ((int)$p['status'] === 1): ?>
-                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=toggle_status&id=<?= $p['id'] ?>" class="badge bg-success text-decoration-none" title="Klik untuk menonaktifkan">
-                                        <i class="bi bi-check-circle me-1"></i> Aktif
+                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=toggle_status&id=<?= $p['id'] ?>" class="badge bg-success text-white text-decoration-none px-2.5 py-1.5 d-inline-flex align-items-center gap-1" style="font-size:0.75rem;font-weight:600;border-radius:6px;" title="Klik untuk menonaktifkan">
+                                        <i class="bi bi-check-circle-fill"></i> Aktif
                                     </a>
                                 <?php else: ?>
-                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=toggle_status&id=<?= $p['id'] ?>" class="badge bg-danger text-decoration-none" title="Klik untuk mengaktifkan">
-                                        <i class="bi bi-x-circle me-1"></i> Nonaktif
+                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=toggle_status&id=<?= $p['id'] ?>" class="badge bg-danger text-white text-decoration-none px-2.5 py-1.5 d-inline-flex align-items-center gap-1" style="font-size:0.75rem;font-weight:600;border-radius:6px;" title="Klik untuk mengaktifkan">
+                                        <i class="bi bi-x-circle-fill"></i> Nonaktif
                                     </a>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td class="text-center">
                                 <div class="d-inline-flex gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditAkun_<?= $p['id'] ?>" title="Edit Akun" style="padding:0.25rem 0.5rem;">
-                                        <i class="bi bi-pencil"></i>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditAkun_<?= $p['id'] ?>" title="Edit Akun" style="border-radius:6px;padding:0.3rem 0.55rem;">
+                                        <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=delete&id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun peserta ini? Seluruh riwayat jawaban yang pernah diinput akan tetap tercatat di sistem.');" title="Hapus Akun" style="padding:0.25rem 0.5rem;">
-                                        <i class="bi bi-trash"></i>
+                                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-akses.php?action=delete&id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun peserta ini? Seluruh riwayat jawaban yang pernah diinput akan tetap tercatat di sistem.');" title="Hapus Akun" style="border-radius:6px;padding:0.3rem 0.55rem;">
+                                        <i class="bi bi-trash3"></i>
                                     </a>
                                 </div>
                             </td>
@@ -277,7 +277,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                         </div>
                                         <div class="modal-footer border-top">
                                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-hero-primary px-4">
+                                            <button type="submit" class="btn text-white px-4" style="background:var(--navy);border-radius:8px;font-weight:600;">
                                                 <i class="bi bi-save me-1"></i> Simpan Perubahan
                                             </button>
                                         </div>
@@ -339,7 +339,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-hero-primary px-4">
+                    <button type="submit" class="btn text-white px-4" style="background:var(--navy);border-radius:8px;font-weight:600;">
                         <i class="bi bi-check-circle me-1"></i> Daftarkan Akun
                     </button>
                 </div>

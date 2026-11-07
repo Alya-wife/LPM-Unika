@@ -152,7 +152,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     </p>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-sm btn-hero-primary" data-bs-toggle="modal" data-bs-target="#modalTambahPertanyaan" style="border-radius:8px;">
+                    <button type="button" class="btn btn-sm text-white d-inline-flex align-items-center gap-1 px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalTambahPertanyaan" style="background:var(--navy);border:none;border-radius:8px;font-weight:600;font-size:0.83rem;box-shadow:0 2px 6px rgba(10,25,47,0.2);">
                         <i class="bi bi-plus-circle me-1"></i> Tambah Pertanyaan
                     </button>
                 </div>
@@ -278,7 +278,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                         </div>
                                         <div class="modal-footer border-top">
                                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-hero-primary px-4">
+                                            <button type="submit" class="btn text-white px-4" style="background:var(--navy);border-radius:8px;font-weight:600;">
                                                 <i class="bi bi-save me-1"></i> Simpan Perubahan
                                             </button>
                                         </div>
@@ -350,7 +350,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-hero-primary px-4">
+                    <button type="submit" class="btn text-white px-4" style="background:var(--navy);border-radius:8px;font-weight:600;">
                         <i class="bi bi-check-circle me-1"></i> Tambahkan Pertanyaan
                     </button>
                 </div>

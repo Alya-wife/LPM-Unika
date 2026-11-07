@@ -57,32 +57,12 @@ if ($evaluasi_aktif !== '1' && !$isAdmin) {
     exit;
 }
 
-// 2. Testing Role Switcher (Untuk Admin atau Tester)
-if ($isAdmin || (!empty($_SESSION['evaluasi_user']) && in_array($_SESSION['evaluasi_user']['email'], ['ravywhienelda@gmail.com', 'tu.lpm@unika.ac.id']))) {
-    if (isset($_GET['switch_peserta_id'])) {
-        $swId = (int)$_GET['switch_peserta_id'];
-        $swP = $db->prepare("SELECT * FROM evaluasi_peserta WHERE id = ? LIMIT 1");
-        $swP->execute([$swId]);
-        $targetUser = $swP->fetch(PDO::FETCH_ASSOC);
-        if ($targetUser) {
-            $_SESSION['evaluasi_user'] = [
-                'id'        => (int)$targetUser['id'],
-                'nama'      => $targetUser['nama'],
-                'email'     => $targetUser['email'],
-                'jabatan'   => $targetUser['jabatan'],
-                'peran'     => $targetUser['peran'],
-                'avatar'    => $targetUser['avatar'] ?: '',
-                'logged_at' => time()
-            ];
-            redirect(SITE_URL . '/evaluasi-kinerja.php?msg=' . urlencode('Berhasil beralih akun simulasi sebagai ' . $targetUser['nama']));
-            exit;
-        }
-    }
-}
+// 2. Status Environment
+$isLocalhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false;
 
 // 3. Handle Form Submission
 $flash_success = $_GET['msg'] ?? '';
-$flash_error   = '';
+$flash_error   = $_GET['err'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SESSION['evaluasi_user'])) {
     $cur_user_id = (int)$_SESSION['evaluasi_user']['id'];
@@ -117,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SESSION['evaluasi_user']))
     // B. Submit Evaluasi Antar Personel (Rekan Kerja)
     if ($form_action === 'submit_evaluasi_antar') {
         $target_dinilai_id = (int)($_POST['dinilai_id'] ?? 0);
-        $frekuensi_kerja   = (int)($_POST['frekuensi_kerja'] ?? 1);
+        $frekuensi_kerja   = isset($_POST['frekuensi_kerja']) ? (int)$_POST['frekuensi_kerja'] : 0;
         $skor_items        = $_POST['skor_antar'] ?? [];
         $teks_items        = $_POST['teks_antar'] ?? [];
 
@@ -369,8 +349,6 @@ require_once __DIR__ . '/includes/navbar.php';
                         </div>
                     </div>
 
-                    
-
                 </div>
             </div>
         </div>
@@ -419,7 +397,18 @@ require_once __DIR__ . '/includes/navbar.php';
     }
 
     function triggerEvaluasiGoogleSignIn() {
+        const alertBox   = document.getElementById("evaluasiAuthAlert");
         const loadingBox = document.getElementById("evaluasiLoginLoading");
+
+        if (!googleClientId) {
+            if (alertBox) {
+                alertBox.innerHTML = `<strong>Google Client ID Belum Dikonfigurasi</strong><br>
+                Aplikasi belum memiliki <code>GOOGLE_CLIENT_ID</code>. Silakan hubungi Administrator untuk melengkapi kredensial Google OAuth.`;
+                alertBox.style.display = "block";
+            }
+            return;
+        }
+
         if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
             try {
                 google.accounts.id.prompt();
@@ -496,12 +485,12 @@ require_once __DIR__ . '/includes/navbar.php';
     $stmtAnsDiri->execute([$cur_id, $tahun_akademik]);
     $savedAnsDiri = $stmtAnsDiri->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    // Ambil Daftar Rekan Kerja untuk Antar Personel
+    // Ambil Daftar Rekan Kerja untuk Antar Personel (termasuk Kepala LPM jika penilai adalah personel)
     $stmtRekan = $db->prepare("SELECT p.*, s.status as sub_status, s.frekuensi_kerja 
                                FROM evaluasi_peserta p 
                                LEFT JOIN evaluasi_submission s ON s.dinilai_id = p.id AND s.penilai_id = ? AND s.tahun_akademik = ? AND s.tipe_evaluasi = 'antar_personel'
-                               WHERE p.status = 1 AND p.peran = 'personel' AND p.id != ?
-                               ORDER BY p.id ASC");
+                               WHERE p.status = 1 AND p.id != ?
+                               ORDER BY (p.peran = 'kepala') DESC, p.id ASC");
     $stmtRekan->execute([$cur_id, $tahun_akademik, $cur_id]);
     $listRekan = $stmtRekan->fetchAll(PDO::FETCH_ASSOC);
 
@@ -549,28 +538,6 @@ require_once __DIR__ . '/includes/navbar.php';
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <!-- Dropdown Switch Akun Testing (Hanya jika admin/tester) -->
-                <?php if ($isAdmin || in_array($currentUser['email'], ['ravywhienelda@gmail.com', 'tu.lpm@unika.ac.id'])): ?>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:0.8rem;">
-                        <i class="bi bi-arrow-repeat me-1"></i> Simulasi Akun
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.82rem;min-width:240px;">
-                        <li class="dropdown-header text-uppercase fw-bold" style="font-size:0.7rem;color:#94a3b8;">Pilih Akun Peserta</li>
-                        <?php
-                        $switchList = $db->query("SELECT id, nama, peran FROM evaluasi_peserta WHERE status = 1 ORDER BY peran ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($switchList as $sl):
-                        ?>
-                        <li>
-                            <a class="dropdown-item py-2 <?= $sl['id'] == $cur_id ? 'active fw-bold' : '' ?>" href="<?= SITE_URL ?>/evaluasi-kinerja.php?switch_peserta_id=<?= $sl['id'] ?>">
-                                <?= e($sl['nama']) ?> <span class="badge bg-light text-dark ms-1" style="font-size:0.68rem;"><?= e($sl['peran']) ?></span>
-                            </a>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-                <?php endif; ?>
-
                 <a href="<?= SITE_URL ?>/auth-evaluasi.php?action=logout" class="btn btn-sm btn-outline-danger" style="font-size:0.8rem;border-radius:8px;">
                     <i class="bi bi-box-arrow-right me-1"></i> Keluar
                 </a>
@@ -679,7 +646,7 @@ require_once __DIR__ . '/includes/navbar.php';
         <div class="tab-pane fade" id="pane-antar" role="tabpanel">
             <div class="card shadow-sm border-0 mb-4" style="border-radius:var(--radius-lg);">
                 <div class="card-header bg-white border-bottom p-4">
-                    <h4 class="fw-bold mb-1" style="color:var(--navy);">Penilaian Kinerja Antar Personel (360 Peer Review)</h4>
+                    <h4 class="fw-bold mb-1" style="color:var(--navy);">Penilaian Kinerja Antar Personel</h4>
                     <p class="text-muted mb-0" style="font-size:0.88rem;">
                         Silakan berikan penilaian objektif untuk rekan kerja di bawah ini. Klik tombol <strong>Beri Penilaian</strong> pada masing-masing rekan kerja untuk mengisi kuesioner.
                     </p>
@@ -692,7 +659,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <div class="col-lg-6">
                             <div class="p-3 rounded-3 border h-100 d-flex align-items-center justify-content-between gap-3 <?= $isDone ? 'bg-light' : 'bg-white' ?>" style="box-shadow:0 2px 6px rgba(0,0,0,0.03);">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div style="width:48px;height:48px;border-radius:50%;background:#EEF2F6;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">
+                                    <div style="width:48px;height:48px;border-radius:50%;background:#EEF2F6;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;flex-shrink:0;">
                                         <?php if (!empty($rekan['avatar'])): ?>
                                             <img src="<?= e($rekan['avatar']) ?>" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
                                         <?php else: ?>
@@ -700,7 +667,12 @@ require_once __DIR__ . '/includes/navbar.php';
                                         <?php endif; ?>
                                     </div>
                                     <div>
-                                        <div class="fw-bold text-dark" style="font-size:0.95rem;"><?= e($rekan['nama']) ?></div>
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2 flex-wrap" style="font-size:0.95rem;">
+                                            <span><?= e($rekan['nama']) ?></span>
+                                            <?php if ($rekan['peran'] === 'kepala'): ?>
+                                                <span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:0.7rem;"><i class="bi bi-star-fill text-warning me-1"></i> Kepala LPM</span>
+                                            <?php endif; ?>
+                                        </div>
                                         <div class="text-muted" style="font-size:0.8rem;"><?= e($rekan['jabatan']) ?></div>
                                         <div class="mt-1">
                                             <?php if ($isDone): ?>
@@ -731,14 +703,14 @@ require_once __DIR__ . '/includes/navbar.php';
                                 'teks' => $rRow['jawaban_teks']
                             ];
                         }
-                        $curFrekuensi = (int)($rekan['frekuensi_kerja'] ?? 1);
+                        $curFrekuensi = (isset($rekan['frekuensi_kerja']) && $rekan['frekuensi_kerja'] !== null && $rekan['frekuensi_kerja'] !== '') ? (int)$rekan['frekuensi_kerja'] : null;
                         ?>
                         <div class="modal fade" id="modalNilaiRekan_<?= $rekan['id'] ?>" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                 <div class="modal-content" style="border-radius:var(--radius-lg);overflow:hidden;">
                                     <div class="modal-header bg-navy text-white" style="background:var(--navy);">
                                         <h5 class="modal-title fw-bold" style="font-size:1.05rem;">
-                                            <i class="bi bi-people-fill me-2"></i> Penilaian Rekan Kerja: <?= e($rekan['nama']) ?>
+                                            <i class="bi bi-people-fill me-2"></i> Penilaian <?= $rekan['peran'] === 'kepala' ? 'Kepala LPM' : 'Rekan Kerja' ?>: <?= e($rekan['nama']) ?>
                                         </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
@@ -752,13 +724,13 @@ require_once __DIR__ . '/includes/navbar.php';
                                                 <div class="fw-bold mb-2 text-dark"><i class="bi bi-clock-history me-1"></i> Frekuensi Bekerja Sama Selama Periode Ini:</div>
                                                 <div class="d-flex flex-wrap gap-4" style="font-size:0.9rem;">
                                                     <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="1" <?= $curFrekuensi == 1 ? 'checked' : '' ?> required> (1) Sering
+                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="1" <?= $curFrekuensi === 1 ? 'checked' : '' ?> required> (1) Sering
                                                     </label>
                                                     <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="2" <?= $curFrekuensi == 2 ? 'checked' : '' ?>> (2) Kadang-kadang
+                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="2" <?= $curFrekuensi === 2 ? 'checked' : '' ?>> (2) Kadang-kadang
                                                     </label>
                                                     <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
-                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="3" <?= $curFrekuensi == 3 ? 'checked' : '' ?>> (3) Terbatas
+                                                        <input class="form-check-input" type="radio" name="frekuensi_kerja" value="3" <?= $curFrekuensi === 3 ? 'checked' : '' ?>> (3) Terbatas
                                                     </label>
                                                     <label class="form-check-label d-flex align-items-center gap-1 cursor-pointer">
                                                         <input class="form-check-input" type="radio" name="frekuensi_kerja" value="0" <?= $curFrekuensi === 0 ? 'checked' : '' ?>> N/A
@@ -794,7 +766,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                                     </div>
 
                                                     <?php if ($isSkala): 
-                                                        $selectedSkor = isset($prevVal['skor']) ? (int)$prevVal['skor'] : 1;
+                                                        $selectedSkor = (isset($prevVal['skor']) && $prevVal['skor'] !== null && $prevVal['skor'] !== '') ? (int)$prevVal['skor'] : null;
                                                     ?>
                                                         <div class="d-flex flex-wrap gap-4 ms-4 mt-2" style="font-size:0.88rem;">
                                                             <label class="form-check-label cursor-pointer">
@@ -958,7 +930,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                             $noUrutKepala = 1;
                                             foreach ($pertanyaanKepala as $qK): 
                                                 $prevK = $prevAnsK[$qK['id']] ?? null;
-                                                $selSkorK = isset($prevK['skor']) ? (int)$prevK['skor'] : 4;
+                                                $selSkorK = (isset($prevK['skor']) && $prevK['skor'] !== null && $prevK['skor'] !== '') ? (int)$prevK['skor'] : null;
                                                 $catatanK = $prevK['catatan'] ?? '';
                                             ?>
                                             <div class="mb-4 pb-3 border-bottom">
@@ -1063,6 +1035,27 @@ require_once __DIR__ . '/includes/navbar.php';
     <?php endif; ?>
 
 </div>
+
+<?php if (!empty($_GET['tab']) || !empty($_GET['open_modal'])): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if (($_GET['tab'] ?? '') === 'antar'): ?>
+    var tabBtn = document.getElementById('tab-antar');
+    if (tabBtn && typeof bootstrap !== 'undefined') {
+        bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+    }
+    <?php endif; ?>
+    <?php if (!empty($_GET['open_modal'])): ?>
+    setTimeout(function() {
+        var mEl = document.getElementById('modalNilaiRekan_<?= (int)$_GET['open_modal'] ?>');
+        if (mEl && typeof bootstrap !== 'undefined') {
+            bootstrap.Modal.getOrCreateInstance(mEl).show();
+        }
+    }, 300);
+    <?php endif; ?>
+});
+</script>
+<?php endif; ?>
 
 <?php
 require_once __DIR__ . '/includes/footer.php';

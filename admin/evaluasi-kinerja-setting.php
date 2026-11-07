@@ -138,7 +138,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-                    <button type="submit" class="btn btn-hero-primary px-4 py-2" style="border-radius:8px;">
+                    <button type="submit" class="btn text-white px-4 py-2" style="background:var(--navy);border-radius:8px;font-weight:600;">
                         <i class="bi bi-save-fill me-1"></i> Simpan Pengaturan
                     </button>
                 </div>

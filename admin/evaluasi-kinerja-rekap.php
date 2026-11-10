@@ -43,41 +43,6 @@ $ta_filter           = trim($_GET['ta'] ?? $tahun_aktif_setting);
 // Ambil list seluruh tahun akademik yang pernah ada di submission atau pengaturan
 $taList = $db->query("SELECT DISTINCT tahun_akademik FROM evaluasi_submission WHERE tahun_akademik IS NOT NULL AND tahun_akademik != '' UNION SELECT '2025/2026' UNION SELECT '2024/2025' ORDER BY tahun_akademik DESC")->fetchAll(PDO::FETCH_COLUMN);
 
-// Handle Export CSV
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=rekap_evaluasi_kinerja_lpm_' . str_replace('/', '_', $ta_filter) . '.csv');
-    $output = fopen('php://output', 'w');
-    fputcsv($output, ['No', 'Nama Personel', 'Email', 'Jabatan', 'Tingkat Peran', 'Status Evaluasi Diri', 'Rata-rata Skor Peer Review (1-3)', 'Jumlah Penilai Rekan', 'Skor Evaluasi Kepala LPM (1-5)']);
-
-    $stmtExp = $db->prepare("SELECT p.*, 
-        (SELECT COUNT(*) FROM evaluasi_submission WHERE penilai_id = p.id AND tahun_akademik = ? AND tipe_evaluasi = 'diri') as diri_done,
-        (SELECT ROUND(AVG(skor), 2) FROM evaluasi_antar_jawaban WHERE dinilai_id = p.id AND tahun_akademik = ? AND skor > 0) as avg_antar,
-        (SELECT COUNT(DISTINCT penilai_id) FROM evaluasi_antar_jawaban WHERE dinilai_id = p.id AND tahun_akademik = ?) as jml_penilai,
-        (SELECT ROUND(AVG(skor), 2) FROM evaluasi_kepala_jawaban WHERE dinilai_id = p.id AND tahun_akademik = ? AND skor > 0) as avg_kepala
-        FROM evaluasi_peserta p 
-        WHERE p.status = 1
-        ORDER BY p.peran ASC, p.id ASC");
-    $stmtExp->execute([$ta_filter, $ta_filter, $ta_filter, $ta_filter]);
-    $expData = $stmtExp->fetchAll(PDO::FETCH_ASSOC);
-
-    $noExp = 1;
-    foreach ($expData as $row) {
-        fputcsv($output, [
-            $noExp++,
-            $row['nama'],
-            $row['email'],
-            $row['jabatan'],
-            $row['peran'] === 'kepala' ? 'Kepala LPM' : 'Personel LPM',
-            $row['diri_done'] > 0 ? 'Sudah Kirim' : 'Belum Kirim',
-            $row['avg_antar'] ? $row['avg_antar'] : '0.00',
-            $row['jml_penilai'],
-            $row['avg_kepala'] ? $row['avg_kepala'] : '0.00',
-        ]);
-    }
-    fclose($output);
-    exit;
-}
 
 // 2. Query Ringkasan Data Rekapitulasi
 $stmtPeserta = $db->prepare("SELECT p.*, 
@@ -154,9 +119,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                         </select>
                     </form>
 
-                    <a href="<?= SITE_URL ?>/admin/evaluasi-kinerja-rekap.php?ta=<?= urlencode($ta_filter) ?>&export=csv" class="btn btn-sm btn-outline-success" style="border-radius:6px;">
-                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
-                    </a>
+                    
                 </div>
             </div>
         </div>

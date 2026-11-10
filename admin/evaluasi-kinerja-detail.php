@@ -155,14 +155,6 @@ require_once __DIR__ . '/includes/admin-header.php';
             </div>
         </div>
 
-        <?php if (!in_array($cur_admin_email, ['lpm@unika.ac.id', 'lpm.sekertaris@unika.ac.id'], true)): ?>
-        <div class="alert alert-warning d-flex align-items-center gap-2 mb-4 py-2 px-3 rounded-3 shadow-sm no-print" style="font-size:0.88rem;border:1px solid #FCD34D;background:#FEF3C7;color:#92400E;">
-            <i class="bi bi-shield-exclamation fs-5 flex-shrink-0"></i>
-            <div>
-                <strong>Mode Pengujian Sementara Aktif:</strong> Rincian penilaian dapat diakses untuk pengujian (Akun login: <strong><?= e($cur_admin_email ?: 'Admin Lokal') ?></strong>).
-            </div>
-        </div>
-        <?php endif; ?>
 
         <!-- Kop Surat Resmi LPM UNIKA (Muncul saat Print) -->
         <div class="print-only-header text-center">

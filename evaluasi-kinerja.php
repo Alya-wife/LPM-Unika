@@ -213,6 +213,10 @@ require_once __DIR__ . '/includes/navbar.php';
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(106, 27, 154, 0.22);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 .btn-evaluasi-primary:hover {
     background: linear-gradient(135deg, #5B21B6 0%, #4C1D95 100%);
@@ -226,6 +230,10 @@ require_once __DIR__ . '/includes/navbar.php';
     font-weight: 600;
     background: #ffffff;
     transition: all 0.2s;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 .btn-evaluasi-outline:hover {
     background: var(--purple);
@@ -658,7 +666,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         ?>
                         <div class="col-lg-6">
                             <div class="p-3 rounded-3 border h-100 d-flex align-items-center justify-content-between gap-3 <?= $isDone ? 'bg-light' : 'bg-white' ?>" style="box-shadow:0 2px 6px rgba(0,0,0,0.03);">
-                                <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-3" style="min-width:0;flex:1;">
                                     <div style="width:48px;height:48px;border-radius:50%;background:#EEF2F6;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;flex-shrink:0;">
                                         <?php if (!empty($rekan['avatar'])): ?>
                                             <img src="<?= e($rekan['avatar']) ?>" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
@@ -666,11 +674,11 @@ require_once __DIR__ . '/includes/navbar.php';
                                             <?= strtoupper(substr($rekan['nama'], 0, 1)) ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div>
+                                    <div style="min-width:0;flex:1;">
                                         <div class="fw-bold text-dark d-flex align-items-center gap-2 flex-wrap" style="font-size:0.95rem;">
                                             <span><?= e($rekan['nama']) ?></span>
                                             <?php if ($rekan['peran'] === 'kepala'): ?>
-                                                <span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:0.7rem;"><i class="bi bi-star-fill text-warning me-1"></i> Kepala LPM</span>
+                                                <span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:0.7rem;white-space:nowrap;"><i class="bi bi-star-fill text-warning me-1"></i> Kepala LPM</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="text-muted" style="font-size:0.8rem;"><?= e($rekan['jabatan']) ?></div>
@@ -683,8 +691,8 @@ require_once __DIR__ . '/includes/navbar.php';
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-evaluasi-outline' : 'btn-evaluasi-primary' ?> px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalNilaiRekan_<?= $rekan['id'] ?>" style="border-radius:8px;font-size:0.83rem;">
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-evaluasi-outline' : 'btn-evaluasi-primary' ?> px-3 py-2 d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalNilaiRekan_<?= $rekan['id'] ?>" style="border-radius:8px;font-size:0.83rem;white-space:nowrap;">
                                         <i class="bi <?= $isDone ? 'bi-pencil-square' : 'bi-pencil-fill' ?> me-1"></i> <?= $isDone ? 'Ubah' : 'Nilai' ?>
                                     </button>
                                 </div>
@@ -859,17 +867,17 @@ require_once __DIR__ . '/includes/navbar.php';
                         ?>
                         <div class="col-lg-6">
                             <div class="p-3 rounded-3 border h-100 d-flex align-items-center justify-content-between gap-3 <?= $isDone ? 'bg-light' : 'bg-white' ?>" style="box-shadow:0 2px 6px rgba(0,0,0,0.03);">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="width:50px;height:50px;border-radius:50%;background:#F3E8FF;color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;">
+                                <div class="d-flex align-items-center gap-3" style="min-width:0;flex:1;">
+                                    <div style="width:50px;height:50px;border-radius:50%;background:#F3E8FF;color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex-shrink:0;">
                                         <?php if (!empty($pkItem['avatar'])): ?>
                                             <img src="<?= e($pkItem['avatar']) ?>" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
                                         <?php else: ?>
                                             <?= strtoupper(substr($pkItem['nama'], 0, 1)) ?>
                                         <?php endif; ?>
                                     </div>
-                                    <div>
-                                        <div class="fw-bold text-dark" style="font-size:0.95rem;"><?= e($pkItem['nama']) ?></div>
-                                        <div class="text-muted" style="font-size:0.8rem;"><?= e($pkItem['jabatan']) ?></div>
+                                    <div style="min-width:0;flex:1;">
+                                        <div class="fw-bold text-dark text-truncate" style="font-size:0.95rem;"><?= e($pkItem['nama']) ?></div>
+                                        <div class="text-muted text-truncate" style="font-size:0.8rem;"><?= e($pkItem['jabatan']) ?></div>
                                         <div class="mt-1">
                                             <?php if ($isDone): ?>
                                                 <span class="badge bg-success" style="font-size:0.7rem;"><i class="bi bi-check-circle-fill me-1"></i> Skor: <?= number_format((float)$pkItem['avg_skor'], 2) ?> / 5.00</span>
@@ -879,8 +887,8 @@ require_once __DIR__ . '/includes/navbar.php';
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-outline-purple' : 'btn-purple' ?> px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalNilaiKepala_<?= $pkItem['id'] ?>" style="background:var(--purple);color:#fff;border-radius:8px;font-size:0.83rem;">
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-sm <?= $isDone ? 'btn-outline-purple' : 'btn-purple' ?> px-3 py-2 d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalNilaiKepala_<?= $pkItem['id'] ?>" style="background:var(--purple);color:#fff;border-radius:8px;font-size:0.83rem;white-space:nowrap;">
                                         <i class="bi <?= $isDone ? 'bi-pencil-square' : 'bi-award-fill' ?> me-1"></i> <?= $isDone ? 'Edit Nilai' : 'Beri Nilai' ?>
                                     </button>
                                 </div>

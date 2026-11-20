@@ -189,6 +189,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/includes/admin-header.php';
 ?>
 
+<style>
+.radio-kat-card {
+    background: #ffffff;
+    border: 1.5px solid #E2E8F0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.radio-kat-card:hover {
+    border-color: #CBD5E1;
+}
+.radio-kat-card.active-lokal {
+    border-color: #0D9488 !important;
+    background-color: #F0FDFA !important;
+}
+.radio-kat-card.active-nasional {
+    border-color: #991B1B !important;
+    background-color: #FEF2F2 !important;
+}
+.radio-kat-card.active-internasional {
+    border-color: #1E3A8A !important;
+    background-color: #EFF6FF !important;
+}
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h2 style="font-size:1.25rem;font-weight:700;color:var(--navy);margin:0;">
@@ -228,20 +252,20 @@ require_once __DIR__ . '/includes/admin-header.php';
                 <div class="col-md-6">
                     <label class="form-label fw-bold small text-dark">Segmentasi Wilayah / Skala <span class="text-danger">*</span></label>
                     <?php $curr_kat = $_POST['kategori'] ?? ($item['kategori'] ?? 'nasional'); ?>
-                    <div class="d-flex gap-3 mt-1">
-                        <label class="form-check p-3 border rounded-3 flex-fill cursor-pointer <?= $curr_kat === 'lokal' ? 'border-primary bg-primary bg-opacity-10' : '' ?>" style="cursor:pointer;">
-                            <input class="form-check-input me-2" type="radio" name="kategori" value="lokal" <?= $curr_kat === 'lokal' ? 'checked' : '' ?> required>
-                            <span class="fw-bold text-primary"><i class="bi bi-geo-alt-fill me-1"></i> Lokal</span>
+                    <div class="d-flex gap-3 mt-1 radio-card-group">
+                        <label class="form-check p-3 rounded-3 flex-fill radio-kat-card <?= $curr_kat === 'lokal' ? 'active-lokal' : '' ?>" id="radioCardLokal">
+                            <input class="form-check-input me-2" type="radio" name="kategori" value="lokal" <?= $curr_kat === 'lokal' ? 'checked' : '' ?> onchange="updateRadioCards(this.value)" required>
+                            <span class="fw-bold d-inline-block" style="color:#0D9488;"><i class="bi bi-geo-alt-fill me-1"></i> Lokal</span>
                             <small class="d-block text-muted" style="font-size:0.75rem;">Semarang &amp; Jawa Tengah</small>
                         </label>
-                        <label class="form-check p-3 border rounded-3 flex-fill cursor-pointer <?= $curr_kat === 'nasional' ? 'border-warning bg-warning bg-opacity-10' : '' ?>" style="cursor:pointer;">
-                            <input class="form-check-input me-2" type="radio" name="kategori" value="nasional" <?= $curr_kat === 'nasional' ? 'checked' : '' ?> required>
-                            <span class="fw-bold text-dark"><i class="bi bi-flag-fill text-warning me-1"></i> Nasional</span>
+                        <label class="form-check p-3 rounded-3 flex-fill radio-kat-card <?= $curr_kat === 'nasional' ? 'active-nasional' : '' ?>" id="radioCardNasional">
+                            <input class="form-check-input me-2" type="radio" name="kategori" value="nasional" <?= $curr_kat === 'nasional' ? 'checked' : '' ?> onchange="updateRadioCards(this.value)" required>
+                            <span class="fw-bold d-inline-block" style="color:#991B1B;"><i class="bi bi-flag-fill me-1"></i> Nasional</span>
                             <small class="d-block text-muted" style="font-size:0.75rem;">Tingkat Indonesia</small>
                         </label>
-                        <label class="form-check p-3 border rounded-3 flex-fill cursor-pointer <?= $curr_kat === 'internasional' ? 'border-purple bg-purple bg-opacity-10' : '' ?>" style="cursor:pointer;">
-                            <input class="form-check-input me-2" type="radio" name="kategori" value="internasional" <?= $curr_kat === 'internasional' ? 'checked' : '' ?> required>
-                            <span class="fw-bold text-purple"><i class="bi bi-globe2 me-1"></i> Internasional</span>
+                        <label class="form-check p-3 rounded-3 flex-fill radio-kat-card <?= $curr_kat === 'internasional' ? 'active-internasional' : '' ?>" id="radioCardInternasional">
+                            <input class="form-check-input me-2" type="radio" name="kategori" value="internasional" <?= $curr_kat === 'internasional' ? 'checked' : '' ?> onchange="updateRadioCards(this.value)" required>
+                            <span class="fw-bold d-inline-block" style="color:#1E3A8A;"><i class="bi bi-globe2 me-1"></i> Internasional</span>
                             <small class="d-block text-muted" style="font-size:0.75rem;">Global &amp; Dunia</small>
                         </label>
                     </div>
@@ -825,6 +849,15 @@ document.addEventListener('DOMContentLoaded', function() {
             bsModalLogoRank.hide();
         }
     });
+
+    window.updateRadioCards = function(val) {
+        document.getElementById('radioCardLokal')?.classList.remove('active-lokal');
+        document.getElementById('radioCardNasional')?.classList.remove('active-nasional');
+        document.getElementById('radioCardInternasional')?.classList.remove('active-internasional');
+        if (val === 'lokal') document.getElementById('radioCardLokal')?.classList.add('active-lokal');
+        if (val === 'nasional') document.getElementById('radioCardNasional')?.classList.add('active-nasional');
+        if (val === 'internasional') document.getElementById('radioCardInternasional')?.classList.add('active-internasional');
+    };
 });
 </script>
 

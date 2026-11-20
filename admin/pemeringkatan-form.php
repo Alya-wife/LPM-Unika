@@ -46,6 +46,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $file_sertifikat = $item['file_sertifikat'] ?? '';
+    $logo = $item['logo'] ?? '';
+
+    // Handle delete existing logo
+    if (!empty($_POST['hapus_logo']) && empty($_FILES['logo']['name']) && empty($_POST['cropped_logo_data'])) {
+        if ($logo && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $logo)) {
+            @unlink(__DIR__ . '/../uploads/pemeringkatan/' . $logo);
+        }
+        $logo = null;
+    }
+
+    // Handle Logo Upload (Support Cropped Base64 & Direct File Upload, auto-convert transparent PNG/JPG to WebP)
+    $cropped_logo = trim($_POST['cropped_logo_data'] ?? '');
+    if (!empty($cropped_logo) && preg_match('/^data:image\/(\w+);base64,/', $cropped_logo)) {
+        $raw = base64_decode(substr($cropped_logo, strpos($cropped_logo, ',') + 1));
+        if ($raw !== false) {
+            $upload_dir = __DIR__ . '/../uploads/pemeringkatan/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            $clean_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($judul ?: 'logo'));
+            $new_logo = 'logo_rank_' . $clean_name . '_' . time() . '.webp';
+            if (file_put_contents($upload_dir . $new_logo, $raw)) {
+                if ($logo && $logo !== $new_logo && file_exists($upload_dir . $logo)) {
+                    @unlink($upload_dir . $logo);
+                }
+                $logo = $new_logo;
+            } else {
+                $errors[] = 'Gagal menyimpan gambar logo hasil crop ke server.';
+            }
+        }
+    } elseif (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'])) {
+            $errors[] = 'Format berkas logo tidak valid. Gunakan PNG, JPG, WebP, atau SVG.';
+        } elseif ($_FILES['logo']['size'] > 5 * 1024 * 1024) {
+            $errors[] = 'Ukuran berkas logo melebihi batas 5MB.';
+        } else {
+            $upload_dir = __DIR__ . '/../uploads/pemeringkatan/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            $clean_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtolower($judul ?: 'logo'));
+            
+            if ($ext === 'svg') {
+                $new_logo = 'logo_rank_' . $clean_name . '_' . time() . '.svg';
+                if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_dir . $new_logo)) {
+                    if ($logo && $logo !== $new_logo && file_exists($upload_dir . $logo)) @unlink($upload_dir . $logo);
+                    $logo = $new_logo;
+                }
+            } else {
+                $saved_logo = convertAndSaveWebP($_FILES['logo']['tmp_name'], $upload_dir, 'logo_rank_' . $clean_name . '_');
+                if ($saved_logo) {
+                    if ($logo && $logo !== $saved_logo && file_exists($upload_dir . $logo)) @unlink($upload_dir . $logo);
+                    $logo = $saved_logo;
+                } else {
+                    $errors[] = 'Gagal memproses dan mengonversi logo ke WebP.';
+                }
+            }
+        }
+    }
 
     // Handle delete existing certificate
     if (!empty($_POST['hapus_sertifikat']) && $file_sertifikat !== '') {
@@ -102,13 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id > 0) {
             $stmt = $db->prepare("
                 UPDATE pemeringkatan 
-                SET judul = ?, lembaga = ?, kategori = ?, peringkat = ?, peringkat_dari = ?, 
+                SET judul = ?, lembaga = ?, kategori = ?, peringkat = ?, peringkat_dari = ?, logo = ?,
                     badge_teks = ?, warna = ?, deskripsi = ?, link_url = ?, file_sertifikat = ?, tahun = ?, 
                     urutan = ?, is_active = ?
                 WHERE id = ?
             ");
             $stmt->execute([
-                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari,
+                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo,
                 $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active, $id
             ]);
@@ -116,11 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $stmt = $db->prepare("
                 INSERT INTO pemeringkatan 
-                (judul, lembaga, kategori, peringkat, peringkat_dari, badge_teks, warna, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (judul, lembaga, kategori, peringkat, peringkat_dari, logo, badge_teks, warna, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
-                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari,
+                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo,
                 $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active
             ]);
@@ -236,6 +292,59 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <small class="text-muted" style="font-size:0.72rem;">Kosongkan jika ingin mengikuti warna segmen.</small>
                 </div>
 
+                <!-- Upload Logo Gambar Pemeringkatan (Pengganti Teks Peringkat) -->
+                <div class="col-12 p-3 my-2" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:10px;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="form-label fw-bold mb-0" style="font-family:var(--font-heading);color:var(--navy);font-size:0.95rem;">
+                            <i class="bi bi-image text-primary me-1"></i>
+                            Logo Gambar Peringkat / Rekognisi (Opsional – Pengganti Teks "World Ranked", "Certified", dll)
+                        </label>
+                        <span class="badge bg-light text-muted border" style="font-size:0.75rem;">PNG Transparan / WebP / SVG / JPG</span>
+                    </div>
+                    <div class="row align-items-center g-3">
+                        <!-- Pratinjau Logo -->
+                        <div class="col-auto">
+                            <div id="logoPreviewWrapper" style="width:120px;height:75px;border-radius:10px;background:#ffffff;background-image:linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);background-size:12px 12px;background-position:0 0, 0 6px, 6px -6px, -6px 0px;border:2px dashed #CBD5E1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+                                <?php if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])): ?>
+                                    <img id="logoPreviewImg" src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($item['logo']) ?>" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;">
+                                <?php else: ?>
+                                    <img id="logoPreviewImg" src="" alt="Preview" style="max-width:100%;max-height:100%;object-fit:contain;display:none;">
+                                    <span id="logoPreviewPlaceholder" style="font-size:0.7rem;color:#94A3B8;text-align:center;font-weight:600;line-height:1.2;">
+                                        Belum Ada Logo
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Input File & Options -->
+                        <div class="col">
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="file" name="logo" id="inputLogoRank" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+                                <button type="button" class="btn btn-outline-primary d-none align-items-center gap-1 fw-semibold" id="btnEditLogoRank" style="white-space:nowrap;padding:0.55rem 0.9rem;border-radius:8px;">
+                                    <i class="bi bi-crop text-warning"></i> Sesuaikan / Edit Logo
+                                </button>
+                            </div>
+                            <input type="hidden" name="cropped_logo_data" id="croppedLogoData">
+                            <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+                                Disarankan format <strong>PNG transparan</strong> (maks 5MB). Sistem akan otomatis mengonversi ke format <strong>WebP</strong> berkualitas tinggi dengan mempertahankan transparansi background. Jika diunggah, kartu di halaman pemeringkatan akan menampilkan logo ini di posisi teks peringkat utama.
+                            </small>
+                            <?php if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])): ?>
+                            <div class="d-flex align-items-center gap-3 mt-2">
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;height:26px;" onclick="editExistingLogoRank('<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($item['logo']) ?>')">
+                                    <i class="bi bi-crop text-warning me-1"></i>Edit Logo Tersimpan
+                                </button>
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="checkbox" name="hapus_logo" value="1" id="checkHapusLogo">
+                                    <label class="form-check-label small text-danger" for="checkHapusLogo">
+                                        Hapus logo saat ini (kembali menggunakan teks peringkat)
+                                    </label>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Deskripsi Lengkap -->
                 <div class="col-12">
                     <label class="form-label fw-bold small text-dark">Deskripsi &amp; Ulasan Capaian</label>
@@ -347,7 +456,7 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
-<!-- Modal Cropper Universal Pemeringkatan -->
+<!-- Modal Cropper Universal Pemeringkatan (Sertifikat) -->
 <div class="modal fade" id="modalCropCert" tabindex="-1" aria-labelledby="modalCropCertLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
@@ -416,16 +525,87 @@ require_once __DIR__ . '/includes/admin-header.php';
     </div>
 </div>
 
+<!-- Modal Cropper Logo Pemeringkatan -->
+<div class="modal fade" id="modalCropLogoRank" tabindex="-1" aria-labelledby="modalCropLogoRankLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header text-white" style="background:linear-gradient(135deg, #0A192F 0%, #1E3A8A 100%);padding:1.25rem 1.75rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-crop" style="font-size:1.4rem;color:#FFD54F;"></i>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="modalCropLogoRankLabel">Editor Logo: Crop, Rotate, Flip &amp; Zoom</h5>
+                        <small style="color:rgba(255,255,255,0.85);">Sesuaikan logo pemeringkatan. Transparansi PNG akan dipertahankan dalam format WebP.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4" style="background:#F1F5F9;">
+                <div class="crop-modal-container mb-3 shadow-inner" style="max-height:480px;background:#0F172A;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;">
+                    <img id="cropperSourceImgLogoRank" src="" alt="Source Logo" style="max-width:100%;max-height:460px;display:block;">
+                </div>
+                <div class="card p-3 border shadow-sm rounded-3 bg-white">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipHLogoRank">
+                                <i class="bi bi-symmetry-vertical text-warning"></i> Flip H (⇄)
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill fw-bold d-flex align-items-center justify-content-center gap-1 py-2" id="btnFlipVLogoRank">
+                                <i class="bi bi-symmetry-horizontal text-warning"></i> Flip V (⇅)
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateLeftLogoRank">
+                                <i class="bi bi-arrow-counterclockwise"></i> ↺ 90°
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnRotateRightLogoRank">
+                                <i class="bi bi-arrow-clockwise"></i> ↻ 90°
+                            </button>
+                        </div>
+                        <div class="col-lg-5 col-12 d-flex gap-1">
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomInLogoRank">
+                                <i class="bi bi-zoom-in"></i> +
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" id="btnZoomOutLogoRank">
+                                <i class="bi bi-zoom-out"></i> -
+                            </button>
+                            <button type="button" class="btn btn-outline-danger flex-fill fw-bold py-2" id="btnResetCropLogoRank">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
+                        <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active ratio-btn-logorank fw-semibold" data-ratio="NaN">Bebas</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-logorank fw-semibold" data-ratio="1">1:1 Persegi</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-logorank fw-semibold" data-ratio="1.333333">4:3</button>
+                            <button type="button" class="btn btn-outline-primary ratio-btn-logorank fw-semibold" data-ratio="1.777778">16:9 Banner</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="background:#ffffff;border-top:1px solid #E2E8F0;padding:1rem 1.75rem;">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold d-inline-flex align-items-center gap-2" id="btnApplyCropLogoRank" style="background:var(--navy);border-color:var(--navy);border-radius:8px;">
+                    <i class="bi bi-check-lg fs-5"></i> Terapkan Hasil Penyesuaian Logo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ---------------------------------------------
+    // 1. Cropper Sertifikat
+    // ---------------------------------------------
     let cropperCert = null;
     let scaleXCert = 1;
     let scaleYCert = 1;
     let currentRatioCert = 4 / 3;
 
     const modalCropCertEl  = document.getElementById('modalCropCert');
-    if (!modalCropCertEl) return;
-    const bsModalCert      = new bootstrap.Modal(modalCropCertEl);
+    const bsModalCert      = modalCropCertEl ? new bootstrap.Modal(modalCropCertEl) : null;
     const sourceImgCert    = document.getElementById('cropperSourceImgCert');
     const fileInputCert    = document.getElementById('inputCertFile');
     const btnEditCert      = document.getElementById('btnEditCertImg');
@@ -448,15 +628,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    modalCropCertEl.addEventListener('shown.bs.modal', function() { initCropperCert(); });
-    modalCropCertEl.addEventListener('hidden.bs.modal', function() {
-        if (cropperCert) {
-            cropperCert.destroy();
-            cropperCert = null;
-        }
-    });
+    if (modalCropCertEl) {
+        modalCropCertEl.addEventListener('shown.bs.modal', function() { initCropperCert(); });
+        modalCropCertEl.addEventListener('hidden.bs.modal', function() {
+            if (cropperCert) {
+                cropperCert.destroy();
+                cropperCert = null;
+            }
+        });
+    }
 
-    // Controls
     document.getElementById('btnRotateLeftCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(-90); });
     document.getElementById('btnRotateRightCert')?.addEventListener('click', function() { if (cropperCert) cropperCert.rotate(90); });
     document.getElementById('btnFlipHCert')?.addEventListener('click', function() { if (cropperCert) { scaleXCert = -scaleXCert; cropperCert.scaleX(scaleXCert); } });
@@ -525,6 +706,123 @@ document.addEventListener('DOMContentLoaded', function() {
             btnEditCert.classList.add('d-inline-flex');
             if (fileInputCert) fileInputCert.value = '';
             bsModalCert.hide();
+        }
+    });
+
+    // ---------------------------------------------
+    // 2. Cropper Logo Gambar Pemeringkatan
+    // ---------------------------------------------
+    let cropperLogoRank = null;
+    let scaleXLogoRank = 1;
+    let scaleYLogoRank = 1;
+    let currentRatioLogoRank = NaN;
+
+    const modalCropLogoRankEl  = document.getElementById('modalCropLogoRank');
+    const bsModalLogoRank      = modalCropLogoRankEl ? new bootstrap.Modal(modalCropLogoRankEl) : null;
+    const sourceImgLogoRank    = document.getElementById('cropperSourceImgLogoRank');
+    const fileInputLogoRank    = document.getElementById('inputLogoRank');
+    const btnEditLogoRank      = document.getElementById('btnEditLogoRank');
+    const previewImgLogoRank   = document.getElementById('logoPreviewImg');
+    const placeholderLogoRank  = document.getElementById('logoPreviewPlaceholder');
+    const hiddenCropLogoRank   = document.getElementById('croppedLogoData');
+    const applyBtnLogoRank     = document.getElementById('btnApplyCropLogoRank');
+
+    function initCropperLogoRank() {
+        if (cropperLogoRank) cropperLogoRank.destroy();
+        scaleXLogoRank = 1;
+        scaleYLogoRank = 1;
+        cropperLogoRank = new Cropper(sourceImgLogoRank, {
+            aspectRatio: currentRatioLogoRank,
+            viewMode: 1,
+            autoCropArea: 0.95,
+            responsive: true,
+            guides: true,
+            checkCrossOrigin: false
+        });
+    }
+
+    if (modalCropLogoRankEl) {
+        modalCropLogoRankEl.addEventListener('shown.bs.modal', function() { initCropperLogoRank(); });
+        modalCropLogoRankEl.addEventListener('hidden.bs.modal', function() {
+            if (cropperLogoRank) {
+                cropperLogoRank.destroy();
+                cropperLogoRank = null;
+            }
+        });
+    }
+
+    document.getElementById('btnRotateLeftLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.rotate(-90); });
+    document.getElementById('btnRotateRightLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.rotate(90); });
+    document.getElementById('btnFlipHLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) { scaleXLogoRank = -scaleXLogoRank; cropperLogoRank.scaleX(scaleXLogoRank); } });
+    document.getElementById('btnFlipVLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) { scaleYLogoRank = -scaleYLogoRank; cropperLogoRank.scaleY(scaleYLogoRank); } });
+    document.getElementById('btnZoomInLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.zoom(0.1); });
+    document.getElementById('btnZoomOutLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.zoom(-0.1); });
+    document.getElementById('btnResetCropLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) { cropperLogoRank.reset(); scaleXLogoRank = 1; scaleYLogoRank = 1; } });
+
+    document.querySelectorAll('.ratio-btn-logorank').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ratio-btn-logorank').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            const val = parseFloat(this.getAttribute('data-ratio'));
+            currentRatioLogoRank = isNaN(val) ? NaN : val;
+            if (cropperLogoRank) cropperLogoRank.setAspectRatio(currentRatioLogoRank);
+        });
+    });
+
+    fileInputLogoRank?.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|svg)$/i.test(file.name);
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sourceImgLogoRank.src = e.target.result;
+                    if (previewImgLogoRank) {
+                        previewImgLogoRank.src = e.target.result;
+                        previewImgLogoRank.style.display = 'block';
+                    }
+                    if (placeholderLogoRank) placeholderLogoRank.style.display = 'none';
+                    btnEditLogoRank.classList.remove('d-none');
+                    btnEditLogoRank.classList.add('d-inline-flex');
+                    hiddenCropLogoRank.value = '';
+                    bsModalLogoRank.show();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    btnEditLogoRank?.addEventListener('click', function() {
+        if (sourceImgLogoRank.src) {
+            bsModalLogoRank.show();
+        }
+    });
+
+    window.editExistingLogoRank = function(imgUrl) {
+        sourceImgLogoRank.src = imgUrl;
+        bsModalLogoRank.show();
+    };
+
+    applyBtnLogoRank?.addEventListener('click', function() {
+        if (!cropperLogoRank) return;
+        const canvas = cropperLogoRank.getCroppedCanvas({
+            maxWidth: 1000,
+            maxHeight: 1000,
+            imageSmoothingQuality: 'high'
+        });
+        if (canvas) {
+            // PNG transparency preserved in WebP
+            const dataUrl = canvas.toDataURL('image/webp', 0.95);
+            hiddenCropLogoRank.value = dataUrl;
+            if (previewImgLogoRank) {
+                previewImgLogoRank.src = dataUrl;
+                previewImgLogoRank.style.display = 'block';
+            }
+            if (placeholderLogoRank) placeholderLogoRank.style.display = 'none';
+            btnEditLogoRank.classList.remove('d-none');
+            btnEditLogoRank.classList.add('d-inline-flex');
+            if (fileInputLogoRank) fileInputLogoRank.value = '';
+            bsModalLogoRank.hide();
         }
     });
 });

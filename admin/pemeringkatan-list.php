@@ -21,13 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Handle Delete
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $stmt = $db->prepare("SELECT file_sertifikat FROM pemeringkatan WHERE id = ?");
+    $stmt = $db->prepare("SELECT file_sertifikat, logo FROM pemeringkatan WHERE id = ?");
     $stmt->execute([$id]);
     $item = $stmt->fetch();
     if ($item) {
         if (!empty($item['file_sertifikat'])) {
             deleteUploadedFile($item['file_sertifikat'], 'pemeringkatan');
             deleteUploadedFile($item['file_sertifikat'], 'akreditasi');
+        }
+        if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])) {
+            @unlink(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo']);
         }
         $db->prepare("DELETE FROM pemeringkatan WHERE id = ?")->execute([$id]);
         $_SESSION['flash'] = 'Data pemeringkatan berhasil dihapus.';
@@ -300,6 +303,11 @@ require_once __DIR__ . '/includes/admin-header.php';
                         <?php endif; ?>
                     </td>
                     <td>
+                        <?php if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])): ?>
+                        <div class="mb-1">
+                            <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($item['logo']) ?>" alt="Logo" style="max-height:28px;max-width:90px;object-fit:contain;background:#f8fafc;padding:2px 4px;border-radius:4px;border:1px solid #e2e8f0;display:inline-block;">
+                        </div>
+                        <?php endif; ?>
                         <div class="fw-bold" style="color:<?= e($item_color) ?>;font-size:1.05rem;">
                             <?= e($item['peringkat'] ?: '-') ?>
                         </div>

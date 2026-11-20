@@ -155,20 +155,46 @@ require_once __DIR__ . '/includes/navbar.php';
     border-color: #CBD5E1;
 }
 
+.ranking-hero-box {
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.ranking-hero-logo {
+    max-height: 56px;
+    max-width: 85%;
+    object-fit: contain;
+    margin: 0 auto;
+    display: block;
+}
 .ranking-hero-number {
-    font-size: 2.85rem;
+    font-size: 2.5rem;
     font-weight: 900;
     font-family: var(--font-heading);
-    letter-spacing: -1.2px;
-    line-height: 1;
-    margin-bottom: 0.35rem;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+    word-break: break-word;
 }
 .ranking-hero-sub {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #64748B;
-    margin-bottom: 1rem;
     display: block;
+}
+.ranking-card-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--navy);
+    font-size: 1.1rem;
+    line-height: 1.45;
+    min-height: 3.15rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Section Divider */
@@ -292,8 +318,8 @@ require_once __DIR__ . '/includes/navbar.php';
                     }
                 }
                 ?>
-                <div class="col-md-6 col-lg-4">
-                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                <div class="col-md-6 col-lg-4 d-flex">
+                    <div class="ranking-card w-100 d-flex flex-column" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
                         
                         <!-- Header Kartu: Badge & Tahun -->
                         <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -305,22 +331,26 @@ require_once __DIR__ . '/includes/navbar.php';
                             </span>
                         </div>
 
-                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <!-- Body Kartu: Angka Peringkat / Logo, Judul, Lembaga, Deskripsi -->
                         <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
-                            <div class="mt-2 mb-1">
-                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
-                                    <?= e($r['peringkat'] ?: '-') ?>
-                                </span>
+                            <div class="mt-2 mb-2 ranking-hero-box">
+                                <?php if (!empty($r['logo'])): ?>
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo">
+                                <?php else: ?>
+                                    <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                        <?= e($r['peringkat'] ?: '-') ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($r['peringkat_dari'])): ?>
-                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <span class="ranking-hero-sub mt-1"><?= e($r['peringkat_dari']) ?></span>
                                 <?php endif; ?>
                             </div>
 
-                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                            <h3 class="ranking-card-title mb-2" title="<?= e($r['judul']) ?>">
                                 <?= e($r['judul']) ?>
                             </h3>
 
-                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap" style="min-height:30px;">
                                 <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
                                     <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
                                 </span>
@@ -335,10 +365,12 @@ require_once __DIR__ . '/includes/navbar.php';
                             <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
                                 <?= nl2br(e($r['deskripsi'])) ?>
                             </p>
+                            <?php else: ?>
+                            <div class="flex-grow-1 mb-4"></div>
                             <?php endif; ?>
 
-                            <!-- Tombol Aksi -->
-                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                            <!-- Tombol Aksi (Selalu Rata Bawah) -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2 w-100" style="border-color:#F1F5F9 !important;">
                                 <?php if (!empty($file_url)): ?>
                                 <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
                                     <i class="bi bi-file-earmark-check-fill"></i>
@@ -354,7 +386,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <?php endif; ?>
 
                                 <?php if (empty($file_url) && empty($r['link_url'])): ?>
-                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <span class="text-muted small py-2 d-block">Data resmi terverifikasi</span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -418,8 +450,8 @@ require_once __DIR__ . '/includes/navbar.php';
                     }
                 }
                 ?>
-                <div class="col-md-6 col-lg-4">
-                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                <div class="col-md-6 col-lg-4 d-flex">
+                    <div class="ranking-card w-100 d-flex flex-column" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
                         
                         <!-- Header Kartu: Badge & Tahun -->
                         <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -431,22 +463,26 @@ require_once __DIR__ . '/includes/navbar.php';
                             </span>
                         </div>
 
-                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <!-- Body Kartu: Angka Peringkat / Logo, Judul, Lembaga, Deskripsi -->
                         <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
-                            <div class="mt-2 mb-1">
-                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
-                                    <?= e($r['peringkat'] ?: '-') ?>
-                                </span>
+                            <div class="mt-2 mb-2 ranking-hero-box">
+                                <?php if (!empty($r['logo'])): ?>
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo">
+                                <?php else: ?>
+                                    <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                        <?= e($r['peringkat'] ?: '-') ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($r['peringkat_dari'])): ?>
-                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <span class="ranking-hero-sub mt-1"><?= e($r['peringkat_dari']) ?></span>
                                 <?php endif; ?>
                             </div>
 
-                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                            <h3 class="ranking-card-title mb-2" title="<?= e($r['judul']) ?>">
                                 <?= e($r['judul']) ?>
                             </h3>
 
-                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap" style="min-height:30px;">
                                 <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
                                     <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
                                 </span>
@@ -461,10 +497,12 @@ require_once __DIR__ . '/includes/navbar.php';
                             <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
                                 <?= nl2br(e($r['deskripsi'])) ?>
                             </p>
+                            <?php else: ?>
+                            <div class="flex-grow-1 mb-4"></div>
                             <?php endif; ?>
 
-                            <!-- Tombol Aksi -->
-                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                            <!-- Tombol Aksi (Selalu Rata Bawah) -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2 w-100" style="border-color:#F1F5F9 !important;">
                                 <?php if (!empty($file_url)): ?>
                                 <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
                                     <i class="bi bi-file-earmark-check-fill"></i>
@@ -480,12 +518,13 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <?php endif; ?>
 
                                 <?php if (empty($file_url) && empty($r['link_url'])): ?>
-                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <span class="text-muted small py-2 d-block">Data resmi terverifikasi</span>
                                 <?php endif; ?>
                             </div>
                         </div>
 
                     </div>
+                </div>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -544,8 +583,8 @@ require_once __DIR__ . '/includes/navbar.php';
                     }
                 }
                 ?>
-                <div class="col-md-6 col-lg-4">
-                    <div class="ranking-card" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
+                <div class="col-md-6 col-lg-4 d-flex">
+                    <div class="ranking-card w-100 d-flex flex-column" style="border-top: 5px solid <?= htmlspecialchars($card_color) ?> !important;">
                         
                         <!-- Header Kartu: Badge & Tahun -->
                         <div class="p-4 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -557,22 +596,26 @@ require_once __DIR__ . '/includes/navbar.php';
                             </span>
                         </div>
 
-                        <!-- Body Kartu: Angka Peringkat, Judul, Lembaga, Deskripsi -->
+                        <!-- Body Kartu: Angka Peringkat / Logo, Judul, Lembaga, Deskripsi -->
                         <div class="p-4 pt-3 flex-grow-1 d-flex flex-column text-center">
-                            <div class="mt-2 mb-1">
-                                <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
-                                    <?= e($r['peringkat'] ?: '-') ?>
-                                </span>
+                            <div class="mt-2 mb-2 ranking-hero-box">
+                                <?php if (!empty($r['logo'])): ?>
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo">
+                                <?php else: ?>
+                                    <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
+                                        <?= e($r['peringkat'] ?: '-') ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($r['peringkat_dari'])): ?>
-                                <span class="ranking-hero-sub"><?= e($r['peringkat_dari']) ?></span>
+                                <span class="ranking-hero-sub mt-1"><?= e($r['peringkat_dari']) ?></span>
                                 <?php endif; ?>
                             </div>
 
-                            <h3 style="font-family:var(--font-heading);font-weight:800;color:var(--navy);font-size:1.15rem;line-height:1.4;margin-bottom:0.75rem;">
+                            <h3 class="ranking-card-title mb-2" title="<?= e($r['judul']) ?>">
                                 <?= e($r['judul']) ?>
                             </h3>
 
-                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <div class="mb-3 d-flex align-items-center justify-content-center gap-2 flex-wrap" style="min-height:30px;">
                                 <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.78rem;">
                                     <i class="bi bi-patch-check-fill me-1" style="color:<?= htmlspecialchars($card_color) ?>;"></i> <?= e($r['lembaga']) ?>
                                 </span>
@@ -587,10 +630,12 @@ require_once __DIR__ . '/includes/navbar.php';
                             <p class="text-muted small mb-4 flex-grow-1 text-start" style="font-size:0.86rem;line-height:1.65;">
                                 <?= nl2br(e($r['deskripsi'])) ?>
                             </p>
+                            <?php else: ?>
+                            <div class="flex-grow-1 mb-4"></div>
                             <?php endif; ?>
 
-                            <!-- Tombol Aksi -->
-                            <div class="pt-3 border-top mt-auto vstack gap-2" style="border-color:#F1F5F9 !important;">
+                            <!-- Tombol Aksi (Selalu Rata Bawah) -->
+                            <div class="pt-3 border-top mt-auto vstack gap-2 w-100" style="border-color:#F1F5F9 !important;">
                                 <?php if (!empty($file_url)): ?>
                                 <button type="button" class="btn btn-warning w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size:0.88rem;" onclick="openCertModal('<?= $file_url ?>', '<?= e(addslashes($r['judul'])) ?>', '<?= e(addslashes($r['lembaga'])) ?>')">
                                     <i class="bi bi-file-earmark-check-fill"></i>
@@ -606,7 +651,7 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <?php endif; ?>
 
                                 <?php if (empty($file_url) && empty($r['link_url'])): ?>
-                                <span class="text-muted small py-2">Data resmi terverifikasi</span>
+                                <span class="text-muted small py-2 d-block">Data resmi terverifikasi</span>
                                 <?php endif; ?>
                             </div>
                         </div>

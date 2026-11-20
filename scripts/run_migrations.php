@@ -446,6 +446,11 @@ $db->exec("
 ");
 
 $wCols = $db->query("SHOW COLUMNS FROM pemeringkatan LIKE 'warna'")->fetchAll();
+
+$logoCols = $db->query("SHOW COLUMNS FROM pemeringkatan LIKE 'logo'")->fetchAll();
+if (empty($logoCols)) {
+    $db->exec("ALTER TABLE pemeringkatan ADD COLUMN logo VARCHAR(255) NULL DEFAULT NULL AFTER peringkat_dari");
+}
 if (empty($wCols)) {
     $db->exec("ALTER TABLE pemeringkatan ADD COLUMN warna VARCHAR(30) NULL DEFAULT NULL AFTER badge_teks");
 }

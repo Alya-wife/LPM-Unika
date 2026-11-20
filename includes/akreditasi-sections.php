@@ -489,7 +489,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                     </div>
                                 </button>
                             </h2>
-                            <div id="<?= $collapse_id ?>" class="accordion-collapse collapse <?= $i === 1 ? 'show' : '' ?>" data-bs-parent="#accordionFakultas">
+                            <div id="<?= $collapse_id ?>" class="accordion-collapse collapse <?= $i === 1 ? 'show' : '' ?>">
                                 <div class="accordion-body p-0">
                                     <div class="table-responsive">
                                         <table class="table table-hover mb-0 align-middle">
@@ -660,6 +660,23 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                     color: #ffffff !important;
                     box-shadow: 0 2px 6px rgba(10,25,47,0.25);
                 }
+
+                @keyframes pullUpAnim {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(28px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .fakultas-accordion-item {
+                    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .fakultas-accordion-item.item-pulled-up {
+                    animation: pullUpAnim 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
                 </style>
 
                 <!-- JavaScript Interaktif untuk Search Bar & Filter Prodi -->
@@ -682,7 +699,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                     let currentFilter = 'all';
                     let areAllExpanded = false;
 
-                    function applyFilterAndSearch() {
+                    function applyFilterAndSearch(triggerSource) {
                         if (!searchInput) return;
                         const query = searchInput.value.toLowerCase().trim();
                         
@@ -696,6 +713,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                         }
 
                         let totalVisibleProdi = 0;
+                        let visibleIdx = 0;
 
                         fakultasItems.forEach(function(item) {
                             const rows = item.querySelectorAll('.prodi-row');
@@ -754,6 +772,15 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                 item.style.display = '';
                                 totalVisibleProdi += visibleInFakultas;
 
+                                // Animasi ditarik ke atas (pull up animation)
+                                if (triggerSource === 'chip' || triggerSource === 'search') {
+                                    item.classList.remove('item-pulled-up');
+                                    void item.offsetWidth; // trigger reflow
+                                    item.style.animationDelay = (visibleIdx * 0.04) + 's';
+                                    item.classList.add('item-pulled-up');
+                                }
+                                visibleIdx++;
+
                                 // Jika sedang melakukan pencarian atau filter aktif, buka accordion yang memiliki hasil
                                 if (query.length > 0 || currentFilter !== 'all') {
                                     if (collapseEl && !collapseEl.classList.contains('show') && typeof bootstrap !== 'undefined') {
@@ -763,6 +790,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                 }
                             } else {
                                 item.style.display = 'none';
+                                item.classList.remove('item-pulled-up');
                             }
                         });
 
@@ -779,18 +807,34 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                 noResultsAlert.classList.add('d-none');
                             }
                         }
+
+                        // Jika filter chip diklik, tarik scroll layar ke atas daftar hasil dengan animasi halus
+                        if (triggerSource === 'chip') {
+                            const targetHeader = document.getElementById('accordionFakultas');
+                            if (targetHeader) {
+                                const navOffset = 90;
+                                const elemPos = targetHeader.getBoundingClientRect().top;
+                                const offsetPos = elemPos + window.pageYOffset - navOffset;
+                                window.scrollTo({
+                                    top: offsetPos,
+                                    behavior: 'smooth'
+                                });
+                            }
+                        }
                     }
 
                     // Event listener search input
                     if (searchInput) {
-                        searchInput.addEventListener('input', applyFilterAndSearch);
+                        searchInput.addEventListener('input', function() {
+                            applyFilterAndSearch('search');
+                        });
                     }
 
                     // Tombol clear search
                     if (clearSearchBtn) {
                         clearSearchBtn.addEventListener('click', function() {
                             searchInput.value = '';
-                            applyFilterAndSearch();
+                            applyFilterAndSearch('search');
                             searchInput.focus();
                         });
                     }
@@ -803,7 +847,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                             filterButtons.forEach(btn => btn.classList.remove('active'));
                             const defaultFilterBtn = document.querySelector('.btn-filter[data-filter="all"]');
                             if (defaultFilterBtn) defaultFilterBtn.classList.add('active');
-                            applyFilterAndSearch();
+                            applyFilterAndSearch('chip');
                         });
                     }
 
@@ -813,7 +857,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                             filterButtons.forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
                             currentFilter = btn.getAttribute('data-filter') || 'all';
-                            applyFilterAndSearch();
+                            applyFilterAndSearch('chip');
                         });
                     });
 

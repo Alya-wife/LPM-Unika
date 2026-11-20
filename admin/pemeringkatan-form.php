@@ -33,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $link_url       = trim($_POST['link_url'] ?? '');
     $tahun          = trim($_POST['tahun'] ?? date('Y'));
     $urutan         = (int)($_POST['urutan'] ?? 1);
+    $logo_height    = (int)($_POST['logo_height'] ?? ($item['logo_height'] ?? 75));
+    if ($logo_height < 30 || $logo_height > 200) $logo_height = 75;
     $is_active      = isset($_POST['is_active']) ? 1 : 0;
 
     if ($judul === '') {
@@ -158,13 +160,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id > 0) {
             $stmt = $db->prepare("
                 UPDATE pemeringkatan 
-                SET judul = ?, lembaga = ?, kategori = ?, peringkat = ?, peringkat_dari = ?, logo = ?,
+                SET judul = ?, lembaga = ?, kategori = ?, peringkat = ?, peringkat_dari = ?, logo = ?, logo_height = ?,
                     badge_teks = ?, warna = ?, deskripsi = ?, link_url = ?, file_sertifikat = ?, tahun = ?, 
                     urutan = ?, is_active = ?
                 WHERE id = ?
             ");
             $stmt->execute([
-                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo,
+                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo, $logo_height,
                 $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active, $id
             ]);
@@ -172,11 +174,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $stmt = $db->prepare("
                 INSERT INTO pemeringkatan 
-                (judul, lembaga, kategori, peringkat, peringkat_dari, logo, badge_teks, warna, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (judul, lembaga, kategori, peringkat, peringkat_dari, logo, logo_height, badge_teks, warna, deskripsi, link_url, file_sertifikat, tahun, urutan, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
-                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo,
+                $judul, $lembaga, $kategori, $peringkat, $peringkat_dari, $logo, $logo_height,
                 $badge_teks, $db_warna, $deskripsi, $link_url, $file_sertifikat, $tahun,
                 $urutan, $is_active
             ]);
@@ -349,6 +351,32 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </button>
                             </div>
                             <input type="hidden" name="cropped_logo_data" id="croppedLogoData">
+                            
+                            <!-- Setting Ukuran Tinggi Logo -->
+                            <div class="mt-3 pt-3 border-top">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-bold small text-dark mb-1">
+                                            <i class="bi bi-arrows-vertical text-primary me-1"></i>Tinggi Logo di Kartu:
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="range" class="form-range form-control" min="40" max="150" step="5" id="logoHeightRange" value="<?= (int)($item['logo_height'] ?? 75) ?>" oninput="syncLogoHeight(this.value)">
+                                            <span class="input-group-text bg-white fw-bold" style="min-width:75px;" id="logoHeightDisplay"><?= (int)($item['logo_height'] ?? 75) ?> px</span>
+                                        </div>
+                                        <input type="hidden" name="logo_height" id="logoHeightInput" value="<?= (int)($item['logo_height'] ?? 75) ?>">
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label class="form-label small text-muted mb-1 d-block">Pilihan Cepat Ukuran:</label>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="syncLogoHeight(55)">Kecil (55px)</button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold" style="font-size:0.75rem;" onclick="syncLogoHeight(75)">Standar (75px)</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="syncLogoHeight(90)">Besar (90px)</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:0.75rem;" onclick="syncLogoHeight(110)">Ekstra (110px)</button>
+                                        </div>
+                                        <small class="text-muted" style="font-size:0.72rem;">Sesuaikan agar logo lebar (seperti UI GreenMetric) maupun persegi tampak proporsional dan jelas terbaca.</small>
+                                    </div>
+                                </div>
+                            </div>
                             <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
                                 Disarankan format <strong>PNG transparan</strong> (maks 5MB). Sistem akan otomatis mengonversi ke format <strong>WebP</strong> berkualitas tinggi dengan mempertahankan transparansi background. Jika diunggah, kartu di halaman pemeringkatan akan menampilkan logo ini di posisi teks peringkat utama.
                             </small>
@@ -850,6 +878,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+        window.syncLogoHeight = function(val) {
+        val = parseInt(val) || 75;
+        const range = document.getElementById('logoHeightRange');
+        const disp = document.getElementById('logoHeightDisplay');
+        const input = document.getElementById('logoHeightInput');
+        const preview = document.getElementById('logoPreviewImg');
+        const wrapper = document.getElementById('logoPreviewWrapper');
+        if (range) range.value = val;
+        if (disp) disp.innerText = val + ' px';
+        if (input) input.value = val;
+        if (preview) {
+            preview.style.maxHeight = val + 'px';
+            preview.style.height = 'auto';
+        }
+        if (wrapper) {
+            wrapper.style.height = Math.max(75, Math.min(val + 10, 130)) + 'px';
+        }
+    };
+    syncLogoHeight(<?= (int)($item['logo_height'] ?? 75) ?>);
     window.updateRadioCards = function(val) {
         document.getElementById('radioCardLokal')?.classList.remove('active-lokal');
         document.getElementById('radioCardNasional')?.classList.remove('active-nasional');

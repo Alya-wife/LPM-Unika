@@ -330,7 +330,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <div class="row align-items-center g-3">
                         <!-- Pratinjau Logo -->
                         <div class="col-auto">
-                            <div id="logoPreviewWrapper" style="width:120px;height:75px;border-radius:10px;background:#ffffff;background-image:linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);background-size:12px 12px;background-position:0 0, 0 6px, 6px -6px, -6px 0px;border:2px dashed #CBD5E1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+                            <div id="logoPreviewWrapper" style="width:160px;height:85px;border-radius:10px;background:#ffffff;background-image:linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);background-size:12px 12px;background-position:0 0, 0 6px, 6px -6px, -6px 0px;border:2px dashed #CBD5E1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
                                 <?php if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])): ?>
                                     <img id="logoPreviewImg" src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($item['logo']) ?>" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;">
                                 <?php else: ?>
@@ -378,7 +378,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                                 </div>
                             </div>
                             <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
-                                Disarankan format <strong>PNG transparan</strong> (maks 5MB). Sistem akan otomatis mengonversi ke format <strong>WebP</strong> berkualitas tinggi dengan mempertahankan transparansi background. Jika diunggah, kartu di halaman pemeringkatan akan menampilkan logo ini di posisi teks peringkat utama.
+                                Disarankan format <strong>PNG transparan</strong> (maks 5MB). Logo akan <strong>disimpan utuh tanpa dipotong</strong> dan otomatis dikonversi ke WebP transparan berkualitas tinggi. Penyesuaian/crop di bawah bersifat opsional.
                             </small>
                             <?php if (!empty($item['logo']) && file_exists(__DIR__ . '/../uploads/pemeringkatan/' . $item['logo'])): ?>
                             <div class="d-flex align-items-center gap-3 mt-2">
@@ -628,6 +628,7 @@ require_once __DIR__ . '/includes/admin-header.php';
                     <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top flex-wrap">
                         <span class="text-muted small fw-bold me-1 text-uppercase">Rasio:</span>
                         <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success fw-semibold" id="btnFitFullLogoRank"><i class="bi bi-arrows-fullscreen me-1"></i>Penuh (Jangan Dipotong)</button>
                             <button type="button" class="btn btn-outline-primary active ratio-btn-logorank fw-semibold" data-ratio="NaN">Bebas</button>
                             <button type="button" class="btn btn-outline-primary ratio-btn-logorank fw-semibold" data-ratio="1">1:1 Persegi</button>
                             <button type="button" class="btn btn-outline-primary ratio-btn-logorank fw-semibold" data-ratio="1.333333">4:3</button>
@@ -785,8 +786,8 @@ document.addEventListener('DOMContentLoaded', function() {
         scaleYLogoRank = 1;
         cropperLogoRank = new Cropper(sourceImgLogoRank, {
             aspectRatio: currentRatioLogoRank,
-            viewMode: 1,
-            autoCropArea: 0.95,
+            viewMode: 0,
+            autoCropArea: 1.0,
             responsive: true,
             guides: true,
             checkCrossOrigin: false
@@ -809,6 +810,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnFlipVLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) { scaleYLogoRank = -scaleYLogoRank; cropperLogoRank.scaleY(scaleYLogoRank); } });
     document.getElementById('btnZoomInLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.zoom(0.1); });
     document.getElementById('btnZoomOutLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) cropperLogoRank.zoom(-0.1); });
+    document.getElementById('btnFitFullLogoRank')?.addEventListener('click', function() {
+        if (cropperLogoRank) {
+            cropperLogoRank.reset();
+            scaleXLogoRank = 1;
+            scaleYLogoRank = 1;
+            cropperLogoRank.setCropBoxData(cropperLogoRank.getCanvasData());
+        }
+    });
     document.getElementById('btnResetCropLogoRank')?.addEventListener('click', function() { if (cropperLogoRank) { cropperLogoRank.reset(); scaleXLogoRank = 1; scaleYLogoRank = 1; } });
 
     document.querySelectorAll('.ratio-btn-logorank').forEach(function(btn) {
@@ -837,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnEditLogoRank.classList.remove('d-none');
                     btnEditLogoRank.classList.add('d-inline-flex');
                     hiddenCropLogoRank.value = '';
-                    bsModalLogoRank.show();
+                    // Logo disimpan utuh tanpa modal crop otomatis.
                 };
                 reader.readAsDataURL(file);
             }

@@ -167,18 +167,20 @@ require_once __DIR__ . '/includes/navbar.php';
 }
 
 .ranking-hero-box {
-    min-height: 95px;
-    height: 95px;
+    min-height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     margin-top: 0.25rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    overflow: visible;
 }
 .ranking-hero-logo {
-    max-width: 92%;
+    max-width: 95%;
+    width: auto;
+    height: auto;
     object-fit: contain;
     margin: 0 auto;
     display: block;
@@ -378,7 +380,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <div class="ranking-card-body">
                             <div class="ranking-hero-box">
                                 <?php if (!empty($r['logo'])): ?>
-                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="height:<?= $logo_h ?>px;max-height:<?= $logo_h ?>px;">
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="max-height:<?= $logo_h ?>px;">
                                 <?php else: ?>
                                     <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
                                         <?= e($r['peringkat'] ?: '-') ?>
@@ -511,7 +513,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <div class="ranking-card-body">
                             <div class="ranking-hero-box">
                                 <?php if (!empty($r['logo'])): ?>
-                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="height:<?= $logo_h ?>px;max-height:<?= $logo_h ?>px;">
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="max-height:<?= $logo_h ?>px;">
                                 <?php else: ?>
                                     <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
                                         <?= e($r['peringkat'] ?: '-') ?>
@@ -644,7 +646,7 @@ require_once __DIR__ . '/includes/navbar.php';
                         <div class="ranking-card-body">
                             <div class="ranking-hero-box">
                                 <?php if (!empty($r['logo'])): ?>
-                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="height:<?= $logo_h ?>px;max-height:<?= $logo_h ?>px;">
+                                    <img src="<?= SITE_URL ?>/uploads/pemeringkatan/<?= e($r['logo']) ?>" alt="<?= e($r['judul']) ?>" class="ranking-hero-logo" style="max-height:<?= $logo_h ?>px;">
                                 <?php else: ?>
                                     <span class="ranking-hero-number" style="color:<?= htmlspecialchars($card_color) ?>;">
                                         <?= e($r['peringkat'] ?: '-') ?>

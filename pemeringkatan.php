@@ -525,7 +525,6 @@ require_once __DIR__ . '/includes/navbar.php';
 
                     </div>
                 </div>
-                </div>
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>

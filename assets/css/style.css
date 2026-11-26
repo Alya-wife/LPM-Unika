@@ -47,7 +47,7 @@ body {
   color: var(--text-primary);
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -76,7 +76,7 @@ img { max-width: 100%; height: auto; }
   padding: 0.65rem 0;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 1030;
 }
 
 #main-navbar.navbar-scrolled {

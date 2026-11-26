@@ -51,12 +51,17 @@ require_once __DIR__ . '/includes/navbar.php';
 /* Navigasi Cepat Antar Section (Sticky Jump Bar) */
 .section-jump-wrapper {
     position: sticky;
-    top: 76px;
+    top: 72px;
     z-index: 100;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid #E2E8F0;
     box-shadow: 0 4px 18px rgba(7, 23, 57, 0.05);
+}
+@media (max-width: 991.98px) {
+    .section-jump-wrapper {
+        top: 64px;
+    }
 }
 .jump-pill {
     padding: 0.6rem 1.25rem;

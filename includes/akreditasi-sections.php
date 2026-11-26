@@ -495,12 +495,12 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                         <table class="table table-hover mb-0 align-middle table-prodi-fixed">
                                             <colgroup>
                                                 <col style="width: 4%;">
-                                                <col style="width: 20%;">
+                                                <col style="width: 19%;">
                                                 <col style="width: 8%;">
-                                                <col style="width: 13%;">
-                                                <col style="width: 21%;">
+                                                <col style="width: 16%;">
+                                                <col style="width: 20%;">
                                                 <col style="width: 11%;">
-                                                <col style="width: 23%;">
+                                                <col style="width: 22%;">
                                             </colgroup>
                                             <thead style="background-color:#f8fafc;border-bottom:2px solid #E2E8F0;">
                                                 <tr>
@@ -550,7 +550,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                                         <span class="badge bg-secondary" style="font-size:0.75rem;padding:0.35rem 0.6rem;border-radius:6px;min-width:48px;display:inline-block;text-align:center;"><?= htmlspecialchars($p['strata'] ?? '') ?></span>
                                                     </td>
                                                     <td class="px-2 py-3 text-center">
-                                                        <span class="badge" style="background:<?= $badge_bg ?>;color:<?= $badge_color ?>;font-weight:800;font-size:0.82rem;padding:0.4rem 0.8rem;border-radius:20px;min-width:96px;display:inline-block;text-align:center;white-space:nowrap;">
+                                                        <span class="badge" style="background:<?= $badge_bg ?>;color:<?= $badge_color ?>;font-weight:800;font-size:0.8rem;padding:0.4rem 0.75rem;border-radius:16px;min-width:96px;max-width:100%;display:inline-block;text-align:center;white-space:normal;line-height:1.3;">
                                                             <?= htmlspecialchars($p['peringkat'] ?? '') ?>
                                                         </span>
                                                     </td>

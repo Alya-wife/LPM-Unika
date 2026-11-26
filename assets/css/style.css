@@ -171,6 +171,9 @@ img { max-width: 100%; height: auto; }
   font-weight: 700 !important;
   box-shadow: 0 3px 12px rgba(106, 27, 154, 0.4) !important;
   margin-left: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-cta:hover {
@@ -212,7 +215,18 @@ img { max-width: 100%; height: auto; }
     margin-top: 0.4rem !important;
     text-align: center;
     justify-content: center;
+    align-items: center !important;
+    gap: 6px;
     display: flex !important;
+  }
+  .nav-cta svg, .nav-feedback svg {
+    margin-right: 0 !important;
+    vertical-align: middle !important;
+    flex-shrink: 0;
+  }
+  .nav-cta.dropdown-toggle::after {
+    margin-left: 2px !important;
+    vertical-align: middle !important;
   }
 }
 

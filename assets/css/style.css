@@ -1803,15 +1803,73 @@ img { max-width: 100%; height: auto; }
 }
 
 @media (max-width: 1199.98px) {
-  .whimsical-dropdown {
+  #main-navbar .dropdown-toggle::after {
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #main-navbar .dropdown-toggle.show::after,
+  #main-navbar .dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+  }
+
+  #main-navbar .nav-item.dropdown > .dropdown-menu {
+    display: block !important;
+    position: static !important;
     min-width: 100% !important;
     max-width: 100% !important;
-    position: static !important;
-    margin-top: 0.5rem !important;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: none;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-width: 0 !important;
     box-shadow: none !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    transform: none !important;
+    transform: translateY(-8px);
+    transition:
+      max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.24s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.28s ease,
+      margin 0.28s ease,
+      visibility 0.28s ease;
   }
+
+  #main-navbar .nav-item.dropdown > .dropdown-menu.show {
+    max-height: 650px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    padding: 0.5rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.35rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(0);
+  }
+
+  #main-navbar .nav-item.dropdown > .whimsical-dropdown.show {
+    padding: 0.85rem 0.95rem !important;
+  }
+
+  #main-navbar .whimsical-dropdown .whimsical-item {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease;
+  }
+
+  #main-navbar .whimsical-dropdown.show .whimsical-item {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #main-navbar .whimsical-dropdown.show .whimsical-item:nth-child(1) { transition-delay: 0.04s; }
+  #main-navbar .whimsical-dropdown.show .whimsical-item:nth-child(2) { transition-delay: 0.08s; }
+  #main-navbar .whimsical-dropdown.show .whimsical-item:nth-child(3) { transition-delay: 0.12s; }
+  #main-navbar .whimsical-dropdown.show .whimsical-item:nth-child(4) { transition-delay: 0.16s; }
+  #main-navbar .whimsical-dropdown.show .whimsical-item:nth-child(5) { transition-delay: 0.20s; }
 }
 
 /* Center dropdown directly under the chosen menu in Desktop view */

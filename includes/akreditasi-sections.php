@@ -492,16 +492,25 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                             <div id="<?= $collapse_id ?>" class="accordion-collapse collapse <?= $i === 1 ? 'show' : '' ?>">
                                 <div class="accordion-body p-0">
                                     <div class="table-responsive">
-                                        <table class="table table-hover mb-0 align-middle">
+                                        <table class="table table-hover mb-0 align-middle table-prodi-fixed">
+                                            <colgroup>
+                                                <col style="width: 4%;">
+                                                <col style="width: 20%;">
+                                                <col style="width: 8%;">
+                                                <col style="width: 13%;">
+                                                <col style="width: 21%;">
+                                                <col style="width: 11%;">
+                                                <col style="width: 23%;">
+                                            </colgroup>
                                             <thead style="background-color:#f8fafc;border-bottom:2px solid #E2E8F0;">
                                                 <tr>
-                                                    <th class="py-3 px-3 fw-bold text-center" width="45" style="color:#64748B;font-size:0.85rem;">#</th>
+                                                    <th class="py-3 px-2 fw-bold text-center" style="color:#64748B;font-size:0.85rem;">#</th>
                                                     <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;">Program Studi</th>
-                                                    <th class="py-3 px-3 fw-bold" width="90" style="color:#475569;font-size:0.85rem;">Strata</th>
-                                                    <th class="py-3 px-3 fw-bold" width="130" style="color:#475569;font-size:0.85rem;">Peringkat</th>
+                                                    <th class="py-3 px-2 fw-bold text-center" style="color:#475569;font-size:0.85rem;">Strata</th>
+                                                    <th class="py-3 px-2 fw-bold text-center" style="color:#475569;font-size:0.85rem;">Peringkat</th>
                                                     <th class="py-3 px-3 fw-bold" style="color:#475569;font-size:0.85rem;">Lembaga &amp; No. SK</th>
-                                                    <th class="py-3 px-3 fw-bold" width="130" style="color:#475569;font-size:0.85rem;">Masa Berlaku</th>
-                                                    <th class="py-3 px-3 fw-bold text-center" width="260" style="color:#475569;font-size:0.85rem;min-width:260px;">Dokumen (SK &amp; Sertifikat)</th>
+                                                    <th class="py-3 px-2 fw-bold text-center" style="color:#475569;font-size:0.85rem;">Masa Berlaku</th>
+                                                    <th class="py-3 px-3 fw-bold text-center" style="color:#475569;font-size:0.85rem;">Dokumen (SK &amp; Sertifikat)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -537,11 +546,11 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                                         <div class="fw-bold" style="color:var(--navy);font-size:0.95rem;"><?= htmlspecialchars($p['program_studi'] ?? '') ?></div>
                                                         <div class="text-muted small"><?= htmlspecialchars($p['fakultas'] ?? '') ?></div>
                                                     </td>
-                                                    <td class="px-3 py-3">
-                                                        <span class="badge bg-secondary" style="font-size:0.75rem;padding:0.35rem 0.6rem;border-radius:6px;"><?= htmlspecialchars($p['strata'] ?? '') ?></span>
+                                                    <td class="px-2 py-3 text-center">
+                                                        <span class="badge bg-secondary" style="font-size:0.75rem;padding:0.35rem 0.6rem;border-radius:6px;min-width:48px;display:inline-block;text-align:center;"><?= htmlspecialchars($p['strata'] ?? '') ?></span>
                                                     </td>
-                                                    <td class="px-3 py-3">
-                                                        <span class="badge" style="background:<?= $badge_bg ?>;color:<?= $badge_color ?>;font-weight:800;font-size:0.82rem;padding:0.4rem 0.8rem;border-radius:20px;">
+                                                    <td class="px-2 py-3 text-center">
+                                                        <span class="badge" style="background:<?= $badge_bg ?>;color:<?= $badge_color ?>;font-weight:800;font-size:0.82rem;padding:0.4rem 0.8rem;border-radius:20px;min-width:96px;display:inline-block;text-align:center;white-space:nowrap;">
                                                             <?= htmlspecialchars($p['peringkat'] ?? '') ?>
                                                         </span>
                                                     </td>
@@ -549,7 +558,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                                         <div class="fw-bold" style="font-size:0.9rem;color:#0F172A;"><?= htmlspecialchars($p['lembaga'] ?? '') ?></div>
                                                         <div class="text-muted" style="font-size:0.75rem;word-break:break-word;"><?= htmlspecialchars($p['no_sk'] ?? '') ?></div>
                                                     </td>
-                                                    <td class="px-3 py-3">
+                                                    <td class="px-2 py-3 text-center text-nowrap">
                                                         <?php if ($is_expired): ?>
                                                             <span class="text-danger fw-bold" style="font-size:0.82rem;">
                                                                 <i class="bi bi-x-circle me-1"></i> Kadaluarsa
@@ -563,7 +572,7 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
                                                         <?php endif; ?>
                                                     </td>
                                                     <td class="px-3 py-3">
-                                                        <div class="d-flex flex-column gap-2" style="min-width: 250px;">
+                                                        <div class="d-flex flex-column gap-2 w-100">
                                                             <!-- Berkas SK -->
                                                             <?php if (!empty($p['file_sk']) && file_exists(__DIR__ . '/../uploads/akreditasi_prodi/' . $p['file_sk'])): ?>
                                                                 <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded-2 gap-2" style="background:#EFF6FF;border:1px solid #BFDBFE;">
@@ -626,6 +635,15 @@ function renderAkreditasiSection($type, $block = [], $is_builder = false) {
 
                 <!-- Styling Tambahan Khusus Accordion & Filter Prodi -->
                 <style>
+                .table-prodi-fixed {
+                    table-layout: fixed;
+                    width: 100%;
+                    min-width: 1080px;
+                }
+                .table-prodi-fixed td,
+                .table-prodi-fixed th {
+                    vertical-align: middle;
+                }
                 .accordion-lpm .accordion-button {
                     font-weight: 700;
                     color: var(--navy);
